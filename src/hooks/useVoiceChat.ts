@@ -4,12 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { JournalEntry } from '@/store/useJournalStore';
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
-interface MessageEvent {
-  type: 'transcript' | 'agent_response' | 'debug';
-  text?: string;
-  transcript?: string;
-  debug?: any;
-}
+type Role = 'user' | 'ai';
 
 export const useVoiceChat = () => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -23,16 +18,12 @@ export const useVoiceChat = () => {
       const apiKey = localStorage.getItem('ELEVENLABS_API_KEY');
       if (!apiKey) throw new Error('API key not found');
 
-      // Format journal context
       const journalContext = journals
-        .map(j => `Journal entry "${j.title}": ${j.content.substring(0, 500)}`)
+        .map(j => `Journal entry "${j.title}": ${j.content}`)
         .join('\n\n');
 
-      // Request microphone access
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      console.log('Initializing ElevenLabs conversation...');
-      
       const newConversation = await Conversation.startSession({
         agentId: ELEVENLABS_AGENT_ID,
         overrides: {
@@ -41,10 +32,6 @@ export const useVoiceChat = () => {
             prompt: {
               prompt: `You are a helpful AI therapist. Consider this context from the user's journals: ${journalContext}`
             }
-          },
-          tts: {
-            voiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah voice
-            modelId: "eleven_monolingual_v2"
           }
         },
         onConnect: () => {
@@ -58,45 +45,31 @@ export const useVoiceChat = () => {
           setConversation(null);
           toast({ title: 'Disconnected', description: 'Voice chat ended' });
         },
-        onError: (error: string) => {
-          console.error('ElevenLabs error:', error);
+        onError: (message: string, context?: any) => {
+          console.error('ElevenLabs error:', message, context);
           toast({
             title: 'Connection Error',
-            description: error,
+            description: message,
             variant: 'destructive'
           });
           setConnectionStatus('disconnected');
           setConversation(null);
         },
         onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
-          console.log('Mode changed:', mode.mode);
           setAgentStatus(mode.mode);
         },
-        onMessage: (event: MessageEvent) => {
-          console.log('Received message event:', event);
-          
-          if (event.type === 'transcript' && event.transcript) {
-            console.log('User transcript:', event.transcript);
-          }
-          
-          if (event.type === 'agent_response' && event.text) {
-            console.log('Agent response:', event.text);
-            setAgentResponse(event.text);
-          }
-          
-          if (event.type === 'debug') {
-            console.log('Debug event:', event.debug);
+        onMessage: (props: { message: string; source: Role }) => {
+          if (props.source === 'ai') {
+            setAgentResponse(props.message);
           }
         }
       });
 
-      console.log('Conversation initialized successfully');
       setConversation(newConversation);
       return newConversation;
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize voice chat';
-      console.error('Voice chat initialization error:', error);
       toast({
         title: 'Connection Failed',
         description: errorMessage,
@@ -111,14 +84,12 @@ export const useVoiceChat = () => {
       setConnectionStatus('connecting');
       await initializeConversation(journals);
     } catch (error) {
-      console.error('Failed to start session:', error);
       setConnectionStatus('disconnected');
     }
   };
 
   const stopSession = async () => {
     if (conversation) {
-      console.log('Stopping voice chat session...');
       await conversation.endSession();
       setConversation(null);
       setConnectionStatus('disconnected');
@@ -128,7 +99,6 @@ export const useVoiceChat = () => {
   useEffect(() => {
     return () => {
       if (conversation) {
-        console.log('Cleaning up voice chat session...');
         conversation.endSession();
       }
     };
