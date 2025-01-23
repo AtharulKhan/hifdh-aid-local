@@ -16,25 +16,25 @@ const sounds = [
     id: "rain", 
     name: "Rain", 
     icon: Cloud, 
-    src: "https://www.soundsnap.com/thunder_distant_rain_roll_gather_roll"
+    src: "/sounds/rain.mp3"
   },
   { 
     id: "waves", 
     name: "Ocean", 
     icon: Waves, 
-    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8f4d33e36.mp3"
+    src: "/sounds/waves.mp3"
   },
   { 
     id: "forest", 
     name: "Forest", 
     icon: Trees, 
-    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_bf3a5a8d0e.mp3"
+    src: "/sounds/forest.mp3"
   },
   { 
     id: "wind", 
     name: "Wind", 
     icon: Wind, 
-    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_d9b8956868.mp3"
+    src: "/sounds/wind.mp3"
   },
 ];
 
