@@ -55,13 +55,15 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const [editedTags, setEditedTags] = React.useState(journal.tags.join(", "));
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (contentRef.current) {
-      const contentHeight = contentRef.current.scrollHeight;
-      const maxHeight = 400; // Match the ScrollArea height
-      animatedHeight.set(isExpanded ? Math.min(contentHeight, maxHeight) : 0);
-    }
-  }, [isExpanded, animatedHeight, journal.content]);
+useEffect(() => {
+  if (contentRef.current) {
+    const contentHeight = contentRef.current.scrollHeight;
+    const maxHeight = 400;
+    // Use the actual content height if it's less than maxHeight
+    const targetHeight = isExpanded ? Math.min(contentHeight, maxHeight) : 0;
+    animatedHeight.set(targetHeight);
+  }
+}, [isExpanded, animatedHeight, journal.content]);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -161,10 +163,10 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                         exit={{ opacity: 0 }}
                         className="h-full"
                       >
-                        <ScrollArea className="h-[400px] w-full rounded-md border border-transparent">
-                          <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
-                          <ScrollBar orientation="vertical" />
-                        </ScrollArea>
+                      <ScrollArea className="h-full w-full rounded-md border border-transparent">
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
+                        <ScrollBar orientation="vertical" />
+                      </ScrollArea>
                       </motion.div>
                     )}
                   </AnimatePresence>
