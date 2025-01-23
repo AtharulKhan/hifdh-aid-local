@@ -1,13 +1,14 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export function VoiceChat() {
-  const { isListening, agentResponse, startSession, stopSession } = useVoiceChat();
+  const { isListening, isConnecting, agentResponse, startSession, stopSession } = useVoiceChat();
   const { selectedJournals } = useJournalContext();
   const [isOpen, setIsOpen] = React.useState(false);
   
@@ -53,21 +54,38 @@ export function VoiceChat() {
             </ScrollArea>
           </div>
 
+          <div className={cn(
+            "p-4 rounded-lg transition-colors",
+            isListening ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">
+                {isConnecting ? "Connecting..." : 
+                  isListening ? "Listening..." : "Ready to start"}
+              </span>
+              {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
+            </div>
+          </div>
+
           <Button
             onClick={handleStartStop}
             variant={isListening ? "destructive" : "default"}
             className="w-full"
+            disabled={isConnecting}
           >
-            {isListening ? (
+            {isConnecting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : isListening ? (
               <Square className="mr-2 h-4 w-4" />
             ) : (
               <Mic className="mr-2 h-4 w-4" />
             )}
-            {isListening ? 'Stop Voice Chat' : 'Start Voice Chat'}
+            {isConnecting ? 'Connecting...' : 
+              isListening ? 'Stop Voice Chat' : 'Start Voice Chat'}
           </Button>
 
           {agentResponse && (
-            <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="p-4 bg-primary/10 rounded-lg">
               <p className="text-sm">{agentResponse}</p>
             </div>
           )}
