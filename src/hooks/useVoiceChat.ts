@@ -4,7 +4,8 @@ import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 import { JournalEntry } from '@/store/useJournalStore';
 import { Conversation } from '@11labs/client';
 
-type Role = 'assistant' | 'user';
+// Import Role type from the client library instead of defining our own
+import type { Role } from '@11labs/client';
 
 interface AgentMessage {
   message: string;
@@ -72,20 +73,20 @@ export const useVoiceChat = () => {
             description: "Voice chat has ended",
           });
         },
-        onError: (error: Error) => {
-          console.error('ElevenLabs error:', error);
+        onError: (message: string, context?: any) => {
+          console.error('ElevenLabs error:', message, context);
           toast({
             title: "Connection Error",
-            description: error.message || "Failed to connect to voice service",
+            description: message || "Failed to connect to voice service",
             variant: "destructive"
           });
           setIsConnecting(false);
           setIsListening(false);
           setConnectionState('disconnected');
         },
-        onMessage: (message: AgentMessage) => {
-          console.log('Received message:', message);
-          setAgentResponse(message.message);
+        onMessage: (props: { message: string; source: Role }) => {
+          console.log('Received message:', props);
+          setAgentResponse(props.message);
         },
         overrides: {
           agent: {
