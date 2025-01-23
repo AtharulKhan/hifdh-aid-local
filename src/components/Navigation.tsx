@@ -32,21 +32,21 @@ export const Navigation = () => {
 
   return (
     <nav className={cn(
-      "fixed md:relative transition-all duration-300 ease-in-out z-50",
+      "transition-all duration-300 ease-in-out",
       "bg-white/80 backdrop-blur-xl border-r border-gray-200 min-h-screen shadow-lg animate-fadeIn",
-      isMinimized ? "w-0 md:w-16 -translate-x-full md:translate-x-0" : "w-64 md:w-64 translate-x-0"
+      isMinimized ? "w-16" : "w-16 md:w-64"
     )}>
       <div className="p-4 flex justify-between items-center">
         <h1 className={cn(
           "text-xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent",
-          isMinimized ? "hidden" : "block"
+          isMinimized ? "hidden" : "hidden md:block"
         )}>
           Mental Health Hub
         </h1>
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-4 md:hidden"
+          className="md:hidden"
           onClick={() => setIsMinimized(!isMinimized)}
         >
           {isMinimized ? (
@@ -72,7 +72,7 @@ export const Navigation = () => {
             <Icon className="h-5 w-5" />
             <span className={cn(
               "font-medium",
-              isMinimized ? "hidden" : "block"
+              isMinimized ? "hidden" : "hidden md:inline"
             )}>
               {label}
             </span>
