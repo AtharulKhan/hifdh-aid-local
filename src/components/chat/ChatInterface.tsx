@@ -9,6 +9,7 @@ import { ModelSelector } from './ModelSelector';
 import { JournalSelector } from './JournalSelector';
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { useIsMobile } from '@/hooks/use-mobile';
+import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,15 @@ import {
 } from "@/components/ui/dialog";
 
 const CHAT_HISTORY_KEY = 'chat_history';
+
+// Base instruction for markdown formatting
+const BASE_SYSTEM_INSTRUCTION = `You are a helpful AI assistant. Please format your responses using markdown for better readability. Use:
+- Headers (# ## ###) for sections
+- Lists (* or -) for enumeration
+- **Bold** or *italic* for emphasis
+- \`code blocks\` for technical terms
+- > for quotes
+- --- for separators when needed`;
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -151,7 +161,7 @@ export function ChatInterface() {
 
       const systemMessage = {
         role: 'system',
-        content: `You are a helpful AI assistant. Here is some context from the user's journal entries:\n\n${journalContext}`
+        content: `${BASE_SYSTEM_INSTRUCTION}\n\nHere is some context from the user's journal entries:\n\n${journalContext}`
       };
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -317,10 +327,14 @@ export function ChatInterface() {
                   className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground ml-auto'
-                      : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20'
+                      : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20 prose dark:prose-invert'
                   }`}
                 >
-                  <p className="leading-relaxed">{message.content}</p>
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  ) : (
+                    <p className="leading-relaxed">{message.content}</p>
+                  )}
                   {message.model && (
                     <p className="text-xs mt-2 opacity-70">
                       {message.model}
