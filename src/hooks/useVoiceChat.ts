@@ -1,133 +1,112 @@
-import { useState, useRef, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { ELEVENLABS_AGENT_ID } from '@/config/voice';
-import { JournalEntry } from '@/store/useJournalStore';
+import { useState, useEffect } from 'react';
 import { Conversation } from '@11labs/client';
-import type { Role } from '@11labs/client';
-
-interface AgentMessage {
-  message: string;
-  source: Role;
-}
+import { useToast } from "@/hooks/use-toast";
+import { JournalEntry } from '@/store/useJournalStore';
+import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
 export const useVoiceChat = () => {
-  const [isListening, setIsListening] = useState(false);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [agentStatus, setAgentStatus] = useState<'listening' | 'speaking'>('listening');
   const [agentResponse, setAgentResponse] = useState('');
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionState, setConnectionState] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const conversationRef = useRef<any>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    return () => {
-      if (conversationRef.current) {
-        conversationRef.current.endSession();
-      }
-    };
-  }, []);
-
-  const initConnection = async (journals: JournalEntry[]) => {
-    const apiKey = localStorage.getItem('ELEVENLABS_API_KEY');
-
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your ElevenLabs API key in settings first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsConnecting(true);
-    setConnectionState('connecting');
-
+  const initializeConversation = async (journals: JournalEntry[]) => {
     try {
-      // Request microphone permission first
+      const apiKey = localStorage.getItem('ELEVENLABS_API_KEY');
+      if (!apiKey) throw new Error('API key not found');
+
+      const journalContext = journals
+        .map(j => `Journal entry "${j.title}": ${j.content}`)
+        .join('\n\n');
+
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Create context from journals
-      const journalContext = journals.map(journal => 
-        `Context from journal "${journal.title}": ${journal.content}`
-      ).join('\n\n');
-
-      // Start the conversation using the official client
-      conversationRef.current = await Conversation.startSession({
+      const newConversation = await Conversation.startSession({
         agentId: ELEVENLABS_AGENT_ID,
+        overrides: {
+          agent: {
+            firstMessage: `Hello! I'm your AI therapist. I've reviewed your journal entries.`,
+            prompt: {
+              prompt: `You are a helpful AI therapist. Consider this context from the user's journals: ${journalContext}`
+            }
+          }
+        },
         onConnect: () => {
           console.log('Connected to ElevenLabs');
-          setConnectionState('connected');
-          setIsConnecting(false);
-          toast({
-            title: "Connected",
-            description: "Voice chat is now active",
-          });
+          setConnectionStatus('connected');
+          toast({ title: 'Connected', description: 'Voice chat active' });
         },
         onDisconnect: () => {
           console.log('Disconnected from ElevenLabs');
-          setConnectionState('disconnected');
-          setIsListening(false);
+          setConnectionStatus('disconnected');
+          setConversation(null);
+          toast({ title: 'Disconnected', description: 'Voice chat ended' });
+        },
+        onError: (error: string) => {
+          console.error('ElevenLabs error:', error);
           toast({
-            title: "Disconnected",
-            description: "Voice chat has ended",
+            title: 'Connection Error',
+            description: error,
+            variant: 'destructive'
           });
+          setConnectionStatus('disconnected');
+          setConversation(null);
         },
-        onError: (message: string, context?: any) => {
-          console.error('ElevenLabs error:', message, context);
-          toast({
-            title: "Connection Error",
-            description: message || "Failed to connect to voice service",
-            variant: "destructive"
-          });
-          setIsConnecting(false);
-          setIsListening(false);
-          setConnectionState('disconnected');
+        onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
+          setAgentStatus(mode.mode);
         },
-        onMessage: (props: { message: string; source: Role }) => {
-          console.log('Received message:', props);
-          setAgentResponse(props.message);
-        },
-        overrides: {
-          agent: {
-            firstMessage: `Hello! I'm your AI therapist. ${journalContext}`,
-            language: "en",
+        onMessage: (message: { type: string; text?: string }) => {
+          if (message.type === 'agent_response' && message.text) {
+            setAgentResponse(message.text);
           }
         }
       });
 
+      setConversation(newConversation);
+      return newConversation;
+
     } catch (error) {
-      console.error("Connection error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to connect to voice service";
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize voice chat';
       toast({
-        title: "Connection Error",
+        title: 'Connection Failed',
         description: errorMessage,
-        variant: "destructive"
+        variant: 'destructive'
       });
-      setIsConnecting(false);
-      setIsListening(false);
-      setConnectionState('disconnected');
+      throw error;
     }
   };
 
-  return {
-    isListening,
-    isConnecting,
-    connectionState,
-    agentResponse,
-    startSession: (journals: JournalEntry[]) => {
-      setIsListening(true);
-      initConnection(journals);
-    },
-    stopSession: async () => {
-      if (conversationRef.current) {
-        await conversationRef.current.endSession();
-        conversationRef.current = null;
-      }
-      setIsListening(false);
-      setConnectionState('disconnected');
-      toast({
-        title: "Voice Chat Ended",
-        description: "Voice chat session has been terminated",
-      });
+  const startSession = async (journals: JournalEntry[]) => {
+    try {
+      setConnectionStatus('connecting');
+      await initializeConversation(journals);
+    } catch (error) {
+      setConnectionStatus('disconnected');
     }
+  };
+
+  const stopSession = async () => {
+    if (conversation) {
+      await conversation.endSession();
+      setConversation(null);
+      setConnectionStatus('disconnected');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (conversation) {
+        conversation.endSession();
+      }
+    };
+  }, [conversation]);
+
+  return {
+    connectionStatus,
+    agentStatus,
+    agentResponse,
+    startSession,
+    stopSession
   };
 };
