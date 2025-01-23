@@ -14,16 +14,22 @@ export function AIReflection() {
   const generateReflection = async () => {
     setIsLoading(true);
     try {
+      const apiKey = localStorage.getItem('OPENROUTER_API_KEY');
+      if (!apiKey) {
+        throw new Error('OpenRouter API key not found');
+      }
+
       const recentJournals = journals
         .slice(-10)
         .map(j => `${j.title}: ${j.content}`)
         .join("\n\n");
 
-      const response = await fetch("https://api.openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": window.location.origin,
         },
         body: JSON.stringify({
           model: "openai/gpt-4o",
@@ -34,18 +40,24 @@ export function AIReflection() {
             },
             {
               role: "user",
-              content: recentJournals
+              content: recentJournals || "No journal entries found."
             }
           ]
         })
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to generate reflection');
+      }
+
       const data = await response.json();
       setReflection(data.choices[0].message.content);
     } catch (error) {
+      console.error('Reflection generation error:', error);
       toast({
         title: "Error",
-        description: "Unable to generate reflection. Please try again later.",
+        description: error instanceof Error ? error.message : "Unable to generate reflection. Please try again later.",
         variant: "destructive",
       });
     } finally {
