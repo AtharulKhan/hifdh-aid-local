@@ -1,23 +1,82 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Mic, Square, Loader2 } from "lucide-react";
-import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { Mic, Square, Loader2, Volume2 } from "lucide-react";
+import { useConversation } from '@11labs/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
 
 export function VoiceChat() {
-  const { isListening, isConnecting, connectionState, agentResponse, startSession, stopSession } = useVoiceChat();
+  const { toast } = useToast();
   const { selectedJournals } = useJournalContext();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [volume, setVolume] = React.useState(1);
+  const [agentResponse, setAgentResponse] = React.useState<string>('');
   
-  const handleStartStop = () => {
-    if (isListening) {
-      stopSession();
-    } else {
-      startSession(selectedJournals);
+  const conversation = useConversation({
+    preferHeadphonesForIosDevices: true,
+    onConnect: () => {
+      toast({
+        title: "Connected",
+        description: "Voice chat is now active",
+      });
+    },
+    onDisconnect: () => {
+      toast({
+        title: "Disconnected",
+        description: "Voice chat session ended",
+      });
+    },
+    onMessage: (message) => {
+      if (message.type === 'assistant_response') {
+        setAgentResponse(message.text);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during voice chat",
+        variant: "destructive",
+      });
     }
+  });
+
+  const handleStartStop = async () => {
+    try {
+      if (conversation.status === 'connected') {
+        await conversation.endSession();
+      } else {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Start conversation with journal context
+        await conversation.startSession({ 
+          agentId: process.env.ELEVENLABS_AGENT_ID || '',
+          overrides: {
+            agent: {
+              prompt: {
+                prompt: `Context from selected journals: ${selectedJournals.map(j => j.content).join('\n')}`,
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start voice chat",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleVolumeChange = async (value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    await conversation.setVolume({ volume: newVolume });
   };
 
   return (
@@ -56,39 +115,72 @@ export function VoiceChat() {
 
           <div className={cn(
             "p-4 rounded-lg transition-colors",
-            connectionState === 'connected' && isListening ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
+            conversation.status === 'connected' ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
-                {isConnecting ? "Connecting..." : 
-                  connectionState === 'connected' ? (isListening ? "Listening..." : "Connected") : 
+                {conversation.status === 'connected' ? 
+                  (conversation.isSpeaking ? "Speaking..." : "Listening...") : 
                   "Ready to start"}
               </span>
-              {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
           </div>
 
           {agentResponse && (
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <p className="text-sm">{agentResponse}</p>
+            <div className="space-y-2">
+              <div className="p-4 bg-primary/10 rounded-lg">
+                <p className="text-sm">{agentResponse}</p>
+              </div>
+              {conversation.canSendFeedback && (
+                <div className="flex gap-2 justify-end">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => conversation.sendFeedback(true)}
+                  >
+                    👍 Helpful
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => conversation.sendFeedback(false)}
+                  >
+                    👎 Not Helpful
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Volume2 className="h-4 w-4" />
+              <Slider
+                value={[volume]}
+                onValueChange={handleVolumeChange}
+                max={1}
+                step={0.1}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
           <Button
             onClick={handleStartStop}
-            variant={isListening ? "destructive" : "default"}
+            variant={conversation.status === 'connected' ? "destructive" : "default"}
             className="w-full"
-            disabled={isConnecting}
           >
-            {isConnecting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : isListening ? (
-              <Square className="mr-2 h-4 w-4" />
+            {conversation.status === 'connected' ? (
+              <>
+                <Square className="mr-2 h-4 w-4" />
+                Stop Voice Chat
+              </>
             ) : (
-              <Mic className="mr-2 h-4 w-4" />
+              <>
+                <Mic className="mr-2 h-4 w-4" />
+                Start Voice Chat
+              </>
             )}
-            {isConnecting ? 'Connecting...' : 
-              isListening ? 'Stop Voice Chat' : 'Start Voice Chat'}
           </Button>
         </div>
       </DialogContent>
