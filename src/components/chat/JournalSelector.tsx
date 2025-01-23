@@ -3,23 +3,108 @@ import { useJournalStore } from '@/store/useJournalStore';
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, X } from "lucide-react";
+import { Search, X, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  startOfToday,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subMonths,
+  subWeeks,
+  subYears,
+  isWithinInterval
+} from 'date-fns';
+
+type DateFilter = 
+  | 'today'
+  | 'this-week'
+  | 'last-week'
+  | 'this-month'
+  | 'last-month'
+  | 'this-year'
+  | 'last-year'
+  | 'last-3-months'
+  | 'last-6-months'
+  | 'all';
 
 export function JournalSelector() {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [dateFilter, setDateFilter] = React.useState<DateFilter>('all');
   const journals = useJournalStore((state) => state.journals);
   const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
 
+  const getDateRange = (filter: DateFilter) => {
+    const now = new Date();
+    switch (filter) {
+      case 'today':
+        return { start: startOfToday(), end: now };
+      case 'this-week':
+        return { start: startOfWeek(now), end: endOfWeek(now) };
+      case 'last-week':
+        return {
+          start: startOfWeek(subWeeks(now, 1)),
+          end: endOfWeek(subWeeks(now, 1))
+        };
+      case 'this-month':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'last-month':
+        return {
+          start: startOfMonth(subMonths(now, 1)),
+          end: endOfMonth(subMonths(now, 1))
+        };
+      case 'this-year':
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case 'last-year':
+        return {
+          start: startOfYear(subYears(now, 1)),
+          end: endOfYear(subYears(now, 1))
+        };
+      case 'last-3-months':
+        return { start: subMonths(now, 3), end: now };
+      case 'last-6-months':
+        return { start: subMonths(now, 6), end: now };
+      default:
+        return null;
+    }
+  };
+
   const filteredJournals = React.useMemo(() => {
-    return journals
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .filter((journal) => {
+    let filtered = journals
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter((journal) => {
         const searchString = `${journal.title} ${journal.description} ${journal.tags.join(" ")}`.toLowerCase();
         return searchString.includes(searchTerm.toLowerCase());
       });
-  }, [journals, searchTerm]);
+    }
+
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      const dateRange = getDateRange(dateFilter);
+      if (dateRange) {
+        filtered = filtered.filter((journal) => {
+          const journalDate = new Date(journal.updatedAt);
+          return isWithinInterval(journalDate, dateRange);
+        });
+      }
+    }
+
+    return filtered;
+  }, [journals, searchTerm, dateFilter]);
 
   const isSelected = (journalId: string) => {
     return selectedJournals.some(j => j.id === journalId);
@@ -49,16 +134,44 @@ export function JournalSelector() {
     clearJournalContext();
   };
 
+  const handleDateFilterChange = (value: DateFilter) => {
+    setDateFilter(value);
+    clearJournalContext();
+    if (value !== 'all') {
+      filteredJournals.forEach(journal => addJournalToContext(journal));
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search journals..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search journals..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={dateFilter} onValueChange={handleDateFilterChange}>
+          <SelectTrigger className="w-[180px]">
+            <Calendar className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Filter by date" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="this-week">This week</SelectItem>
+            <SelectItem value="last-week">Last week</SelectItem>
+            <SelectItem value="this-month">This month</SelectItem>
+            <SelectItem value="last-month">Last month</SelectItem>
+            <SelectItem value="last-3-months">Last 3 months</SelectItem>
+            <SelectItem value="last-6-months">Last 6 months</SelectItem>
+            <SelectItem value="this-year">This year</SelectItem>
+            <SelectItem value="last-year">Last year</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="flex gap-2">
