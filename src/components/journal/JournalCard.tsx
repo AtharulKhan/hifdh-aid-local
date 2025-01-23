@@ -13,6 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface JournalEntry {
   id: string;
@@ -35,6 +37,8 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const updateJournal = useJournalStore((state) => state.updateJournal);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editedContent, setEditedContent] = React.useState(journal.content);
+  const [editedDescription, setEditedDescription] = React.useState(journal.description);
+  const [editedTags, setEditedTags] = React.useState(journal.tags.join(", "));
 
   useEffect(() => {
     if (contentRef.current) {
@@ -46,10 +50,17 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
     e.stopPropagation();
     setIsDialogOpen(true);
     setEditedContent(journal.content);
+    setEditedDescription(journal.description);
+    setEditedTags(journal.tags.join(", "));
   };
 
   const handleSave = () => {
-    updateJournal(journal.id, { content: editedContent });
+    const tags = editedTags.split(",").map((tag) => tag.trim()).filter(Boolean);
+    updateJournal(journal.id, { 
+      content: editedContent,
+      description: editedDescription,
+      tags
+    });
     setIsDialogOpen(false);
   };
 
@@ -138,11 +149,33 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
             <DialogTitle>Edit Journal Entry</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              className="min-h-[300px]"
-            />
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                placeholder="Enter description"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tags">Tags</Label>
+              <Input
+                id="tags"
+                value={editedTags}
+                onChange={(e) => setEditedTags(e.target.value)}
+                placeholder="Enter tags separated by commas"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="content">Content</Label>
+              <Textarea
+                id="content"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="min-h-[300px]"
+              />
+            </div>
             <Button onClick={handleSave}>Save Changes</Button>
           </div>
         </DialogContent>
