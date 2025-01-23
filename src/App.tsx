@@ -4,8 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Menu from "./pages/Menu";
-import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import { Navigation } from "./components/Navigation";
 
@@ -22,8 +20,6 @@ const App = () => (
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/orders" element={<Orders />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>

@@ -7,7 +7,8 @@ import {
   Activity,
   Users,
   HelpCircle,
-  Home
+  Home,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,8 @@ const navItems = [
   { path: "/mindfulness", icon: Leaf, label: "Mindfulness" },
   { path: "/progress", icon: Activity, label: "Progress" },
   { path: "/community", icon: Users, label: "Community" },
-  { path: "/help", icon: HelpCircle, label: "Get Help" }
+  { path: "/help", icon: HelpCircle, label: "Get Help" },
+  { path: "/settings", icon: Settings, label: "Settings" }
 ];
 
 export const Navigation = () => {
