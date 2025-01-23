@@ -3,13 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useJournalStore } from "@/store/useJournalStore";
 
-export const Calendar = () => {
-  const [date, setDate] = React.useState<Date>(new Date());
-  const journals = useJournalStore((state) => state.journals);
+interface CalendarProps {
+  selectedDate: Date;
+  onDateSelect: (date: Date) => void;
+}
 
+export const Calendar = ({ selectedDate, onDateSelect }: CalendarProps) => {
   const handleSelect = (newDate: Date | undefined) => {
     if (newDate) {
-      setDate(newDate);
+      onDateSelect(newDate);
     }
   };
 
@@ -24,7 +26,7 @@ export const Calendar = () => {
       <div className="flex-grow flex items-center justify-center">
         <CalendarComponent
           mode="single"
-          selected={date}
+          selected={selectedDate}
           onSelect={handleSelect}
           className="rounded-md border shadow-sm"
         />

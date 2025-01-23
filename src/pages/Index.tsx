@@ -23,6 +23,10 @@ const Index = () => {
     return isEqual(journalDate, selectedDay);
   });
 
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -94,7 +98,10 @@ const Index = () => {
           </div>
 
           <div className="lg:col-span-1 space-y-8">
-            <Calendar />
+            <Calendar 
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
+            />
             
             {/* Ambient Sound Player */}
             <Card className="p-6">
