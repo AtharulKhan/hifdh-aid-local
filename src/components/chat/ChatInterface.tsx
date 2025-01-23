@@ -315,9 +315,6 @@ export function ChatInterface() {
         ) : (
           <Card className="col-span-1 p-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
             <JournalContextContent />
-            <div className="mt-4">
-              <VoiceChat />
-            </div>
           </Card>
         )}
 
@@ -387,13 +384,7 @@ export function ChatInterface() {
                     <Maximize2 className="h-4 w-4" />
                   )}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-primary/20 transition-colors"
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
+                <VoiceChat />
                 <Button 
                   onClick={handleSendMessage} 
                   disabled={isLoading || !input.trim()}
