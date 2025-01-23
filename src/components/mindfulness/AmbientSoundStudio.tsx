@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { 
@@ -39,10 +39,34 @@ const sounds = [
 ];
 
 export function AmbientSoundStudio() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(50);
-  const [activeSound, setActiveSound] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(() => {
+    return localStorage.getItem("ambientSound_isPlaying") === "true";
+  });
+  const [volume, setVolume] = useState(() => {
+    return Number(localStorage.getItem("ambientSound_volume")) || 50;
+  });
+  const [activeSound, setActiveSound] = useState<string | null>(() => {
+    return localStorage.getItem("ambientSound_activeSound") || null;
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Initialize audio on component mount
+    if (activeSound && isPlaying && audioRef.current) {
+      audioRef.current.src = sounds.find(s => s.id === activeSound)?.src || "";
+      audioRef.current.volume = volume / 100;
+      audioRef.current.play();
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save state to localStorage whenever it changes
+    localStorage.setItem("ambientSound_isPlaying", isPlaying.toString());
+    localStorage.setItem("ambientSound_volume", volume.toString());
+    if (activeSound) {
+      localStorage.setItem("ambientSound_activeSound", activeSound);
+    }
+  }, [isPlaying, volume, activeSound]);
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -59,6 +83,7 @@ export function AmbientSoundStudio() {
     setActiveSound(soundId);
     if (audioRef.current) {
       audioRef.current.src = sounds.find(s => s.id === soundId)?.src || "";
+      audioRef.current.volume = volume / 100;
       audioRef.current.play();
       setIsPlaying(true);
     }
