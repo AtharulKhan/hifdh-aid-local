@@ -27,7 +27,11 @@ const BASE_SYSTEM_INSTRUCTION = `You are a helpful AI assistant. Please format y
 - **Bold** or *italic* for emphasis
 - \`code blocks\` for technical terms
 - > for quotes
-- --- for separators when needed`;
+- --- for separators when needed
+- Tables using | for columns
+- [links](url) for references
+
+Always structure your responses with clear sections using markdown headers and appropriate formatting for different types of content.`;
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
