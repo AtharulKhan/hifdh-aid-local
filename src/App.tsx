@@ -3,6 +3,7 @@ import { Navigation } from "./components/Navigation";
 import Settings from "./pages/Settings";
 import Chat from "./pages/Chat";
 import Index from "./pages/Index";
+import Journal from "./pages/Journal";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/journal" element={<Journal />} />
           </Routes>
         </main>
       </div>
