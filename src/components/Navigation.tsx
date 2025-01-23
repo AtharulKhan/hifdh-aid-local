@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   MessageCircle, 
@@ -8,9 +8,12 @@ import {
   Users,
   HelpCircle,
   Home,
-  Settings
+  Settings,
+  PanelLeftClose,
+  PanelLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -25,13 +28,33 @@ const navItems = [
 
 export const Navigation = () => {
   const location = useLocation();
+  const [isMinimized, setIsMinimized] = useState(false);
 
   return (
-    <nav className="w-16 md:w-64 bg-white/80 backdrop-blur-xl border-r border-gray-200 min-h-screen shadow-lg animate-fadeIn">
-      <div className="p-4">
-        <h1 className="text-xl font-bold text-center hidden md:block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    <nav className={cn(
+      "transition-all duration-300 ease-in-out",
+      "bg-white/80 backdrop-blur-xl border-r border-gray-200 min-h-screen shadow-lg animate-fadeIn",
+      isMinimized ? "w-16" : "w-16 md:w-64"
+    )}>
+      <div className="p-4 flex justify-between items-center">
+        <h1 className={cn(
+          "text-xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent",
+          isMinimized ? "hidden" : "hidden md:block"
+        )}>
           Mental Health Hub
         </h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setIsMinimized(!isMinimized)}
+        >
+          {isMinimized ? (
+            <PanelLeft className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </Button>
       </div>
       <div className="space-y-2 p-2">
         {navItems.map(({ path, icon: Icon, label }) => (
@@ -47,7 +70,12 @@ export const Navigation = () => {
             )}
           >
             <Icon className="h-5 w-5" />
-            <span className="hidden md:inline font-medium">{label}</span>
+            <span className={cn(
+              "font-medium",
+              isMinimized ? "hidden" : "hidden md:inline"
+            )}>
+              {label}
+            </span>
           </Link>
         ))}
       </div>

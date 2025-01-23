@@ -108,15 +108,15 @@ export function ChatInterface() {
   );
 
   return (
-    <div className="flex flex-col h-screen max-w-6xl mx-auto p-4">
-      <div className="mb-4 flex justify-between items-center">
+    <div className="flex flex-col h-screen max-w-6xl mx-auto p-4 overflow-x-hidden">
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-semibold text-primary">
           Chat With AI Therapist
         </h2>
         <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 w-full">
         {isMobile ? (
           <Dialog>
             <DialogTrigger asChild>
@@ -171,7 +171,7 @@ export function ChatInterface() {
         </Card>
       </div>
 
-      <div className="relative">
+      <div className="relative w-full">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 blur-xl -z-10" />
         <div className="relative backdrop-blur-sm bg-background/80 rounded-2xl border border-primary/20 p-4 shadow-lg">
           <div className="flex gap-3">
