@@ -4,6 +4,8 @@ import { Clock, Tag, Edit } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useExpandable } from "@/hooks/use-expandable";
+import { Button } from "@/components/ui/button";
+import { useJournalStore } from "@/store/useJournalStore";
 
 interface JournalEntry {
   id: string;
@@ -23,12 +25,23 @@ interface JournalCardProps {
 export function JournalCard({ journal, onClick }: JournalCardProps) {
   const { isExpanded, toggleExpand, animatedHeight } = useExpandable();
   const contentRef = useRef<HTMLDivElement>(null);
+  const updateJournal = useJournalStore((state) => state.updateJournal);
+  const [isEditing, setIsEditing] = React.useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
       animatedHeight.set(isExpanded ? contentRef.current.scrollHeight : 0);
     }
-  }, [isExpanded, animatedHeight]);
+  }, [isExpanded, animatedHeight, journal.content]);
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateJournal(journal.id, { content: e.target.value });
+  };
 
   return (
     <motion.div
@@ -48,7 +61,14 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
               <h3 className="text-xl font-semibold">{journal.title}</h3>
               <p className="text-sm text-muted-foreground">{journal.description}</p>
             </div>
-            <Edit className="h-4 w-4 text-muted-foreground" />
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleEditClick}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4 text-muted-foreground" />
+            </Button>
           </div>
         </CardHeader>
         
@@ -77,7 +97,16 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                       exit={{ opacity: 0 }}
                       className="mt-4 space-y-4"
                     >
-                      <p className="text-sm text-gray-600">{journal.content}</p>
+                      {isEditing ? (
+                        <textarea
+                          className="w-full min-h-[200px] p-2 border rounded-md"
+                          value={journal.content}
+                          onChange={handleContentChange}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{journal.content}</p>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -87,12 +116,15 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
         </CardContent>
 
         <CardFooter>
-          <div className="flex items-center justify-between w-full text-sm text-muted-foreground">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>Created {new Date(journal.createdAt).toLocaleDateString()}</span>
-            </div>
-            <span>Last updated {new Date(journal.updatedAt).toLocaleDateString()}</span>
+          <div className="flex items-center justify-between w-full">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Created {new Date(journal.createdAt).toLocaleDateString()}
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Updated {new Date(journal.updatedAt).toLocaleDateString()}
+            </Badge>
           </div>
         </CardFooter>
       </Card>
