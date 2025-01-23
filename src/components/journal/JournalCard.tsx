@@ -57,7 +57,7 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
 
   useEffect(() => {
     if (contentRef.current) {
-      const height = isExpanded ? contentRef.current.scrollHeight : 0;
+      const height = isExpanded ? Math.min(contentRef.current.scrollHeight, 400) : 0;
       animatedHeight.set(height);
     }
   }, [isExpanded, animatedHeight, journal.content]);
@@ -166,7 +166,7 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                       >
-                        <ScrollArea className="w-full rounded-md border border-transparent">
+                        <ScrollArea className="w-full max-h-[400px] rounded-md border border-transparent">
                           <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
                         </ScrollArea>
                       </motion.div>
