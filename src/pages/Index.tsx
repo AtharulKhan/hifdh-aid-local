@@ -31,9 +31,11 @@ const Index = () => {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-secondary">Latest Reflection</h2>
               {lastReflection ? (
-                <Card className="p-6 bg-secondary/5 border-none prose prose-sm max-w-none dark:prose-invert">
+                <Card className="p-6 bg-secondary/5 border-none">
                   <ScrollArea className="h-[200px]">
-                    <ReactMarkdown>{lastReflection}</ReactMarkdown>
+                    <div className="prose prose-sm max-w-none dark:prose-invert [&>p]:mb-4 [&>h1]:mb-6 [&>h2]:mb-4 [&>h3]:mb-3 [&>ul]:mb-4 [&>ol]:mb-4 [&>blockquote]:mb-4 [&>*:last-child]:mb-0">
+                      <ReactMarkdown>{lastReflection}</ReactMarkdown>
+                    </div>
                   </ScrollArea>
                 </Card>
               ) : (
