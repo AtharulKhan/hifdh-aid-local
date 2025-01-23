@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Maximize2, Minimize2, BookOpen } from "lucide-react";
+import { Send, Mic, Maximize2, Minimize2, BookOpen, Menu, RefreshCw, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ChatMessage } from './types';
+import { ChatMessage, ChatStream, ChatHistory } from './types';
 import { ModelSelector } from './ModelSelector';
 import { JournalSelector } from './JournalSelector';
 import { useJournalContext } from '@/hooks/use-journal-context';
@@ -17,6 +17,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+const CHAT_HISTORY_KEY = 'chat_history';
+
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -27,8 +29,66 @@ export function ChatInterface() {
   const [selectedModel, setSelectedModel] = useState(() => 
     localStorage.getItem('SELECTED_MODEL') || 'openrouter/auto'
   );
+  const [chatHistory, setChatHistory] = useState<ChatHistory>(() => {
+    const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+    return saved ? JSON.parse(saved) : { chats: [], currentChatId: null };
+  });
 
   const { selectedJournals } = useJournalContext();
+
+  useEffect(() => {
+    if (chatHistory.currentChatId) {
+      const currentChat = chatHistory.chats.find(chat => chat.id === chatHistory.currentChatId);
+      if (currentChat) {
+        setMessages(currentChat.messages);
+      }
+    }
+  }, [chatHistory.currentChatId]);
+
+  useEffect(() => {
+    if (chatHistory.currentChatId) {
+      const updatedChats = chatHistory.chats.map(chat => 
+        chat.id === chatHistory.currentChatId ? { ...chat, messages } : chat
+      );
+      const newHistory = { ...chatHistory, chats: updatedChats };
+      setChatHistory(newHistory);
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+    }
+  }, [messages]);
+
+  const createNewChat = () => {
+    const newChat: ChatStream = {
+      id: Date.now().toString(),
+      messages: [],
+      createdAt: Date.now(),
+      title: "New Chat"
+    };
+    const newHistory = {
+      chats: [...chatHistory.chats, newChat],
+      currentChatId: newChat.id
+    };
+    setChatHistory(newHistory);
+    setMessages([]);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+  };
+
+  const resetChat = () => {
+    setMessages([]);
+    if (chatHistory.currentChatId) {
+      const updatedChats = chatHistory.chats.map(chat => 
+        chat.id === chatHistory.currentChatId ? { ...chat, messages: [] } : chat
+      );
+      const newHistory = { ...chatHistory, chats: updatedChats };
+      setChatHistory(newHistory);
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+    }
+  };
+
+  const switchChat = (chatId: string) => {
+    const newHistory = { ...chatHistory, currentChatId: chatId };
+    setChatHistory(newHistory);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+  };
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -110,10 +170,54 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-screen max-w-6xl mx-auto overflow-hidden">
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4">
-        <h2 className="text-2xl font-semibold text-primary">
-          Chat With AI Therapist
-        </h2>
-        <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
+        <div className="flex items-center gap-4">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Chat History</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {chatHistory.chats.map((chat) => (
+                  <Button
+                    key={chat.id}
+                    variant={chat.id === chatHistory.currentChatId ? "default" : "outline"}
+                    className="w-full justify-start"
+                    onClick={() => switchChat(chat.id)}
+                  >
+                    {chat.title || "Untitled Chat"}
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+          <h2 className="text-2xl font-semibold text-primary">
+            Chat With AI Therapist
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={createNewChat}
+            title="New Chat"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={resetChat}
+            title="Reset Chat"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 px-4 flex-1 min-h-0">
