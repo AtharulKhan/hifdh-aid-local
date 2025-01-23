@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Tag, Edit } from "lucide-react";
+import { Clock, Tag, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useExpandable } from "@/hooks/use-expandable";
@@ -12,9 +12,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface JournalEntry {
   id: string;
@@ -35,10 +46,13 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const { isExpanded, toggleExpand, animatedHeight } = useExpandable();
   const contentRef = useRef<HTMLDivElement>(null);
   const updateJournal = useJournalStore((state) => state.updateJournal);
+  const deleteJournal = useJournalStore((state) => state.deleteJournal);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [editedContent, setEditedContent] = React.useState(journal.content);
   const [editedDescription, setEditedDescription] = React.useState(journal.description);
   const [editedTags, setEditedTags] = React.useState(journal.tags.join(", "));
+  const { toast } = useToast();
 
   useEffect(() => {
     if (contentRef.current) {
@@ -56,9 +70,20 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDialogOpen(true);
-    setEditedContent(journal.content);
-    setEditedDescription(journal.description);
-    setEditedTags(journal.tags.join(", "));
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    deleteJournal(journal.id);
+    setIsDeleteDialogOpen(false);
+    toast({
+      title: "Journal Entry Deleted",
+      description: "Your journal entry has been successfully deleted.",
+    });
   };
 
   const handleSave = () => {
@@ -69,6 +94,10 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
       tags
     });
     setIsDialogOpen(false);
+    toast({
+      title: "Changes Saved",
+      description: "Your journal entry has been updated successfully.",
+    });
   };
 
   return (
@@ -90,14 +119,24 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                 <h3 className="text-xl font-semibold">{journal.title}</h3>
                 <p className="text-sm text-muted-foreground">{journal.description}</p>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={handleEditClick}
-                className="h-8 w-8"
-              >
-                <Edit className="h-4 w-4 text-muted-foreground" />
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handleEditClick}
+                  className="h-8 w-8"
+                >
+                  <Edit className="h-4 w-4 text-muted-foreground" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handleDeleteClick}
+                  className="h-8 w-8"
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           
@@ -187,6 +226,23 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this journal entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your journal entry.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
