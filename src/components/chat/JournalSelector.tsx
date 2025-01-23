@@ -11,10 +11,6 @@ export function JournalSelector() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const journals = useJournalStore((state) => state.journals);
   const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
-  const [autoSelectDisabled, setAutoSelectDisabled] = React.useState(() => {
-    // Initialize from localStorage to persist the state
-    return localStorage.getItem('autoSelectDisabled') === 'true';
-  });
 
   const filteredJournals = React.useMemo(() => {
     return journals
@@ -25,19 +21,6 @@ export function JournalSelector() {
       });
   }, [journals, searchTerm]);
 
-  useEffect(() => {
-    // Only auto-select if not manually cleared and no journals are selected
-    if (!autoSelectDisabled && selectedJournals.length === 0 && filteredJournals.length > 0) {
-      const lastThreeJournals = filteredJournals.slice(0, 3);
-      lastThreeJournals.forEach(journal => addJournalToContext(journal));
-    }
-  }, [filteredJournals, selectedJournals.length, addJournalToContext, autoSelectDisabled]);
-
-  // Update localStorage when autoSelectDisabled changes
-  useEffect(() => {
-    localStorage.setItem('autoSelectDisabled', autoSelectDisabled.toString());
-  }, [autoSelectDisabled]);
-
   const isSelected = (journalId: string) => {
     return selectedJournals.some(j => j.id === journalId);
   };
@@ -45,7 +28,6 @@ export function JournalSelector() {
   const toggleJournal = (journal: typeof journals[0], event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    setAutoSelectDisabled(true);
     
     if (isSelected(journal.id)) {
       removeJournalFromContext(journal.id);
@@ -55,7 +37,6 @@ export function JournalSelector() {
   };
 
   const handleSelectAll = () => {
-    setAutoSelectDisabled(true);
     if (selectedJournals.length === filteredJournals.length) {
       clearJournalContext();
     } else {
@@ -65,7 +46,6 @@ export function JournalSelector() {
   };
 
   const handleClearSelection = () => {
-    setAutoSelectDisabled(true);
     clearJournalContext();
   };
 
