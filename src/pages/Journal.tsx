@@ -11,10 +11,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NewJournalForm } from "@/components/journal/NewJournalForm";
+import { useJournalStore } from "@/store/useJournalStore";
 
 export default function Journal() {
-  const [journals, setJournals] = useState<JournalEntry[]>([]);
-  const [filteredJournals, setFilteredJournals] = useState<JournalEntry[]>([]);
+  const journals = useJournalStore((state) => state.journals);
+  const [filteredJournals, setFilteredJournals] = useState(journals);
 
   const handleSearch = (query: string) => {
     const filtered = journals.filter((journal) => {
@@ -22,6 +23,11 @@ export default function Journal() {
       return searchString.includes(query.toLowerCase());
     });
     setFilteredJournals(filtered);
+  };
+
+  const handleJournalClick = (journalId: string) => {
+    // For now, just log the click. You can implement navigation or dialog opening later
+    console.log('Journal clicked:', journalId);
   };
 
   return (
@@ -51,6 +57,7 @@ export default function Journal() {
           <JournalCard
             key={journal.id}
             journal={journal}
+            onClick={() => handleJournalClick(journal.id)}
           />
         ))}
         {filteredJournals.length === 0 && (
@@ -61,14 +68,4 @@ export default function Journal() {
       </div>
     </div>
   );
-}
-
-interface JournalEntry {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
