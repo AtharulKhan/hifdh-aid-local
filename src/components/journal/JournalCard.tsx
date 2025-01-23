@@ -46,6 +46,13 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
     }
   }, [isExpanded, animatedHeight, journal.content]);
 
+  // Update local state when journal prop changes
+  useEffect(() => {
+    setEditedContent(journal.content);
+    setEditedDescription(journal.description);
+    setEditedTags(journal.tags.join(", "));
+  }, [journal]);
+
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDialogOpen(true);
