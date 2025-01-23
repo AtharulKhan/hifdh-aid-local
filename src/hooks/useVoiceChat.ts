@@ -4,6 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { JournalEntry } from '@/store/useJournalStore';
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
+type Role = 'user' | 'ai';
+
 export const useVoiceChat = () => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
@@ -43,11 +45,11 @@ export const useVoiceChat = () => {
           setConversation(null);
           toast({ title: 'Disconnected', description: 'Voice chat ended' });
         },
-        onError: (error: string) => {
-          console.error('ElevenLabs error:', error);
+        onError: (message: string, context?: any) => {
+          console.error('ElevenLabs error:', message, context);
           toast({
             title: 'Connection Error',
-            description: error,
+            description: message,
             variant: 'destructive'
           });
           setConnectionStatus('disconnected');
@@ -56,9 +58,9 @@ export const useVoiceChat = () => {
         onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
           setAgentStatus(mode.mode);
         },
-        onMessage: (message: { type: string; text?: string }) => {
-          if (message.type === 'agent_response' && message.text) {
-            setAgentResponse(message.text);
+        onMessage: (props: { message: string; source: Role }) => {
+          if (props.source === 'ai') {
+            setAgentResponse(props.message);
           }
         }
       });
