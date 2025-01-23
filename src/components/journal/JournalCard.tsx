@@ -56,7 +56,7 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
 
   useEffect(() => {
     if (contentRef.current) {
-      animatedHeight.set(isExpanded ? contentRef.current.scrollHeight : 0);
+      animatedHeight.set(isExpanded ? contentRef.current.scrollHeight + 32 : 0);
     }
   }, [isExpanded, animatedHeight, journal.content]);
 
@@ -156,14 +156,14 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="overflow-hidden"
               >
-                <div ref={contentRef}>
+                <div ref={contentRef} className="pt-4">
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="mt-4 space-y-4"
+                        className="space-y-4"
                       >
                         <p className="text-sm text-gray-600 whitespace-pre-wrap">{journal.content}</p>
                       </motion.div>
