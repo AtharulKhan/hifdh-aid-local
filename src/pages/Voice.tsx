@@ -35,7 +35,7 @@ const Voice = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-8">Voice Chat</h1>
       <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
         <elevenlabs-convai 
