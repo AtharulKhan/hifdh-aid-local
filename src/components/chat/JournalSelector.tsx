@@ -137,8 +137,18 @@ export function JournalSelector() {
   const handleDateFilterChange = (value: DateFilter) => {
     setDateFilter(value);
     clearJournalContext();
+    
+    // Only auto-select journals if a date filter is selected
     if (value !== 'all') {
-      filteredJournals.forEach(journal => addJournalToContext(journal));
+      const dateRange = getDateRange(value);
+      if (dateRange) {
+        journals.forEach(journal => {
+          const journalDate = new Date(journal.updatedAt);
+          if (isWithinInterval(journalDate, dateRange)) {
+            addJournalToContext(journal);
+          }
+        });
+      }
     }
   };
 
