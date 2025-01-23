@@ -16,7 +16,7 @@ const sounds = [
     id: "rain", 
     name: "Rain", 
     icon: Cloud, 
-    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c9a4a1d936.mp3"
+    src: "https://www.soundsnap.com/thunder_distant_rain_roll_gather_roll"
   },
   { 
     id: "waves", 
