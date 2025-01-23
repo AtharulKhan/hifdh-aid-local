@@ -1,23 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { useVoiceChat } from '@/hooks/useVoiceChat';
-import { useJournalContext } from '@/hooks/use-journal-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useJournalContext } from '@/hooks/use-journal-context';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export function VoiceChat() {
-  const { connectionStatus, agentStatus, agentResponse, startSession, stopSession } = useVoiceChat();
+  const { isListening, isConnecting, connectionState, agentResponse, startSession, stopSession } = useVoiceChat();
   const { selectedJournals } = useJournalContext();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleToggle = async () => {
-    if (connectionStatus === 'connected') {
-      await stopSession();
-      setIsOpen(false);
+  const [isOpen, setIsOpen] = React.useState(false);
+  
+  const handleStartStop = () => {
+    if (isListening) {
+      stopSession();
     } else {
-      await startSession(selectedJournals);
+      startSession(selectedJournals);
     }
   };
 
@@ -34,7 +33,7 @@ export function VoiceChat() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Voice Chat Session</DialogTitle>
+          <DialogTitle>Voice Chat</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -57,16 +56,15 @@ export function VoiceChat() {
 
           <div className={cn(
             "p-4 rounded-lg transition-colors",
-            connectionStatus === 'connected' && agentStatus === 'listening' ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
+            connectionState === 'connected' && isListening ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
-                {connectionStatus === 'connecting' ? "Connecting..." : 
-                  connectionStatus === 'connected' ? (
-                    agentStatus === 'speaking' ? "AI is speaking..." : "Listening..."
-                  ) : "Ready to start"}
+                {isConnecting ? "Connecting..." : 
+                  connectionState === 'connected' ? (isListening ? "Listening..." : "Connected") : 
+                  "Ready to start"}
               </span>
-              {connectionStatus === 'connecting' && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
           </div>
 
@@ -77,20 +75,20 @@ export function VoiceChat() {
           )}
 
           <Button
-            onClick={handleToggle}
-            variant={connectionStatus === 'connected' ? "destructive" : "default"}
+            onClick={handleStartStop}
+            variant={isListening ? "destructive" : "default"}
             className="w-full"
-            disabled={connectionStatus === 'connecting'}
+            disabled={isConnecting}
           >
-            {connectionStatus === 'connecting' ? (
+            {isConnecting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : connectionStatus === 'connected' ? (
+            ) : isListening ? (
               <Square className="mr-2 h-4 w-4" />
             ) : (
               <Mic className="mr-2 h-4 w-4" />
             )}
-            {connectionStatus === 'connecting' ? 'Connecting...' : 
-              connectionStatus === 'connected' ? 'End Session' : 'Start Session'}
+            {isConnecting ? 'Connecting...' : 
+              isListening ? 'Stop Voice Chat' : 'Start Voice Chat'}
           </Button>
         </div>
       </DialogContent>
