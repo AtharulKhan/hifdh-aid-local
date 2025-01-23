@@ -28,17 +28,17 @@ export const FloatingChatButton = () => {
             )}
           </Button>
         </SheetTrigger>
-      <SheetContent 
-        side="right"
-        className="w-[85vw] h-[85vh] max-w-none rounded-lg p-0"
-      >
-        <SheetHeader className="px-4 py-2 border-b">
-          <SheetTitle>Chat with AI Therapist</SheetTitle>
-        </SheetHeader>
-        <div className="h-[calc(100%-57px)]">
-          <ChatInterface />
-        </div>
-      </SheetContent>
+        <SheetContent 
+          side="right" // Animation still comes from right but position is overridden
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85vw] h-[85vh] max-w-none rounded-lg p-0 right-auto"
+        >
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Chat with AI Therapist</SheetTitle>
+          </SheetHeader>
+          <div className="h-[calc(85vh-57px)] overflow-auto">
+            <ChatInterface />
+          </div>
+        </SheetContent>
       </Sheet>
     </div>
   );
