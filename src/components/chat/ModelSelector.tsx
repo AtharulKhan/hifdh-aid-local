@@ -9,7 +9,7 @@ interface ModelSelectorProps {
 export function ModelSelector({ currentModel, onModelChange }: ModelSelectorProps) {
   return (
     <Select value={currentModel} onValueChange={onModelChange}>
-      <SelectTrigger className="w-[200px]">
+      <SelectTrigger className="w-[200px] bg-white">
         <SelectValue placeholder="Select model" />
       </SelectTrigger>
       <SelectContent>

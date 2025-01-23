@@ -76,8 +76,8 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-screen max-w-6xl mx-auto p-4">
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-2xl font-semibold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent animate-pulse">
-          Therapy Session
+        <h2 className="text-2xl font-semibold text-primary">
+          Chat With AI Therapist
         </h2>
         <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
       </div>
