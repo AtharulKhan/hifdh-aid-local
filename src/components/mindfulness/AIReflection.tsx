@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Loader2 } from "lucide-react";
 import { useJournalStore } from "@/store/useJournalStore";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from 'react-markdown';
 
 export function AIReflection() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,10 +12,25 @@ export function AIReflection() {
   const journals = useJournalStore((state) => state.journals);
   const { toast } = useToast();
 
+  // Load saved reflection from localStorage on component mount
+  useEffect(() => {
+    const savedReflection = localStorage.getItem('lastAIReflection');
+    if (savedReflection) {
+      setReflection(savedReflection);
+    }
+  }, []);
+
   const generateReflection = async () => {
     setIsLoading(true);
+    toast({
+      title: "Generating Reflection",
+      description: "Please wait while we analyze your journal entries...",
+    });
+
     try {
       const apiKey = localStorage.getItem('OPENROUTER_API_KEY');
+      const lastModel = localStorage.getItem('lastUsedAIModel') || "openai/gpt-4o";
+      
       if (!apiKey) {
         throw new Error('OpenRouter API key not found');
       }
@@ -32,11 +48,11 @@ export function AIReflection() {
           "HTTP-Referer": window.location.origin,
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o",
+          model: lastModel,
           messages: [
             {
               role: "system",
-              content: "You are a mindful AI therapist. Analyze the journal entries and provide a compassionate, insightful reflection focusing on patterns, growth opportunities, and positive observations. Keep the response concise and encouraging."
+              content: "You are a mindful AI therapist. Analyze the journal entries and provide a compassionate, insightful reflection focusing on patterns, growth opportunities, and positive observations. Format your response using markdown with headers, bullet points, and emphasis where appropriate. Keep the response concise and encouraging."
             },
             {
               role: "user",
@@ -52,7 +68,9 @@ export function AIReflection() {
       }
 
       const data = await response.json();
-      setReflection(data.choices[0].message.content);
+      const newReflection = data.choices[0].message.content;
+      setReflection(newReflection);
+      localStorage.setItem('lastAIReflection', newReflection);
     } catch (error) {
       console.error('Reflection generation error:', error);
       toast({
@@ -84,8 +102,8 @@ export function AIReflection() {
       </div>
 
       {reflection ? (
-        <Card className="p-6 bg-secondary/5 border-none">
-          <p className="text-lg leading-relaxed">{reflection}</p>
+        <Card className="p-6 bg-secondary/5 border-none prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown>{reflection}</ReactMarkdown>
         </Card>
       ) : (
         <p className="text-center text-muted-foreground">
