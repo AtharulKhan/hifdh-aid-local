@@ -2,68 +2,97 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { useStore } from "@/store/useStore";
-import { MenuItem } from "@/types/menu";
+import { Brain, Heart, BookOpen, Activity, MessageSquare, HelpCircle } from "lucide-react";
 
-const menuItems: MenuItem[] = [
+interface FeatureCard {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  action: string;
+  available: boolean;
+}
+
+const features: FeatureCard[] = [
   {
     id: 1,
-    name: "Pizza Margherita",
-    description: "Tomate, mozzarella, basilic frais",
-    price: 12.99,
-    category: "Plats",
-    image: "🍕",
+    title: "AI Therapy Chat",
+    description: "Talk to our AI therapist about your thoughts and feelings",
+    icon: <Brain className="w-8 h-8" />,
+    action: "Start Chat",
     available: true
   },
   {
     id: 2,
-    name: "Salade César",
-    description: "Laitue romaine, parmesan, croûtons, sauce césar",
-    price: 8.99,
-    category: "Entrées",
-    image: "🥗",
+    title: "Mood Journal",
+    description: "Track your daily moods and emotions",
+    icon: <BookOpen className="w-8 h-8" />,
+    action: "Write Entry",
     available: true
   },
   {
     id: 3,
-    name: "Tiramisu",
-    description: "Biscuits, café, mascarpone, cacao",
-    price: 6.99,
-    category: "Desserts",
-    image: "🍰",
+    title: "Mindfulness Exercises",
+    description: "Guided meditation and breathing exercises",
+    icon: <Heart className="w-8 h-8" />,
+    action: "Begin",
+    available: true
+  },
+  {
+    id: 4,
+    title: "Progress Tracking",
+    description: "Monitor your mental health journey",
+    icon: <Activity className="w-8 h-8" />,
+    action: "View Stats",
+    available: true
+  },
+  {
+    id: 5,
+    title: "Community Support",
+    description: "Connect with others on similar journeys",
+    icon: <MessageSquare className="w-8 h-8" />,
+    action: "Join Now",
+    available: true
+  },
+  {
+    id: 6,
+    title: "Professional Help",
+    description: "Find licensed therapists and resources",
+    icon: <HelpCircle className="w-8 h-8" />,
+    action: "Get Help",
     available: true
   }
 ];
 
 const Menu = () => {
   const { toast } = useToast();
-  const addItem = useStore((state) => state.addItem);
 
-  const handleAddToCart = (item: MenuItem) => {
-    addItem(item);
+  const handleFeatureClick = (feature: FeatureCard) => {
     toast({
-      title: "Ajouté au panier",
-      description: `${item.name} a été ajouté à votre commande.`
+      title: "Coming Soon",
+      description: `${feature.title} will be available in the next update.`
     });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Menu</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Mental Health Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {menuItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+        {features.map((feature) => (
+          <Card 
+            key={feature.id} 
+            className="overflow-hidden hover:shadow-lg transition-all duration-300 animate-fadeIn hover:scale-105"
+          >
             <div className="p-6">
-              <div className="text-4xl mb-4 text-center">{item.image}</div>
-              <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
-              <p className="text-gray-600 mb-4">{item.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{item.price.toFixed(2)}€</span>
+              <div className="text-primary mb-4 flex justify-center">{feature.icon}</div>
+              <h3 className="text-xl font-semibold mb-2 text-center">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4 text-center">{feature.description}</p>
+              <div className="flex justify-center">
                 <Button 
-                  onClick={() => handleAddToCart(item)}
-                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => handleFeatureClick(feature)}
+                  className="bg-accent hover:bg-accent/90 animate-glow"
                 >
-                  Ajouter
+                  {feature.action}
                 </Button>
               </div>
             </div>

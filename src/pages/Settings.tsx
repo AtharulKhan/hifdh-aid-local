@@ -4,66 +4,69 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState({
-    restaurantName: "Le Bon Restaurant",
-    address: "123 Rue de la Gastronomie",
-    phone: "+33 1 23 45 67 89",
+    name: "John Doe",
+    email: "john@example.com",
+    openRouterKey: "",
     notifications: true,
     darkMode: false,
-    autoPrint: true
+    dataCollection: true
   });
 
   const handleSave = () => {
     toast({
-      title: "Paramètres sauvegardés",
-      description: "Vos modifications ont été enregistrées avec succès."
+      title: "Settings saved",
+      description: "Your changes have been saved successfully."
     });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Paramètres</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Settings</h1>
       
       <div className="max-w-2xl mx-auto space-y-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Informations du restaurant</h2>
+        <Card className="p-6 animate-fadeIn">
+          <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="restaurant-name">Nom du restaurant</Label>
+              <Label htmlFor="name">Name</Label>
               <Input 
-                id="restaurant-name" 
-                value={settings.restaurantName}
-                onChange={(e) => setSettings({...settings, restaurantName: e.target.value})}
+                id="name" 
+                value={settings.name}
+                onChange={(e) => setSettings({...settings, name: e.target.value})}
               />
             </div>
             <div>
-              <Label htmlFor="address">Adresse</Label>
+              <Label htmlFor="email">Email</Label>
               <Input 
-                id="address" 
-                value={settings.address}
-                onChange={(e) => setSettings({...settings, address: e.target.value})}
+                id="email" 
+                type="email"
+                value={settings.email}
+                onChange={(e) => setSettings({...settings, email: e.target.value})}
               />
             </div>
             <div>
-              <Label htmlFor="phone">Téléphone</Label>
+              <Label htmlFor="openrouter-key">OpenRouter API Key</Label>
               <Input 
-                id="phone" 
-                value={settings.phone}
-                onChange={(e) => setSettings({...settings, phone: e.target.value})}
+                id="openrouter-key" 
+                type="password"
+                value={settings.openRouterKey}
+                onChange={(e) => setSettings({...settings, openRouterKey: e.target.value})}
+                placeholder="Enter your OpenRouter API key"
               />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Préférences</h2>
+        <Card className="p-6 animate-fadeIn">
+          <h2 className="text-xl font-semibold mb-4">Preferences</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="notifications">Notifications sonores</Label>
+              <Label htmlFor="notifications">Push Notifications</Label>
               <Switch 
                 id="notifications" 
                 checked={settings.notifications}
@@ -71,7 +74,7 @@ const Settings = () => {
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="dark-mode">Mode sombre</Label>
+              <Label htmlFor="dark-mode">Dark Mode</Label>
               <Switch 
                 id="dark-mode" 
                 checked={settings.darkMode}
@@ -79,20 +82,20 @@ const Settings = () => {
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="auto-print">Impression automatique</Label>
+              <Label htmlFor="data-collection">Anonymous Data Collection</Label>
               <Switch 
-                id="auto-print" 
-                checked={settings.autoPrint}
-                onCheckedChange={(checked) => setSettings({...settings, autoPrint: checked})}
+                id="data-collection" 
+                checked={settings.dataCollection}
+                onCheckedChange={(checked) => setSettings({...settings, dataCollection: checked})}
               />
             </div>
           </div>
         </Card>
 
         <div className="flex justify-end space-x-4">
-          <Button variant="outline">Annuler</Button>
-          <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
-            Sauvegarder
+          <Button variant="outline">Cancel</Button>
+          <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 animate-glow">
+            Save Changes
           </Button>
         </div>
       </div>
