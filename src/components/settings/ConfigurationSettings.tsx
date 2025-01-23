@@ -21,10 +21,6 @@ export function ConfigurationSettings() {
         <AISection
           openrouterApiKey={openrouterApiKey}
           onOpenRouterKeyChange={setOpenrouterApiKey}
-          onInputTokenChange={handleInputTokenChange}
-          onOutputTokenChange={handleOutputTokenChange}
-          customInstructions=""
-          onCustomInstructionsChange={() => {}}
         />
       </Accordion>
     </div>
