@@ -3,8 +3,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 import { JournalEntry } from '@/store/useJournalStore';
 import { Conversation } from '@11labs/client';
-
-// Import Role type from the client library instead of defining our own
 import type { Role } from '@11labs/client';
 
 interface AgentMessage {
