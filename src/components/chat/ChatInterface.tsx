@@ -74,14 +74,17 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-16rem)] max-w-4xl mx-auto p-4">
+    <div className="flex flex-col h-screen max-w-6xl mx-auto p-4">
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Chat Session</h2>
+        <h2 className="text-2xl font-semibold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent animate-pulse">
+          Therapy Session
+        </h2>
         <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
       </div>
 
-      <Card className="flex-1 overflow-auto p-4 mb-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
-        <div className="space-y-4">
+      <Card className="flex-1 overflow-auto p-6 mb-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
+        <div className="relative z-10 space-y-4">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -90,10 +93,10 @@ export function ChatInterface() {
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 animate-slideIn ${
+                className={`max-w-[80%] rounded-2xl p-4 animate-slideIn shadow-lg ${
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground shadow-lg'
-                    : 'bg-accent/10 backdrop-blur-sm border border-accent/20'
+                    ? 'bg-primary text-primary-foreground ml-auto'
+                    : 'bg-secondary/10 backdrop-blur-sm border border-secondary/20'
                 }`}
               >
                 {message.content}
@@ -105,14 +108,14 @@ export function ChatInterface() {
 
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 blur-xl -z-10" />
-        <div className="relative backdrop-blur-sm bg-background/80 rounded-lg border border-primary/20 p-2">
-          <div className="flex gap-2">
+        <div className="relative backdrop-blur-sm bg-background/80 rounded-2xl border border-primary/20 p-4 shadow-lg">
+          <div className="flex gap-3">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
-              className={`flex-1 bg-transparent border-none focus-visible:ring-1 focus-visible:ring-primary/50 resize-none transition-all duration-200 ${
-                isExpanded ? 'h-32' : 'h-10'
+              className={`flex-1 bg-transparent border-none focus-visible:ring-1 focus-visible:ring-primary/50 resize-none transition-all duration-200 rounded-xl ${
+                isExpanded ? 'h-32' : 'h-12'
               }`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -125,7 +128,7 @@ export function ChatInterface() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-primary/20"
+                className="hover:bg-primary/20 transition-colors"
                 onClick={() => setIsExpanded(!isExpanded)}
               >
                 {isExpanded ? (
@@ -137,14 +140,14 @@ export function ChatInterface() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-primary/20"
+                className="hover:bg-primary/20 transition-colors"
               >
                 <Mic className="h-4 w-4" />
               </Button>
               <Button 
                 onClick={handleSendMessage} 
                 disabled={isLoading || !input.trim()}
-                className="bg-primary hover:bg-primary/90 transition-colors"
+                className="bg-primary hover:bg-primary/90 transition-colors animate-pulse"
               >
                 <Send className="h-4 w-4" />
               </Button>
