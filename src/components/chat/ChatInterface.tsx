@@ -331,7 +331,7 @@ export function ChatInterface() {
                   className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground ml-auto'
-                      : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20 prose dark:prose-invert'
+                      : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20 prose dark:prose-invert prose-sm md:prose-base max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:my-4 [&>h1]:mt-6 [&>h2]:mt-5 [&>h3]:mt-4 [&>ul]:my-4 [&>ol]:my-4 [&>blockquote]:my-4 [&>pre]:my-4'
                   }`}
                 >
                   {message.role === 'assistant' ? (
