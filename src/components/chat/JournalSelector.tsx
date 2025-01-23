@@ -24,7 +24,6 @@ export function JournalSelector() {
   };
 
   const toggleJournal = (journal: typeof journals[0], event: React.MouseEvent) => {
-    // Prevent the event from bubbling up and affecting scroll
     event.preventDefault();
     event.stopPropagation();
     
@@ -39,7 +38,7 @@ export function JournalSelector() {
     if (selectedJournals.length === filteredJournals.length) {
       clearJournalContext();
     } else {
-      clearJournalContext(); // Clear first to prevent duplicates
+      clearJournalContext();
       filteredJournals.forEach(journal => addJournalToContext(journal));
     }
   };
@@ -71,6 +70,7 @@ export function JournalSelector() {
             <div
               key={journal.id}
               className="flex items-start justify-between gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors"
+              onClick={(e) => e.preventDefault()}
             >
               <div className="space-y-1">
                 <h4 className="font-medium leading-none">{journal.title}</h4>
