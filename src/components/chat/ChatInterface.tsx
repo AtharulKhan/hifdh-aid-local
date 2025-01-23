@@ -217,7 +217,7 @@ export function ChatInterface() {
   );
 
   return (
-    <div className="flex flex-col h-screen max-w-6xl mx-auto overflow-hidden">
+    <div className="flex flex-col h-screen max-w-[95vw] lg:max-w-[90vw] mx-auto overflow-hidden">
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4">
         <div className="flex items-center gap-4">
           <Dialog>
@@ -292,7 +292,7 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 px-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4 px-4 flex-1 min-h-0">
         {isMobile ? (
           <Dialog>
             <DialogTrigger asChild>
@@ -317,7 +317,7 @@ export function ChatInterface() {
           </Card>
         )}
 
-        <Card className="col-span-1 md:col-span-2 flex-1 overflow-auto p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
+        <Card className="col-span-1 lg:col-span-3 flex-1 overflow-auto p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
           <div className="relative z-10 space-y-4 max-h-full overflow-y-auto">
             {messages.map((message, index) => (
