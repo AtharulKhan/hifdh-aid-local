@@ -56,12 +56,14 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const { toast } = useToast();
 
 useEffect(() => {
-  if (contentRef.current) {
-    const contentHeight = contentRef.current.scrollHeight;
-    const maxHeight = 400;
-    // Use the actual content height if it's less than maxHeight
-    const targetHeight = isExpanded ? Math.min(contentHeight, maxHeight) : 0;
-    animatedHeight.set(targetHeight);
+  if (contentRef.current && isExpanded) {
+    const scrollArea = contentRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollArea) {
+      const height = Math.min(scrollArea.scrollHeight, 400);
+      animatedHeight.set(height);
+    }
+  } else {
+    animatedHeight.set(0);
   }
 }, [isExpanded, animatedHeight, journal.content]);
 
@@ -149,29 +151,32 @@ useEffect(() => {
                 ))}
               </div>
 
-              <motion.div
-                style={{ height: animatedHeight }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="overflow-hidden"
-              >
-                <div ref={contentRef} className="pt-4">
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="h-full"
-                      >
-                      <ScrollArea className="h-full w-full rounded-md border border-transparent">
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
+            <motion.div
+              style={{ height: animatedHeight }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-4">
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="h-full"
+                      ref={contentRef}
+                    >
+                      <ScrollArea className="h-[400px] w-full">
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">
+                          {journal.content}
+                        </p>
                         <ScrollBar orientation="vertical" />
                       </ScrollArea>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
             </div>
           </CardContent>
 
