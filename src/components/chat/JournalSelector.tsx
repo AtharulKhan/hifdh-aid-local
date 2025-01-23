@@ -11,6 +11,7 @@ export function JournalSelector() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const journals = useJournalStore((state) => state.journals);
   const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
+  const [autoSelectDisabled, setAutoSelectDisabled] = React.useState(false);
 
   const filteredJournals = React.useMemo(() => {
     return journals
@@ -22,12 +23,12 @@ export function JournalSelector() {
   }, [journals, searchTerm]);
 
   useEffect(() => {
-    // Select the last 3 journals by default if none are selected
-    if (selectedJournals.length === 0 && filteredJournals.length > 0) {
+    // Only auto-select if not manually cleared and no journals are selected
+    if (!autoSelectDisabled && selectedJournals.length === 0 && filteredJournals.length > 0) {
       const lastThreeJournals = filteredJournals.slice(0, 3);
       lastThreeJournals.forEach(journal => addJournalToContext(journal));
     }
-  }, [filteredJournals, selectedJournals.length, addJournalToContext]);
+  }, [filteredJournals, selectedJournals.length, addJournalToContext, autoSelectDisabled]);
 
   const isSelected = (journalId: string) => {
     return selectedJournals.some(j => j.id === journalId);
@@ -36,6 +37,7 @@ export function JournalSelector() {
   const toggleJournal = (journal: typeof journals[0], event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    setAutoSelectDisabled(true);
     
     if (isSelected(journal.id)) {
       removeJournalFromContext(journal.id);
@@ -45,12 +47,18 @@ export function JournalSelector() {
   };
 
   const handleSelectAll = () => {
+    setAutoSelectDisabled(true);
     if (selectedJournals.length === filteredJournals.length) {
       clearJournalContext();
     } else {
       clearJournalContext();
       filteredJournals.forEach(journal => addJournalToContext(journal));
     }
+  };
+
+  const handleClearSelection = () => {
+    setAutoSelectDisabled(true);
+    clearJournalContext();
   };
 
   return (
@@ -79,7 +87,7 @@ export function JournalSelector() {
           <Button
             variant="outline"
             size="sm"
-            onClick={clearJournalContext}
+            onClick={handleClearSelection}
             className="gap-2"
           >
             <X className="h-4 w-4" />
@@ -99,6 +107,9 @@ export function JournalSelector() {
               <div className="space-y-1">
                 <h4 className="font-medium leading-none">{journal.title}</h4>
                 <p className="text-sm text-muted-foreground">{journal.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  Modified: {new Date(journal.updatedAt).toLocaleString()}
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {journal.tags.map((tag, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs">
