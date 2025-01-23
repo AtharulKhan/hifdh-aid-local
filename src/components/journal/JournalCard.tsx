@@ -62,13 +62,6 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
     }
   }, [isExpanded, animatedHeight, journal.content]);
 
-  // Update local state when journal prop changes
-  useEffect(() => {
-    setEditedContent(journal.content);
-    setEditedDescription(journal.description);
-    setEditedTags(journal.tags.join(", "));
-  }, [journal]);
-
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDialogOpen(true);
@@ -166,9 +159,9 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                       >
-                        <ScrollArea className="w-full max-h-[400px] rounded-md border border-transparent">
+                        <ScrollArea className="w-full h-full rounded-md border border-transparent">
                           <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
-                          <ScrollBar />
+                          <ScrollBar orientation="vertical" />
                         </ScrollArea>
                       </motion.div>
                     )}
