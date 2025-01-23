@@ -6,6 +6,7 @@ import Chat from "./pages/Chat";
 import Journal from "./pages/Journal";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import Mindfulness from "./pages/Mindfulness";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/journal" element={<Journal />} />
+            <Route path="/mindfulness" element={<Mindfulness />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Help />} />
           </Routes>
