@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Maximize2, Minimize2, BookOpen, Menu, RefreshCw, Plus } from "lucide-react";
+import { Send, Mic, Maximize2, Minimize2, BookOpen, Menu, RefreshCw, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage, ChatStream, ChatHistory } from './types';
 import { ModelSelector } from './ModelSelector';
@@ -88,6 +88,41 @@ export function ChatInterface() {
     const newHistory = { ...chatHistory, currentChatId: chatId };
     setChatHistory(newHistory);
     localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+  };
+
+  const deleteChat = (chatId: string) => {
+    const updatedChats = chatHistory.chats.filter(chat => chat.id !== chatId);
+    const newHistory = {
+      chats: updatedChats,
+      currentChatId: chatId === chatHistory.currentChatId ? null : chatHistory.currentChatId
+    };
+    setChatHistory(newHistory);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+    
+    // If we deleted the current chat, clear messages
+    if (chatId === chatHistory.currentChatId) {
+      setMessages([]);
+    }
+
+    toast({
+      title: "Chat Deleted",
+      description: "The chat has been removed from history",
+    });
+  };
+
+  const deleteAllChats = () => {
+    const newHistory = {
+      chats: [],
+      currentChatId: null
+    };
+    setChatHistory(newHistory);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(newHistory));
+    setMessages([]);
+
+    toast({
+      title: "All Chats Deleted",
+      description: "Chat history has been cleared",
+    });
   };
 
   const handleSendMessage = async () => {
@@ -179,18 +214,41 @@ export function ChatInterface() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Chat History</DialogTitle>
+                <DialogTitle className="flex justify-between items-center">
+                  <span>Chat History</span>
+                  {chatHistory.chats.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={deleteAllChats}
+                      className="ml-2"
+                    >
+                      Delete All
+                    </Button>
+                  )}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 {chatHistory.chats.map((chat) => (
-                  <Button
-                    key={chat.id}
-                    variant={chat.id === chatHistory.currentChatId ? "default" : "outline"}
-                    className="w-full justify-start"
-                    onClick={() => switchChat(chat.id)}
-                  >
-                    {chat.title || "Untitled Chat"}
-                  </Button>
+                  <div key={chat.id} className="flex items-center gap-2">
+                    <Button
+                      variant={chat.id === chatHistory.currentChatId ? "default" : "outline"}
+                      className="flex-1 justify-start"
+                      onClick={() => switchChat(chat.id)}
+                    >
+                      {chat.title || "Untitled Chat"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             </DialogContent>
