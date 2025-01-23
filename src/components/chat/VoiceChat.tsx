@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export function VoiceChat() {
-  const { isListening, isConnecting, agentResponse, startSession, stopSession } = useVoiceChat();
+  const { isListening, isConnecting, connectionState, agentResponse, startSession, stopSession } = useVoiceChat();
   const { selectedJournals } = useJournalContext();
   const [isOpen, setIsOpen] = React.useState(false);
   
@@ -56,16 +56,23 @@ export function VoiceChat() {
 
           <div className={cn(
             "p-4 rounded-lg transition-colors",
-            isListening ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
+            connectionState === 'connected' && isListening ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
                 {isConnecting ? "Connecting..." : 
-                  isListening ? "Listening..." : "Ready to start"}
+                  connectionState === 'connected' ? (isListening ? "Listening..." : "Connected") : 
+                  "Ready to start"}
               </span>
               {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
           </div>
+
+          {agentResponse && (
+            <div className="p-4 bg-primary/10 rounded-lg">
+              <p className="text-sm">{agentResponse}</p>
+            </div>
+          )}
 
           <Button
             onClick={handleStartStop}
@@ -83,12 +90,6 @@ export function VoiceChat() {
             {isConnecting ? 'Connecting...' : 
               isListening ? 'Stop Voice Chat' : 'Start Voice Chat'}
           </Button>
-
-          {agentResponse && (
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <p className="text-sm">{agentResponse}</p>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
