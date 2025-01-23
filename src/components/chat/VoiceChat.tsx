@@ -8,13 +8,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
 export function VoiceChat() {
   const { toast } = useToast();
   const { selectedJournals } = useJournalContext();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [volume, setVolume] = React.useState(1);
   const [agentResponse, setAgentResponse] = React.useState<string>('');
+  const [volume, setVolume] = React.useState(1);
   
   const conversation = useConversation({
     preferHeadphonesForIosDevices: true,
@@ -54,7 +55,7 @@ export function VoiceChat() {
         
         // Start conversation with journal context
         await conversation.startSession({ 
-          agentId: process.env.ELEVENLABS_AGENT_ID || '',
+          agentId: ELEVENLABS_AGENT_ID,
           overrides: {
             agent: {
               prompt: {
