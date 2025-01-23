@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useExpandable } from "@/hooks/use-expandable";
 import { Button } from "@/components/ui/button";
 import { useJournalStore } from "@/store/useJournalStore";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -168,6 +168,7 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                       >
                         <ScrollArea className="w-full max-h-[400px] rounded-md border border-transparent">
                           <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
+                          <ScrollBar />
                         </ScrollArea>
                       </motion.div>
                     )}
