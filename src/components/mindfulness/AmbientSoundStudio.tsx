@@ -12,10 +12,30 @@ import {
 } from "lucide-react";
 
 const sounds = [
-  { id: "rain", name: "Rain", icon: Cloud, src: "/sounds/rain.mp3" },
-  { id: "waves", name: "Ocean", icon: Waves, src: "/sounds/waves.mp3" },
-  { id: "forest", name: "Forest", icon: Trees, src: "/sounds/forest.mp3" },
-  { id: "wind", name: "Wind", icon: Wind, src: "/sounds/wind.mp3" },
+  { 
+    id: "rain", 
+    name: "Rain", 
+    icon: Cloud, 
+    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c9a4a1d936.mp3"
+  },
+  { 
+    id: "waves", 
+    name: "Ocean", 
+    icon: Waves, 
+    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8f4d33e36.mp3"
+  },
+  { 
+    id: "forest", 
+    name: "Forest", 
+    icon: Trees, 
+    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_bf3a5a8d0e.mp3"
+  },
+  { 
+    id: "wind", 
+    name: "Wind", 
+    icon: Wind, 
+    src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_d9b8956868.mp3"
+  },
 ];
 
 export function AmbientSoundStudio() {
