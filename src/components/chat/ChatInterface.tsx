@@ -2,12 +2,20 @@ import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Mic, Maximize2, Minimize2, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from './types';
 import { ModelSelector } from './ModelSelector';
 import { JournalSelector } from './JournalSelector';
 import { useJournalContext } from '@/hooks/use-journal-context';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -15,6 +23,7 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedModel, setSelectedModel] = useState(() => 
     localStorage.getItem('SELECTED_MODEL') || 'openrouter/auto'
   );
@@ -91,6 +100,13 @@ export function ChatInterface() {
     }
   };
 
+  const JournalContextContent = () => (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium mb-4">Journal Context</h3>
+      <JournalSelector />
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-screen max-w-6xl mx-auto p-4">
       <div className="mb-4 flex justify-between items-center">
@@ -101,10 +117,29 @@ export function ChatInterface() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <Card className="col-span-1 p-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
-          <h3 className="text-lg font-medium mb-4">Journal Context</h3>
-          <JournalSelector />
-        </Card>
+        {isMobile ? (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Select Journal Context
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Select Journal Context</DialogTitle>
+              </DialogHeader>
+              <JournalContextContent />
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <Card className="col-span-1 p-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
+            <JournalContextContent />
+          </Card>
+        )}
 
         <Card className="col-span-1 md:col-span-2 flex-1 overflow-auto p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
