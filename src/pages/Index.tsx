@@ -4,18 +4,19 @@ import { Cart } from "@/components/Cart";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Restaurant POS</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <header className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Restaurant POS
+          </h1>
         </div>
       </header>
       
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <CategoryGrid />
-            {/* Espace pour la liste des produits qui sera ajoutée plus tard */}
           </div>
           <div className="lg:col-span-1">
             <Cart />
