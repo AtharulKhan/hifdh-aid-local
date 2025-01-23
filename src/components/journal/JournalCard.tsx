@@ -57,8 +57,9 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
 
   useEffect(() => {
     if (contentRef.current) {
-      const height = isExpanded ? Math.min(contentRef.current.scrollHeight, 400) : 0;
-      animatedHeight.set(height);
+      const contentHeight = contentRef.current.scrollHeight;
+      const maxHeight = 400; // Match the ScrollArea height
+      animatedHeight.set(isExpanded ? Math.min(contentHeight, maxHeight) : 0);
     }
   }, [isExpanded, animatedHeight, journal.content]);
 
@@ -158,8 +159,9 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        className="h-full"
                       >
-                        <ScrollArea className="w-full h-full rounded-md border border-transparent">
+                        <ScrollArea className="h-[400px] w-full rounded-md border border-transparent">
                           <p className="text-sm text-gray-600 whitespace-pre-wrap pr-4">{journal.content}</p>
                           <ScrollBar orientation="vertical" />
                         </ScrollArea>
