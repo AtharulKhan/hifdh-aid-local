@@ -10,13 +10,15 @@ import {
   Home,
   Settings,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Mic
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
+  { path: "/voice", icon: Mic, label: "Voice Chat" },
   { path: "/chat", icon: MessageCircle, label: "AI Therapist" },
   { path: "/journal", icon: BookOpen, label: "Mood Journal" },
   { path: "/mindfulness", icon: Leaf, label: "Mindfulness" },
