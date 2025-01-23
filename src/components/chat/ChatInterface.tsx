@@ -218,16 +218,16 @@ export function ChatInterface() {
   );
 
   return (
-    <div className="flex flex-col h-screen max-w-6xl mx-auto overflow-hidden">
-      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col h-screen max-w-6xl mx-auto overflow-hidden px-2 sm:px-4">
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-2 sm:p-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="icon">
                 <Menu className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-[90vw] sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle className="flex justify-between items-center">
                   <span>Chat History</span>
@@ -248,7 +248,7 @@ export function ChatInterface() {
                   <div key={chat.id} className="flex items-center gap-2">
                     <Button
                       variant={chat.id === chatHistory.currentChatId ? "default" : "outline"}
-                      className="flex-1 justify-start"
+                      className="flex-1 justify-start text-sm truncate"
                       onClick={() => switchChat(chat.id)}
                     >
                       {chat.title || "Untitled Chat"}
@@ -268,11 +268,11 @@ export function ChatInterface() {
               </div>
             </DialogContent>
           </Dialog>
-          <h2 className="text-2xl font-semibold text-primary">
+          <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
             Chat With AI Therapist
           </h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="icon"
@@ -293,7 +293,7 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 px-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 px-2 sm:px-4 flex-1 min-h-0">
         {isMobile ? (
           <Dialog>
             <DialogTrigger asChild>
@@ -305,7 +305,7 @@ export function ChatInterface() {
                 Select Journal Context
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="max-w-[90vw] sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Select Journal Context</DialogTitle>
               </DialogHeader>
@@ -318,7 +318,7 @@ export function ChatInterface() {
           </Card>
         )}
 
-        <Card className="col-span-1 md:col-span-2 flex-1 overflow-auto p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
+        <Card className="col-span-1 md:col-span-2 flex-1 overflow-auto p-4 sm:p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
           <div className="relative z-10 space-y-4 max-h-full overflow-y-auto">
             {messages.map((message, index) => (
@@ -329,7 +329,7 @@ export function ChatInterface() {
                 } animate-slideIn`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
+                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 shadow-sm transition-all duration-200 ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground ml-auto'
                       : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20 prose dark:prose-invert prose-sm md:prose-base max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:my-4 [&>h1]:mt-6 [&>h2]:mt-5 [&>h3]:mt-4 [&>ul]:my-4 [&>ol]:my-4 [&>blockquote]:my-4 [&>pre]:my-4'
@@ -338,7 +338,7 @@ export function ChatInterface() {
                   {message.role === 'assistant' ? (
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                   ) : (
-                    <p className="leading-relaxed">{message.content}</p>
+                    <p className="leading-relaxed break-words">{message.content}</p>
                   )}
                   {message.model && (
                     <p className="text-xs mt-2 opacity-70">
@@ -352,16 +352,16 @@ export function ChatInterface() {
         </Card>
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 w-full px-4 pb-4 bg-background/5 backdrop-blur-sm">
+      <div className="sticky bottom-0 left-0 right-0 w-full px-2 sm:px-4 pb-4 bg-background/5 backdrop-blur-sm">
         <div className="relative w-full max-w-6xl mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 blur-xl -z-10" />
-          <div className="relative backdrop-blur-sm bg-background/80 rounded-2xl border border-primary/20 p-4 shadow-lg">
-            <div className="flex gap-3">
+          <div className="relative backdrop-blur-sm bg-background/80 rounded-2xl border border-primary/20 p-2 sm:p-4 shadow-lg">
+            <div className="flex gap-2 sm:gap-3">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message..."
-                className={`flex-1 bg-transparent border-none focus-visible:ring-1 focus-visible:ring-primary/50 resize-none transition-all duration-200 rounded-xl ${
+                className={`flex-1 bg-transparent border-none focus-visible:ring-1 focus-visible:ring-primary/50 resize-none transition-all duration-200 rounded-xl text-sm sm:text-base ${
                   isExpanded ? 'h-32' : 'h-12'
                 }`}
                 onKeyDown={(e) => {
