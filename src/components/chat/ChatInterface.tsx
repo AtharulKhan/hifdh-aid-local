@@ -6,6 +6,8 @@ import { Send, Mic, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from './types';
 import { ModelSelector } from './ModelSelector';
+import { JournalSelector } from './JournalSelector';
+import { useJournalContext } from '@/hooks/use-journal-context';
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -16,6 +18,8 @@ export function ChatInterface() {
   const [selectedModel, setSelectedModel] = useState(() => 
     localStorage.getItem('SELECTED_MODEL') || 'openrouter/auto'
   );
+
+  const { selectedJournals } = useJournalContext();
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -36,6 +40,16 @@ export function ChatInterface() {
         throw new Error('API key not found');
       }
 
+      // Create context from selected journals
+      const journalContext = selectedJournals.map(journal => 
+        `Context from journal "${journal.title}": ${journal.content}`
+      ).join('\n\n');
+
+      const systemMessage = {
+        role: 'system',
+        content: `You are a helpful AI assistant. Here is some context from the user's journal entries:\n\n${journalContext}`
+      };
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -45,7 +59,11 @@ export function ChatInterface() {
         },
         body: JSON.stringify({
           model: selectedModel,
-          messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+          messages: [
+            systemMessage,
+            ...messages,
+            userMessage
+          ].map(({ role, content }) => ({ role, content })),
         }),
       });
 
@@ -82,34 +100,41 @@ export function ChatInterface() {
         <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
       </div>
 
-      <Card className="flex-1 overflow-auto p-6 mb-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
-        <div className="relative z-10 space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              } animate-slideIn`}
-            >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <Card className="col-span-1 p-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
+          <h3 className="text-lg font-medium mb-4">Journal Context</h3>
+          <JournalSelector />
+        </Card>
+
+        <Card className="col-span-1 md:col-span-2 flex-1 overflow-auto p-6 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-secondary/5 pointer-events-none" />
+          <div className="relative z-10 space-y-4">
+            {messages.map((message, index) => (
               <div
-                className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground ml-auto'
-                    : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20'
-                }`}
+                key={index}
+                className={`flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                } animate-slideIn`}
               >
-                <p className="leading-relaxed">{message.content}</p>
-                {message.model && (
-                  <p className="text-xs mt-2 opacity-70">
-                    {message.model}
-                  </p>
-                )}
+                <div
+                  className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground ml-auto'
+                      : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20'
+                  }`}
+                >
+                  <p className="leading-relaxed">{message.content}</p>
+                  {message.model && (
+                    <p className="text-xs mt-2 opacity-70">
+                      {message.model}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      </div>
 
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 blur-xl -z-10" />
