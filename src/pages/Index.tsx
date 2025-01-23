@@ -1,5 +1,6 @@
 import React from "react";
 import { Calendar } from "@/components/Calendar";
+import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
 
 const Index = () => {
   return (
@@ -22,6 +23,7 @@ const Index = () => {
           </div>
         </div>
       </main>
+      <FloatingChatButton />
     </div>
   );
 };
