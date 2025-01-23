@@ -4,11 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { JournalEntry } from '@/store/useJournalStore';
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
-interface MessageEvent {
-  type: 'transcript' | 'agent_response' | 'debug';
-  text?: string;
-  transcript?: string;
-  debug?: any;
+type Role = 'user' | 'ai';
+
+interface ConversationMessage {
+  message: string;
+  source: Role;
 }
 
 export const useVoiceChat = () => {
@@ -43,8 +43,7 @@ export const useVoiceChat = () => {
             }
           },
           tts: {
-            voiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah voice
-            modelId: "eleven_monolingual_v2"
+            voiceId: "EXAVITQu4vr4xnSDxMaL" // Sarah voice
           }
         },
         onConnect: () => {
@@ -72,20 +71,11 @@ export const useVoiceChat = () => {
           console.log('Mode changed:', mode.mode);
           setAgentStatus(mode.mode);
         },
-        onMessage: (event: MessageEvent) => {
-          console.log('Received message event:', event);
-          
-          if (event.type === 'transcript' && event.transcript) {
-            console.log('User transcript:', event.transcript);
-          }
-          
-          if (event.type === 'agent_response' && event.text) {
-            console.log('Agent response:', event.text);
-            setAgentResponse(event.text);
-          }
-          
-          if (event.type === 'debug') {
-            console.log('Debug event:', event.debug);
+        onMessage: (props: ConversationMessage) => {
+          console.log('Received message:', props);
+          if (props.source === 'ai') {
+            console.log('Agent response:', props.message);
+            setAgentResponse(props.message);
           }
         }
       });
