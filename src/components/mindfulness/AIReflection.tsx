@@ -5,12 +5,16 @@ import { Brain, Loader2 } from "lucide-react";
 import { useJournalStore } from "@/store/useJournalStore";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
+import { ModelSelector } from "@/components/chat/ModelSelector";
 
 export function AIReflection() {
   const [isLoading, setIsLoading] = useState(false);
   const [reflection, setReflection] = useState<string | null>(null);
   const journals = useJournalStore((state) => state.journals);
   const { toast } = useToast();
+  const [selectedModel, setSelectedModel] = useState(() => 
+    localStorage.getItem('LAST_REFLECTION_MODEL') || 'openrouter/auto'
+  );
 
   // Load saved reflection from localStorage on component mount
   useEffect(() => {
@@ -29,7 +33,6 @@ export function AIReflection() {
 
     try {
       const apiKey = localStorage.getItem('OPENROUTER_API_KEY');
-      const lastModel = localStorage.getItem('lastUsedAIModel') || "openai/gpt-4";
       
       if (!apiKey) {
         throw new Error('OpenRouter API key not found');
@@ -48,7 +51,7 @@ export function AIReflection() {
           "HTTP-Referer": window.location.origin,
         },
         body: JSON.stringify({
-          model: lastModel,
+          model: selectedModel,
           messages: [
             {
               role: "system",
@@ -71,6 +74,7 @@ export function AIReflection() {
       const newReflection = data.choices[0].message.content;
       setReflection(newReflection);
       localStorage.setItem('lastAIReflection', newReflection);
+      localStorage.setItem('LAST_REFLECTION_MODEL', selectedModel);
     } catch (error) {
       console.error('Reflection generation error:', error);
       toast({
@@ -87,18 +91,21 @@ export function AIReflection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-secondary">AI Reflection</h2>
-        <Button
-          onClick={generateReflection}
-          disabled={isLoading || journals.length === 0}
-          className="gap-2"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Brain className="h-4 w-4" />
-          )}
-          Generate Insight
-        </Button>
+        <div className="flex items-center gap-4">
+          <ModelSelector currentModel={selectedModel} onModelChange={setSelectedModel} />
+          <Button
+            onClick={generateReflection}
+            disabled={isLoading || journals.length === 0}
+            className="gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Brain className="h-4 w-4" />
+            )}
+            Generate Insight
+          </Button>
+        </div>
       </div>
 
       {reflection ? (
