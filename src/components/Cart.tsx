@@ -4,28 +4,30 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { useStore } from "@/store/useStore";
+import { TableSelector } from "./TableSelector";
 
 export const Cart = () => {
   const { toast } = useToast();
-  const [items, setItems] = React.useState<CartItem[]>([
-    { id: 1, name: "Salade César", price: 12.99, quantity: 1 },
-    { id: 2, name: "Pizza Margherita", price: 15.99, quantity: 2 },
-  ]);
+  const { items, tableNumber, updateQuantity, removeItem, clearCart } = useStore();
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
+    if (!tableNumber) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une table avant de valider la commande.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     toast({
       title: "Commande validée !",
       description: "Votre commande a été envoyée en cuisine.",
     });
+    clearCart();
   };
 
   return (
@@ -37,7 +39,9 @@ export const Cart = () => {
         </h2>
       </div>
       
-      <ScrollArea className="flex-grow pr-4">
+      <TableSelector />
+      
+      <ScrollArea className="flex-grow pr-4 mt-4">
         <div className="space-y-4">
           {items.map((item) => (
             <div
@@ -61,9 +65,11 @@ export const Cart = () => {
                   size="icon"
                   className="h-8 w-8 rounded-full"
                   onClick={() => {
-                    setItems(items.map(i => 
-                      i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1) } : i
-                    ).filter(i => i.quantity > 0));
+                    if (item.quantity === 1) {
+                      removeItem(item.id);
+                    } else {
+                      updateQuantity(item.id, item.quantity - 1);
+                    }
                   }}
                 >
                   <Minus className="h-4 w-4" />
@@ -73,11 +79,7 @@ export const Cart = () => {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => {
-                    setItems(items.map(i => 
-                      i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-                    ));
-                  }}
+                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -96,8 +98,9 @@ export const Cart = () => {
           className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 rounded-xl
                      shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-105"
           onClick={handleCheckout}
+          disabled={items.length === 0 || !tableNumber}
         >
-          Valider la commande
+          {items.length === 0 ? "Panier vide" : "Valider la commande"}
         </Button>
       </div>
     </Card>

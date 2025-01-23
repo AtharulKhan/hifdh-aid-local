@@ -1,6 +1,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Order {
   id: number;
@@ -10,29 +12,40 @@ interface Order {
   timestamp: string;
 }
 
-const orders: Order[] = [
-  {
-    id: 1,
-    table: 4,
-    items: [
-      { name: "Salade César", quantity: 1, price: 12.99 },
-      { name: "Pizza Margherita", quantity: 2, price: 15.99 }
-    ],
-    status: "preparing",
-    timestamp: "2024-02-20T12:30:00"
-  },
-  {
-    id: 2,
-    table: 7,
-    items: [
-      { name: "Tiramisu", quantity: 3, price: 8.99 }
-    ],
-    status: "ready",
-    timestamp: "2024-02-20T12:35:00"
-  }
-];
-
 const Orders = () => {
+  const { toast } = useToast();
+  const [orders, setOrders] = React.useState<Order[]>([
+    {
+      id: 1,
+      table: 4,
+      items: [
+        { name: "Salade César", quantity: 1, price: 12.99 },
+        { name: "Pizza Margherita", quantity: 2, price: 15.99 }
+      ],
+      status: "preparing",
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: 2,
+      table: 7,
+      items: [
+        { name: "Tiramisu", quantity: 3, price: 8.99 }
+      ],
+      status: "ready",
+      timestamp: new Date().toISOString()
+    }
+  ]);
+
+  const updateOrderStatus = (orderId: number, newStatus: Order["status"]) => {
+    setOrders(orders.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+    toast({
+      title: "Statut mis à jour",
+      description: `La commande #${orderId} est maintenant ${newStatus}`
+    });
+  };
+
   const getStatusColor = (status: Order["status"]) => {
     switch (status) {
       case "pending": return "bg-yellow-500";
@@ -40,6 +53,15 @@ const Orders = () => {
       case "ready": return "bg-green-500";
       case "served": return "bg-gray-500";
       default: return "bg-gray-500";
+    }
+  };
+
+  const getNextStatus = (status: Order["status"]): Order["status"] => {
+    switch (status) {
+      case "pending": return "preparing";
+      case "preparing": return "ready";
+      case "ready": return "served";
+      default: return "served";
     }
   };
 
@@ -71,7 +93,7 @@ const Orders = () => {
               ))}
             </div>
             <div className="mt-4 pt-4 border-t">
-              <div className="flex justify-between font-bold">
+              <div className="flex justify-between font-bold mb-4">
                 <span>Total</span>
                 <span>
                   {order.items
@@ -79,6 +101,14 @@ const Orders = () => {
                     .toFixed(2)}€
                 </span>
               </div>
+              {order.status !== "served" && (
+                <Button
+                  className="w-full"
+                  onClick={() => updateOrderStatus(order.id, getNextStatus(order.status))}
+                >
+                  Marquer comme {getNextStatus(order.status)}
+                </Button>
+              )}
             </div>
           </Card>
         ))}

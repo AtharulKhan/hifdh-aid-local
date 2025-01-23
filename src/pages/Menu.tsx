@@ -2,47 +2,45 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-
-interface MenuItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-}
+import { useStore } from "@/store/useStore";
+import { MenuItem } from "@/types/menu";
 
 const menuItems: MenuItem[] = [
   {
     id: 1,
-    name: "Salade César",
-    description: "Laitue romaine, parmesan, croûtons, sauce césar maison",
+    name: "Pizza Margherita",
+    description: "Tomate, mozzarella, basilic frais",
     price: 12.99,
-    category: "Entrées",
-    image: "🥗"
+    category: "Plats",
+    image: "🍕",
+    available: true
   },
   {
     id: 2,
-    name: "Pizza Margherita",
-    description: "Sauce tomate, mozzarella, basilic frais",
-    price: 15.99,
-    category: "Plats",
-    image: "🍕"
+    name: "Salade César",
+    description: "Laitue romaine, parmesan, croûtons, sauce césar",
+    price: 8.99,
+    category: "Entrées",
+    image: "🥗",
+    available: true
   },
   {
     id: 3,
     name: "Tiramisu",
     description: "Biscuits, café, mascarpone, cacao",
-    price: 8.99,
+    price: 6.99,
     category: "Desserts",
-    image: "🍰"
+    image: "🍰",
+    available: true
   }
 ];
 
 const Menu = () => {
   const { toast } = useToast();
+  const addItem = useStore((state) => state.addItem);
 
   const handleAddToCart = (item: MenuItem) => {
+    addItem(item);
     toast({
       title: "Ajouté au panier",
       description: `${item.name} a été ajouté à votre commande.`
