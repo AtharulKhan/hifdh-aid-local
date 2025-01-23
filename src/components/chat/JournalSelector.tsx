@@ -11,7 +11,10 @@ export function JournalSelector() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const journals = useJournalStore((state) => state.journals);
   const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
-  const [autoSelectDisabled, setAutoSelectDisabled] = React.useState(false);
+  const [autoSelectDisabled, setAutoSelectDisabled] = React.useState(() => {
+    // Initialize from localStorage to persist the state
+    return localStorage.getItem('autoSelectDisabled') === 'true';
+  });
 
   const filteredJournals = React.useMemo(() => {
     return journals
@@ -29,6 +32,11 @@ export function JournalSelector() {
       lastThreeJournals.forEach(journal => addJournalToContext(journal));
     }
   }, [filteredJournals, selectedJournals.length, addJournalToContext, autoSelectDisabled]);
+
+  // Update localStorage when autoSelectDisabled changes
+  useEffect(() => {
+    localStorage.setItem('autoSelectDisabled', autoSelectDisabled.toString());
+  }, [autoSelectDisabled]);
 
   const isSelected = (journalId: string) => {
     return selectedJournals.some(j => j.id === journalId);
