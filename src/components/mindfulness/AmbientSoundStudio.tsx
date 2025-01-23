@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { 
@@ -10,92 +10,24 @@ import {
   Cloud,
   Wind
 } from "lucide-react";
+import { useAudio, sounds } from "@/contexts/AudioContext";
 
-const sounds = [
-  { 
-    id: "rain", 
-    name: "Rain", 
-    icon: Cloud, 
-    src: "/sounds/rain.mp3"
-  },
-  { 
-    id: "waves", 
-    name: "Ocean", 
-    icon: Waves, 
-    src: "/sounds/waves.mp3"
-  },
-  { 
-    id: "forest", 
-    name: "Forest", 
-    icon: Trees, 
-    src: "/sounds/forest.mp3"
-  },
-  { 
-    id: "wind", 
-    name: "Wind", 
-    icon: Wind, 
-    src: "/sounds/wind.mp3"
-  },
-];
+const soundIcons = {
+  rain: Cloud,
+  waves: Waves,
+  forest: Trees,
+  wind: Wind,
+};
 
 export function AmbientSoundStudio() {
-  const [isPlaying, setIsPlaying] = useState(() => {
-    return localStorage.getItem("ambientSound_isPlaying") === "true";
-  });
-  const [volume, setVolume] = useState(() => {
-    return Number(localStorage.getItem("ambientSound_volume")) || 50;
-  });
-  const [activeSound, setActiveSound] = useState<string | null>(() => {
-    return localStorage.getItem("ambientSound_activeSound") || null;
-  });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    // Initialize audio on component mount
-    if (activeSound && isPlaying && audioRef.current) {
-      audioRef.current.src = sounds.find(s => s.id === activeSound)?.src || "";
-      audioRef.current.volume = volume / 100;
-      audioRef.current.play();
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save state to localStorage whenever it changes
-    localStorage.setItem("ambientSound_isPlaying", isPlaying.toString());
-    localStorage.setItem("ambientSound_volume", volume.toString());
-    if (activeSound) {
-      localStorage.setItem("ambientSound_activeSound", activeSound);
-    }
-  }, [isPlaying, volume, activeSound]);
-
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleSoundSelect = (soundId: string) => {
-    setActiveSound(soundId);
-    if (audioRef.current) {
-      audioRef.current.src = sounds.find(s => s.id === soundId)?.src || "";
-      audioRef.current.volume = volume / 100;
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume / 100;
-    }
-  };
+  const { 
+    isPlaying, 
+    volume, 
+    activeSound, 
+    togglePlay, 
+    handleSoundSelect, 
+    handleVolumeChange 
+  } = useAudio();
 
   return (
     <div className="space-y-6">
@@ -116,17 +48,20 @@ export function AmbientSoundStudio() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {sounds.map(({ id, name, icon: Icon }) => (
-          <Button
-            key={id}
-            variant={activeSound === id ? "default" : "outline"}
-            className="flex flex-col gap-2 h-auto py-4"
-            onClick={() => handleSoundSelect(id)}
-          >
-            <Icon className="h-6 w-6" />
-            <span>{name}</span>
-          </Button>
-        ))}
+        {sounds.map(({ id, name }) => {
+          const Icon = soundIcons[id as keyof typeof soundIcons];
+          return (
+            <Button
+              key={id}
+              variant={activeSound === id ? "default" : "outline"}
+              className="flex flex-col gap-2 h-auto py-4"
+              onClick={() => handleSoundSelect(id)}
+            >
+              <Icon className="h-6 w-6" />
+              <span>{name}</span>
+            </Button>
+          );
+        })}
       </div>
 
       <div className="space-y-2">
@@ -140,8 +75,6 @@ export function AmbientSoundStudio() {
           />
         </div>
       </div>
-
-      <audio ref={audioRef} loop />
     </div>
   );
 }
