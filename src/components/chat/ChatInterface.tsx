@@ -90,16 +90,21 @@ export function ChatInterface() {
               key={index}
               className={`flex ${
                 message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              } animate-slideIn`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl p-4 animate-slideIn shadow-lg ${
+                className={`max-w-[80%] rounded-2xl p-4 shadow-sm transition-all duration-200 ${
                   message.role === 'user'
                     ? 'bg-primary text-primary-foreground ml-auto'
-                    : 'bg-secondary/10 backdrop-blur-sm border border-secondary/20'
+                    : 'bg-blue-50 text-gray-800 dark:bg-blue-900/20 dark:text-gray-200 backdrop-blur-sm border border-blue-100/20'
                 }`}
               >
-                {message.content}
+                <p className="leading-relaxed">{message.content}</p>
+                {message.model && (
+                  <p className="text-xs mt-2 opacity-70">
+                    {message.model}
+                  </p>
+                )}
               </div>
             </div>
           ))}
