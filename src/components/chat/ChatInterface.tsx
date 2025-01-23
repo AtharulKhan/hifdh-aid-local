@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { VoiceChat } from './VoiceChat';
 
 const CHAT_HISTORY_KEY = 'chat_history';
 
@@ -314,6 +315,9 @@ export function ChatInterface() {
         ) : (
           <Card className="col-span-1 p-4 bg-background/60 backdrop-blur-sm border-primary/20 shadow-lg">
             <JournalContextContent />
+            <div className="mt-4">
+              <VoiceChat />
+            </div>
           </Card>
         )}
 
