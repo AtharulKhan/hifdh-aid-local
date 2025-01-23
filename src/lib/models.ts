@@ -15,32 +15,46 @@ export const MODELS: AIModel[] = [
     contextWindow: 2000000
   },
   {
-    id: "anthropic/claude-3-opus",
-    name: "Claude 3 Opus",
-    provider: "Anthropic",
-    description: "Most capable model for therapy",
-    contextWindow: 200000
+    id: "google/gemini-pro-1.5",
+    name: "Gemini Pro 1.5",
+    provider: "OpenAI",
+    description: "Gemini",
+    contextWindow: 2000000
   },
   {
-    id: "anthropic/claude-3-sonnet",
-    name: "Claude 3 Sonnet",
+    id: "openai/gpt-4o-mini",
+    name: "GPT4o Mini",
+    provider: "OpenAI",
+    description: "Mini GPT4o",
+    contextWindow: 128000
+  },
+  {
+    id: "openai/gpt-4o-2024-11-20",
+    name: "GPT4o",
+    provider: "OpenAI",
+    description: "Advanced reasoning model",
+    contextWindow: 128000
+  },
+  {
+    id: "deepseek/deepseek-r1",
+    name: "DeepSeek R1",
+    provider: "DeepSeek",
+    description: "Advanced reasoning model",
+    contextWindow: 64000
+  },
+  {
+    id: "openai/o1-mini",
+    name: "OpenAI O1 Mini",
+    provider: "OpenAI",
+    description: "Compact version of GPT-4o",
+    contextWindow: 128000
+  },
+  {
+    id: "anthropic/claude-3.5-sonnet",
+    name: "Claude 3.5 Sonnet",
     provider: "Anthropic",
     description: "Balanced intelligence and speed",
     contextWindow: 200000
-  },
-  {
-    id: "google/gemini-pro",
-    name: "Gemini Pro",
-    provider: "Google",
-    description: "Advanced AI for therapeutic conversations",
-    contextWindow: 128000
-  },
-  {
-    id: "meta-llama/llama-3-70b",
-    name: "Llama 3 70B",
-    provider: "Meta",
-    description: "Open source model for therapy",
-    contextWindow: 128000
   }
 ];
 
