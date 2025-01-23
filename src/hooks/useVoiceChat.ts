@@ -4,6 +4,13 @@ import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 import { JournalEntry } from '@/store/useJournalStore';
 import { Conversation } from '@11labs/client';
 
+type Role = 'assistant' | 'user';
+
+interface AgentMessage {
+  message: string;
+  source: Role;
+}
+
 export const useVoiceChat = () => {
   const [isListening, setIsListening] = useState(false);
   const [agentResponse, setAgentResponse] = useState('');
@@ -65,7 +72,7 @@ export const useVoiceChat = () => {
             description: "Voice chat has ended",
           });
         },
-        onError: (error) => {
+        onError: (error: Error) => {
           console.error('ElevenLabs error:', error);
           toast({
             title: "Connection Error",
@@ -76,12 +83,9 @@ export const useVoiceChat = () => {
           setIsListening(false);
           setConnectionState('disconnected');
         },
-        onMessage: (message) => {
+        onMessage: (message: AgentMessage) => {
           console.log('Received message:', message);
-          setAgentResponse(message.text);
-        },
-        onModeChange: (mode) => {
-          console.log('Mode changed:', mode);
+          setAgentResponse(message.message);
         },
         overrides: {
           agent: {
@@ -93,9 +97,10 @@ export const useVoiceChat = () => {
 
     } catch (error) {
       console.error("Connection error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to connect to voice service";
       toast({
         title: "Connection Error",
-        description: error instanceof Error ? error.message : "Failed to connect to voice service",
+        description: errorMessage,
         variant: "destructive"
       });
       setIsConnecting(false);
