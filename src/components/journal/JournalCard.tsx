@@ -55,17 +55,17 @@ export function JournalCard({ journal, onClick }: JournalCardProps) {
   const [editedTags, setEditedTags] = React.useState(journal.tags.join(", "));
   const { toast } = useToast();
 
-useEffect(() => {
-  if (contentRef.current && isExpanded) {
-    const scrollArea = contentRef.current.querySelector('[data-radix-scroll-area-viewport]');
-    if (scrollArea) {
-      const height = Math.min(scrollArea.scrollHeight, 400);
-      animatedHeight.set(height);
+  useEffect(() => {
+    if (contentRef.current && isExpanded) {
+      const scrollArea = contentRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollArea) {
+        const height = Math.min(scrollArea.scrollHeight, 400);
+        animatedHeight.set(height);
+      }
+    } else {
+      animatedHeight.set(0);
     }
-  } else {
-    animatedHeight.set(0);
-  }
-}, [isExpanded, animatedHeight, journal.content]);
+  }, [isExpanded, animatedHeight, journal.content]);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,6 +118,9 @@ useEffect(() => {
               <div className="space-y-1">
                 <h3 className="text-xl font-semibold">{journal.title}</h3>
                 <p className="text-sm text-muted-foreground">{journal.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {new Date(journal.updatedAt).toLocaleString()}
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button 

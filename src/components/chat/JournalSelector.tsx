@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useJournalStore } from '@/store/useJournalStore';
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -13,11 +13,21 @@ export function JournalSelector() {
   const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
 
   const filteredJournals = React.useMemo(() => {
-    return journals.filter((journal) => {
-      const searchString = `${journal.title} ${journal.description} ${journal.tags.join(" ")}`.toLowerCase();
-      return searchString.includes(searchTerm.toLowerCase());
-    });
+    return journals
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .filter((journal) => {
+        const searchString = `${journal.title} ${journal.description} ${journal.tags.join(" ")}`.toLowerCase();
+        return searchString.includes(searchTerm.toLowerCase());
+      });
   }, [journals, searchTerm]);
+
+  useEffect(() => {
+    // Select the last 3 journals by default if none are selected
+    if (selectedJournals.length === 0 && filteredJournals.length > 0) {
+      const lastThreeJournals = filteredJournals.slice(0, 3);
+      lastThreeJournals.forEach(journal => addJournalToContext(journal));
+    }
+  }, [filteredJournals, selectedJournals.length, addJournalToContext]);
 
   const isSelected = (journalId: string) => {
     return selectedJournals.some(j => j.id === journalId);
@@ -55,14 +65,28 @@ export function JournalSelector() {
         />
       </div>
       
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleSelectAll}
-        className="w-full mb-2"
-      >
-        {selectedJournals.length === filteredJournals.length ? "Deselect All" : "Select All"}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSelectAll}
+          className="flex-1"
+        >
+          {selectedJournals.length === filteredJournals.length ? "Deselect All" : "Select All"}
+        </Button>
+
+        {selectedJournals.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearJournalContext}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
+            Clear Selection
+          </Button>
+        )}
+      </div>
 
       <ScrollArea className="h-[200px] w-full rounded-md border">
         <div className="p-4 space-y-4">
