@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export function JournalSelector() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const journals = useJournalStore((state) => state.journals);
-  const { selectedJournals, addJournalToContext, removeJournalFromContext } = useJournalContext();
+  const { selectedJournals, addJournalToContext, removeJournalFromContext, clearJournalContext } = useJournalContext();
 
   const filteredJournals = React.useMemo(() => {
     return journals.filter((journal) => {
@@ -23,11 +23,24 @@ export function JournalSelector() {
     return selectedJournals.some(j => j.id === journalId);
   };
 
-  const toggleJournal = (journal: typeof journals[0]) => {
+  const toggleJournal = (journal: typeof journals[0], event: React.MouseEvent) => {
+    // Prevent the event from bubbling up and affecting scroll
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (isSelected(journal.id)) {
       removeJournalFromContext(journal.id);
     } else {
       addJournalToContext(journal);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedJournals.length === filteredJournals.length) {
+      clearJournalContext();
+    } else {
+      clearJournalContext(); // Clear first to prevent duplicates
+      filteredJournals.forEach(journal => addJournalToContext(journal));
     }
   };
 
@@ -43,6 +56,15 @@ export function JournalSelector() {
         />
       </div>
       
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleSelectAll}
+        className="w-full mb-2"
+      >
+        {selectedJournals.length === filteredJournals.length ? "Deselect All" : "Select All"}
+      </Button>
+
       <ScrollArea className="h-[200px] w-full rounded-md border">
         <div className="p-4 space-y-4">
           {filteredJournals.map((journal) => (
@@ -64,7 +86,7 @@ export function JournalSelector() {
               <Button
                 variant={isSelected(journal.id) ? "secondary" : "outline"}
                 size="sm"
-                onClick={() => toggleJournal(journal)}
+                onClick={(e) => toggleJournal(journal, e)}
               >
                 {isSelected(journal.id) ? "Selected" : "Select"}
               </Button>
