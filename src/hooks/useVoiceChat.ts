@@ -2,26 +2,23 @@ import { useState, useRef, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 import { JournalEntry } from '@/store/useJournalStore';
+import { Conversation } from '@11labs/client';
 
 export const useVoiceChat = () => {
   const [isListening, setIsListening] = useState(false);
   const [agentResponse, setAgentResponse] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [connectionState, setConnectionState] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const ws = useRef<WebSocket | null>(null);
+  const conversationRef = useRef<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     return () => {
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
-      if (ws.current) {
-        ws.current.close();
+      if (conversationRef.current) {
+        conversationRef.current.endSession();
       }
     };
-  }, [audioStream]);
+  }, []);
 
   const initConnection = async (journals: JournalEntry[]) => {
     const apiKey = localStorage.getItem('ELEVENLABS_API_KEY');
@@ -39,163 +36,71 @@ export const useVoiceChat = () => {
     setConnectionState('connecting');
 
     try {
-      // Create context from selected journals
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Create context from journals
       const journalContext = journals.map(journal => 
         `Context from journal "${journal.title}": ${journal.content}`
       ).join('\n\n');
 
-      // Close existing connection if any
-      if (ws.current) {
-        ws.current.close();
-      }
-
-      // Create new WebSocket connection with API key in headers
-      ws.current = new WebSocket(
-        `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${ELEVENLABS_AGENT_ID}`
-      );
-
-      // Set up connection timeout
-      const connectionTimeout = setTimeout(() => {
-        if (ws.current?.readyState !== WebSocket.OPEN) {
-          ws.current?.close();
-          setConnectionState('disconnected');
+      // Start the conversation using the official client
+      conversationRef.current = await Conversation.startSession({
+        agentId: ELEVENLABS_AGENT_ID,
+        onConnect: () => {
+          console.log('Connected to ElevenLabs');
+          setConnectionState('connected');
+          setIsConnecting(false);
           toast({
-            title: "Connection Timeout",
-            description: "Failed to connect to voice service. Please try again.",
+            title: "Connected",
+            description: "Voice chat is now active",
+          });
+        },
+        onDisconnect: () => {
+          console.log('Disconnected from ElevenLabs');
+          setConnectionState('disconnected');
+          setIsListening(false);
+          toast({
+            title: "Disconnected",
+            description: "Voice chat has ended",
+          });
+        },
+        onError: (error) => {
+          console.error('ElevenLabs error:', error);
+          toast({
+            title: "Connection Error",
+            description: error.message || "Failed to connect to voice service",
             variant: "destructive"
           });
+          setIsConnecting(false);
+          setIsListening(false);
+          setConnectionState('disconnected');
+        },
+        onMessage: (message) => {
+          console.log('Received message:', message);
+          setAgentResponse(message.text);
+        },
+        onModeChange: (mode) => {
+          console.log('Mode changed:', mode);
+        },
+        overrides: {
+          agent: {
+            firstMessage: `Hello! I'm your AI therapist. ${journalContext}`,
+            language: "en",
+          }
         }
-      }, 10000);
+      });
 
-      ws.current.onopen = () => {
-        clearTimeout(connectionTimeout);
-        console.log("WebSocket connection established");
-        
-        // Send initial context and API key
-        ws.current?.send(JSON.stringify({
-          text: `Here is some context about the user: ${journalContext}`,
-          api_key: apiKey
-        }));
-        
-        setIsConnecting(false);
-        setConnectionState('connected');
-        toast({
-          title: "Connected",
-          description: "Voice chat is now active",
-        });
-      };
-
-      ws.current.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("Received message:", data);
-        
-        if (data.type === 'audio') {
-          playAudio(data.audio_event.audio_base_64);
-        } else if (data.type === 'agent_response') {
-          setAgentResponse(data.agent_response_event.agent_response);
-        }
-      };
-
-      ws.current.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        toast({
-          title: "Connection Error",
-          description: "Failed to connect to voice service. Please check your API key and try again.",
-          variant: "destructive"
-        });
-        setIsConnecting(false);
-        setIsListening(false);
-        setConnectionState('disconnected');
-      };
-
-      ws.current.onclose = () => {
-        console.log("WebSocket connection closed");
-        setConnectionState('disconnected');
-        setIsListening(false);
-      };
-
-      await initAudioCapture();
     } catch (error) {
       console.error("Connection error:", error);
       toast({
         title: "Connection Error",
-        description: "Failed to connect to voice service",
+        description: error instanceof Error ? error.message : "Failed to connect to voice service",
         variant: "destructive"
       });
       setIsConnecting(false);
       setIsListening(false);
       setConnectionState('disconnected');
-    }
-  };
-
-  const initAudioCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      
-      setAudioStream(stream);
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-
-      processor.onaudioprocess = (e) => {
-        if (!isListening || connectionState !== 'connected') return;
-        
-        const inputData = e.inputBuffer.getChannelData(0);
-        const audioData = convertFloat32ToInt16(inputData);
-        const base64Data = btoa(String.fromCharCode.apply(null, audioData));
-        
-        if (ws.current?.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({
-            user_audio_chunk: base64Data
-          }));
-        }
-      };
-
-      toast({
-        title: "Microphone Active",
-        description: "Your microphone is now connected",
-      });
-    } catch (error) {
-      console.error("Microphone error:", error);
-      toast({
-        title: "Microphone Access Required",
-        description: "Please enable microphone access to use voice chat",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const convertFloat32ToInt16 = (float32Array: Float32Array) => {
-    const int16Array = new Int16Array(float32Array.length);
-    for (let i = 0; i < float32Array.length; i++) {
-      const s = Math.max(-1, Math.min(1, float32Array[i]));
-      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-    }
-    return int16Array;
-  };
-
-  const playAudio = (base64: string) => {
-    try {
-      const audio = new Audio(`data:audio/wav;base64,${base64}`);
-      audio.play().catch(error => {
-        console.error("Audio playback error:", error);
-        toast({
-          title: "Audio Playback Error",
-          description: "Failed to play audio response",
-          variant: "destructive"
-        });
-      });
-    } catch (error) {
-      console.error("Audio creation error:", error);
     }
   };
 
@@ -208,15 +113,13 @@ export const useVoiceChat = () => {
       setIsListening(true);
       initConnection(journals);
     },
-    stopSession: () => {
+    stopSession: async () => {
+      if (conversationRef.current) {
+        await conversationRef.current.endSession();
+        conversationRef.current = null;
+      }
       setIsListening(false);
       setConnectionState('disconnected');
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
-      if (ws.current) {
-        ws.current.close();
-      }
       toast({
         title: "Voice Chat Ended",
         description: "Voice chat session has been terminated",
