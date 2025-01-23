@@ -1,9 +1,17 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { useJournalStore } from "@/store/useJournalStore";
 
 export const Calendar = () => {
-  const date = new Date();
+  const [date, setDate] = React.useState<Date>(new Date());
+  const journals = useJournalStore((state) => state.journals);
+
+  const handleSelect = (newDate: Date | undefined) => {
+    if (newDate) {
+      setDate(newDate);
+    }
+  };
 
   return (
     <Card className="p-6 h-[calc(100vh-2rem)] flex flex-col bg-white/80 backdrop-blur-xl shadow-xl animate-slideIn">
@@ -17,6 +25,7 @@ export const Calendar = () => {
         <CalendarComponent
           mode="single"
           selected={date}
+          onSelect={handleSelect}
           className="rounded-md border shadow-sm"
         />
       </div>

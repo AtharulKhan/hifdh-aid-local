@@ -8,11 +8,20 @@ import { AmbientSoundStudio } from "@/components/mindfulness/AmbientSoundStudio"
 import ReactMarkdown from 'react-markdown';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { JournalCard } from "@/components/journal/JournalCard";
+import { format, isEqual, startOfDay } from "date-fns";
 
 const Index = () => {
   const journals = useJournalStore((state) => state.journals);
   const lastReflection = localStorage.getItem('lastAIReflection');
   const recentJournals = journals.slice(-3).reverse();
+  const [selectedDate, setSelectedDate] = React.useState<Date>(new Date());
+
+  // Filter journals for selected date
+  const selectedDateJournals = journals.filter((journal) => {
+    const journalDate = startOfDay(new Date(journal.createdAt));
+    const selectedDay = startOfDay(selectedDate);
+    return isEqual(journalDate, selectedDay);
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -44,6 +53,24 @@ const Index = () => {
                 </Card>
               )}
             </section>
+
+            {/* Selected Date Journals */}
+            {selectedDateJournals.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-2xl font-semibold text-secondary">
+                  Journals for {format(selectedDate, 'MMMM d, yyyy')}
+                </h2>
+                <div className="space-y-4">
+                  {selectedDateJournals.map((journal) => (
+                    <JournalCard
+                      key={journal.id}
+                      journal={journal}
+                      onClick={() => {}}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Recent Journal Entries */}
             <section className="space-y-4">
