@@ -1,9 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
-import Settings from "./pages/Settings";
-import Chat from "./pages/Chat";
+import { Toaster } from "./components/ui/toaster";
 import Index from "./pages/Index";
+import Chat from "./pages/Chat";
 import Journal from "./pages/Journal";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 
 function App() {
   return (
@@ -14,11 +16,13 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/settings" element={<Settings />} />
             <Route path="/journal" element={<Journal />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/help" element={<Help />} />
           </Routes>
         </main>
       </div>
+      <Toaster />
     </Router>
   );
 }
