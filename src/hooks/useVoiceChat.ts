@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
+import { JournalEntry } from '@/store/useJournalStore';
 
 export const useVoiceChat = () => {
   const [isListening, setIsListening] = useState(false);
@@ -8,7 +9,7 @@ export const useVoiceChat = () => {
   const ws = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
-  const initConnection = async () => {
+  const initConnection = async (journals: JournalEntry[]) => {
     const apiKey = localStorage.getItem('ELEVENLABS_API_KEY');
 
     if (!apiKey) {
@@ -20,10 +21,22 @@ export const useVoiceChat = () => {
       return;
     }
 
+    // Create context from selected journals
+    const journalContext = journals.map(journal => 
+      `Context from journal "${journal.title}": ${journal.content}`
+    ).join('\n\n');
+
     try {
       ws.current = new WebSocket(
         `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${ELEVENLABS_AGENT_ID}`
       );
+
+      ws.current.onopen = () => {
+        // Send initial context
+        ws.current?.send(JSON.stringify({
+          text: `Here is some context about the user: ${journalContext}`
+        }));
+      };
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -88,20 +101,12 @@ export const useVoiceChat = () => {
     audio.play();
   };
 
-  useEffect(() => {
-    return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
-    };
-  }, []);
-
   return {
     isListening,
     agentResponse,
-    startSession: () => {
+    startSession: (journals: JournalEntry[]) => {
       setIsListening(true);
-      initConnection();
+      initConnection(journals);
     },
     stopSession: () => {
       setIsListening(false);

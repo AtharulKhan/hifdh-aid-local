@@ -1,1 +1,1 @@
-export const ELEVENLABS_AGENT_ID = "your-agent-id-here"; // Replace this with your actual agent ID from ElevenLabs dashboard
+export const ELEVENLABS_AGENT_ID = "your-agent-id-here"; // Replace with your actual agent ID
