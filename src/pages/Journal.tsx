@@ -1,34 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { JournalCard } from "@/components/journal/JournalCard";
 import { JournalSearch } from "@/components/journal/JournalSearch";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
-interface JournalEntry {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { NewJournalForm } from "@/components/journal/NewJournalForm";
 
 export default function Journal() {
   const [journals, setJournals] = useState<JournalEntry[]>([]);
   const [filteredJournals, setFilteredJournals] = useState<JournalEntry[]>([]);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Load journals from localStorage
-    const savedJournals = localStorage.getItem("journals");
-    if (savedJournals) {
-      const parsed = JSON.parse(savedJournals);
-      setJournals(parsed);
-      setFilteredJournals(parsed);
-    }
-  }, []);
 
   const handleSearch = (query: string) => {
     const filtered = journals.filter((journal) => {
@@ -38,18 +24,24 @@ export default function Journal() {
     setFilteredJournals(filtered);
   };
 
-  const handleJournalClick = (journalId: string) => {
-    navigate(`/journal/${journalId}`);
-  };
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-primary">My Journal</h1>
-        <Button onClick={() => navigate("/journal/new")}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Entry
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Entry
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+              <DialogTitle>Create New Journal Entry</DialogTitle>
+            </DialogHeader>
+            <NewJournalForm />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <JournalSearch onSearch={handleSearch} />
@@ -59,7 +51,6 @@ export default function Journal() {
           <JournalCard
             key={journal.id}
             journal={journal}
-            onClick={() => handleJournalClick(journal.id)}
           />
         ))}
         {filteredJournals.length === 0 && (
@@ -70,4 +61,14 @@ export default function Journal() {
       </div>
     </div>
   );
+}
+
+interface JournalEntry {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }
