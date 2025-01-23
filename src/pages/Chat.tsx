@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 
 const Chat = () => {
   const { toast } = useToast();
@@ -23,15 +23,13 @@ const Chat = () => {
       </h1>
       
       <div className="max-w-4xl mx-auto">
-        <Card className="p-6">
-          {apiKey ? (
-            <div>Chat interface coming soon...</div>
-          ) : (
-            <div className="text-center text-muted-foreground">
-              Please configure your OpenRouter API key in the settings to use the AI Therapist.
-            </div>
-          )}
-        </Card>
+        {apiKey ? (
+          <ChatInterface />
+        ) : (
+          <div className="text-center text-muted-foreground">
+            Please configure your OpenRouter API key in the settings to use the AI Therapist.
+          </div>
+        )}
       </div>
     </div>
   );
