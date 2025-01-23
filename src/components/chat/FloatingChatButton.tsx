@@ -30,14 +30,13 @@ export const FloatingChatButton = () => {
         </SheetTrigger>
         <SheetContent 
           side="right"
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-                    w-[95vw] h-[85vh] max-w-[1400px] rounded-lg p-0 right-auto
-                    shadow-xl border"
+          className="fixed inset-0 m-4 w-[calc(100vw-2rem)] h-[calc(100vh-2rem)] 
+                    max-w-none rounded-xl p-0 right-auto transform-none shadow-2xl"
         >
           <SheetHeader className="px-6 py-4 border-b">
-            <SheetTitle className="text-xl">Chat with AI Therapist</SheetTitle>
+            <SheetTitle className="text-2xl">Chat with AI Therapist</SheetTitle>
           </SheetHeader>
-          <div className="h-[calc(100%-65px)] overflow-hidden">
+          <div className="h-[calc(100vh-2rem-73px)]">
             <ChatInterface />
           </div>
         </SheetContent>
