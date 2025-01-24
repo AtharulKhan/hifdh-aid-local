@@ -89,7 +89,9 @@ export function VoiceChat() {
         });
 
       await vapi.start(assistantId, {
-        systemPrompt: `Current journal context: ${selectedJournals.map(j => j.content).join('\n')}`
+        agent: {
+          context: `Current journal context: ${selectedJournals.map(j => j.content).join('\n')}`
+        }
       });
 
       vapiRef.current = vapi;
