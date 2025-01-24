@@ -1,83 +1,124 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Loader2, Volume2 } from "lucide-react";
-import { useConversation } from '@11labs/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useJournalContext } from '@/hooks/use-journal-context';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { ELEVENLABS_AGENT_ID } from '@/config/voice';
+import Vapi from '@vapi-ai/web';
+import { useSettings } from '@/hooks/use-settings';
 
 export function VoiceChat() {
   const { toast } = useToast();
   const { selectedJournals } = useJournalContext();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [agentResponse, setAgentResponse] = React.useState<string>('');
+  const [agentResponse, setAgentResponse] = React.useState('');
   const [volume, setVolume] = React.useState(1);
-  
-  const conversation = useConversation({
-    preferHeadphonesForIosDevices: true,
-    onConnect: () => {
-      toast({
-        title: "Connected",
-        description: "Voice chat is now active",
-      });
-    },
-    onDisconnect: () => {
-      toast({
-        title: "Disconnected",
-        description: "Voice chat session ended",
-      });
-    },
-    onMessage: (message) => {
-      if (message.type === 'assistant_response') {
-        setAgentResponse(message.text);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [status, setStatus] = React.useState<'idle' | 'connecting' | 'connected'>('idle');
+  const vapiRef = React.useRef<Vapi | null>(null);
+  const { settings } = useSettings();
+
+  React.useEffect(() => {
+    return () => {
+      if (vapiRef.current) {
+        vapiRef.current.stop();
       }
-    },
-    onError: (error) => {
+    };
+  }, []);
+
+  const initializeVapi = () => {
+    if (!settings.vapiApiKey) {
       toast({
-        title: "Error",
-        description: error.message || "An error occurred during voice chat",
+        title: "API Key Missing",
+        description: "Please set your Vapi API Key in settings",
         variant: "destructive",
       });
+      return null;
     }
-  });
+
+    if (!settings.vapiAssistantId) {
+      toast({
+        title: "Assistant ID Missing",
+        description: "Please set your Vapi Assistant ID in settings",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    return new Vapi(settings.vapiApiKey);
+  };
 
   const handleStartStop = async () => {
     try {
-      if (conversation.status === 'connected') {
-        await conversation.endSession();
-      } else {
-        // Request microphone permission
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        // Start conversation with journal context
-        await conversation.startSession({ 
-          agentId: ELEVENLABS_AGENT_ID,
-          overrides: {
-            agent: {
-              prompt: {
-                prompt: `Context from selected journals: ${selectedJournals.map(j => j.content).join('\n')}`,
-              }
-            }
-          }
-        });
+      if (status === 'connected') {
+        vapiRef.current?.stop();
+        setStatus('idle');
+        setAgentResponse('');
+        return;
       }
+
+      const vapi = initializeVapi();
+      if (!vapi) return;
+
+      setStatus('connecting');
+      
+      vapi
+        .on('call-start', () => {
+          setStatus('connected');
+          toast({ title: "Connected", description: "Voice chat is now active" });
+        })
+        .on('call-end', () => {
+          setStatus('idle');
+          toast({ title: "Disconnected", description: "Voice chat session ended" });
+        })
+        .on('speech-start', () => setIsSpeaking(true))
+        .on('speech-end', () => setIsSpeaking(false))
+        .on('message', (message) => {
+          if (message.type === 'assistant-response' || message.type === 'transcript') {
+            setAgentResponse(prev => `${prev}\n${message.content}`);
+          }
+        })
+        .on('error', (error) => {
+          toast({
+            title: "Error",
+            description: error.message || "An error occurred during voice chat",
+            variant: "destructive",
+          });
+          setStatus('idle');
+        });
+
+      // Start call with journal context
+      await vapi.start(settings.vapiAssistantId, {
+        model: {
+          messages: [
+            {
+              role: "system",
+              content: `Current journal context: ${selectedJournals.map(j => j.content).join('\n')}`
+            }
+          ]
+        }
+      });
+
+      vapiRef.current = vapi;
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to start voice chat",
         variant: "destructive",
       });
+      setStatus('idle');
     }
   };
 
-  const handleVolumeChange = async (value: number[]) => {
+  const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
     setVolume(newVolume);
-    await conversation.setVolume({ volume: newVolume });
+    if (vapiRef.current) {
+      vapiRef.current.setMuted(newVolume === 0);
+    }
   };
 
   return (
@@ -116,12 +157,12 @@ export function VoiceChat() {
 
           <div className={cn(
             "p-4 rounded-lg transition-colors",
-            conversation.status === 'connected' ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
+            status === 'connected' ? "bg-green-500/10 animate-pulse" : "bg-muted/50"
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
-                {conversation.status === 'connected' ? 
-                  (conversation.isSpeaking ? "Speaking..." : "Listening...") : 
+                {status === 'connected' ? 
+                  (isSpeaking ? "Speaking..." : "Listening...") : 
                   "Ready to start"}
               </span>
             </div>
@@ -130,26 +171,8 @@ export function VoiceChat() {
           {agentResponse && (
             <div className="space-y-2">
               <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-sm">{agentResponse}</p>
+                <p className="text-sm whitespace-pre-wrap">{agentResponse}</p>
               </div>
-              {conversation.canSendFeedback && (
-                <div className="flex gap-2 justify-end">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => conversation.sendFeedback(true)}
-                  >
-                    👍 Helpful
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => conversation.sendFeedback(false)}
-                  >
-                    👎 Not Helpful
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
@@ -168,13 +191,19 @@ export function VoiceChat() {
 
           <Button
             onClick={handleStartStop}
-            variant={conversation.status === 'connected' ? "destructive" : "default"}
+            variant={status === 'connected' ? "destructive" : "default"}
             className="w-full"
+            disabled={status === 'connecting'}
           >
-            {conversation.status === 'connected' ? (
+            {status === 'connected' ? (
               <>
                 <Square className="mr-2 h-4 w-4" />
                 Stop Voice Chat
+              </>
+            ) : status === 'connecting' ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connecting...
               </>
             ) : (
               <>

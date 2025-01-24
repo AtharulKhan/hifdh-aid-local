@@ -9,8 +9,11 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import Mindfulness from "./pages/Mindfulness";
 
+import { SettingsProvider } from '@/hooks/use-settings';
+
 function App() {
   return (
+    <SettingsProvider>
     <Router>
       <AudioProvider>
         <div className="flex min-h-screen bg-background">
@@ -29,6 +32,7 @@ function App() {
         <Toaster />
       </AudioProvider>
     </Router>
+    </SettingsProvider>
   );
 }
 
