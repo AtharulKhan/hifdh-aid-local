@@ -5,21 +5,27 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Key } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useSettings } from "@/hooks/use-settings";
 
-export function AISection() {
+interface AISectionProps {
+  openrouterApiKey: string;
+  onOpenRouterKeyChange: (value: string) => void;
+}
+
+export function AISection({ 
+  openrouterApiKey,
+  onOpenRouterKeyChange,
+}: AISectionProps) {
   const { toast } = useToast();
-  const { settings, updateSettings } = useSettings();
-  const [formValues, setFormValues] = React.useState({
-    vapiApiKey: settings.vapiApiKey || '',
-    vapiAssistantId: settings.vapiAssistantId || ''
-  });
+  const [elevenLabsApiKey, setElevenLabsApiKey] = React.useState(() => 
+    localStorage.getItem('ELEVENLABS_API_KEY') || ''
+  );
 
   const handleSaveApiKeys = () => {
-    updateSettings(formValues);
+    localStorage.setItem('OPENROUTER_API_KEY', openrouterApiKey);
+    localStorage.setItem('ELEVENLABS_API_KEY', elevenLabsApiKey);
     toast({
       title: "Success",
-      description: "API settings saved successfully",
+      description: "API keys saved successfully",
     });
   };
 
@@ -30,49 +36,49 @@ export function AISection() {
         <div className="space-y-6">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Vapi API Key</label>
+              <label className="text-sm font-medium mb-2 block">OpenRouter API Key</label>
               <div className="flex gap-2">
                 <Input
                   type="password"
-                  value={formValues.vapiApiKey}
-                  onChange={(e) => setFormValues(v => ({ ...v, vapiApiKey: e.target.value }))}
-                  placeholder="Enter your Vapi API key"
+                  value={openrouterApiKey}
+                  onChange={(e) => onOpenRouterKeyChange(e.target.value)}
+                  placeholder="Enter your OpenRouter API key"
                   className="flex-1"
                 />
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 Get your API key from the{" "}
                 <a 
-                  href="https://vapi.ai/dashboard" 
+                  href="https://openrouter.ai/keys" 
                   className="text-primary hover:underline" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  Vapi dashboard
+                  OpenRouter dashboard
                 </a>
               </p>
             </div>
 
             <div className="border-t pt-4">
-              <label className="text-sm font-medium mb-2 block">Vapi Assistant ID</label>
+              <label className="text-sm font-medium mb-2 block">ElevenLabs API Key</label>
               <div className="flex gap-2">
                 <Input
-                  type="text"
-                  value={formValues.vapiAssistantId}
-                  onChange={(e) => setFormValues(v => ({ ...v, vapiAssistantId: e.target.value }))}
-                  placeholder="Enter your Vapi Assistant ID"
+                  type="password"
+                  value={elevenLabsApiKey}
+                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                  placeholder="Enter your ElevenLabs API key"
                   className="flex-1"
                 />
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Find your Assistant ID in the{" "}
+                Get your API key from the{" "}
                 <a 
-                  href="https://vapi.ai/dashboard/assistants" 
+                  href="https://elevenlabs.io/api" 
                   className="text-primary hover:underline" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  Vapi Assistants page
+                  ElevenLabs dashboard
                 </a>
               </p>
             </div>
@@ -87,7 +93,7 @@ export function AISection() {
           
           <Button onClick={handleSaveApiKeys} className="w-full">
             <Key className="mr-2 h-4 w-4" />
-            Save API Settings
+            Save API Keys
           </Button>
         </div>
       </AccordionContent>
