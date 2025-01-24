@@ -65,11 +65,37 @@ export function VoiceChat() {
         await conversation.endSession();
       } else {
         debug('Initiating WebSocket connection');
+        
+        // Check for API key
+        const elevenLabsApiKey = localStorage.getItem('ELEVENLABS_API_KEY');
+        if (!elevenLabsApiKey) {
+          debug('Missing ElevenLabs API key');
+          toast({
+            title: "API Key Required",
+            description: "Please set your ElevenLabs API key in settings first",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         // Request microphone permission
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        debug('Requesting microphone access');
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Release stream immediately to avoid iOS issues
+          stream.getTracks().forEach(track => track.stop());
+          debug('Microphone access granted');
+        } catch (error) {
+          debug('Microphone access denied:', error);
+          toast({
+            title: "Microphone Required",
+            description: "Please enable microphone access to use voice chat",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Start conversation with journal context
+        debug('Starting session with agent ID:', ELEVENLABS_AGENT_ID);
         await conversation.startSession({ 
           agentId: ELEVENLABS_AGENT_ID,
           overrides: {
@@ -79,8 +105,12 @@ export function VoiceChat() {
               }
             }
           }
+        }).catch(error => {
+          debug('Session start error:', error);
+          throw error;
         });
-        debug('Sending session configuration');
+        
+        debug('Session started successfully');
       }
     } catch (error) {
       debug('Error in handleStartStop:', error);
@@ -105,6 +135,7 @@ export function VoiceChat() {
       <div>Status: {conversation.status}</div>
       <div>Speaking: {conversation.isSpeaking ? 'Yes' : 'No'}</div>
       <div>Can Send Feedback: {conversation.canSendFeedback ? 'Yes' : 'No'}</div>
+      <div>API Key Set: {localStorage.getItem('ELEVENLABS_API_KEY') ? 'Yes' : 'No'}</div>
     </div>
   );
 
