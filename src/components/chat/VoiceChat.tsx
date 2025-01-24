@@ -10,6 +10,13 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { ELEVENLABS_AGENT_ID } from '@/config/voice';
 
+// Debug logging utility
+const debug = (message: string, data?: any) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[VoiceChat Debug] ${message}`;
+  console.info(logMessage, data || '');
+};
+
 export function VoiceChat() {
   const { toast } = useToast();
   const { selectedJournals } = useJournalContext();
@@ -20,23 +27,27 @@ export function VoiceChat() {
   const conversation = useConversation({
     preferHeadphonesForIosDevices: true,
     onConnect: () => {
+      debug('WebSocket connection established');
       toast({
         title: "Connected",
         description: "Voice chat is now active",
       });
     },
     onDisconnect: () => {
+      debug('WebSocket connection closed');
       toast({
         title: "Disconnected",
         description: "Voice chat session ended",
       });
     },
     onMessage: (message) => {
+      debug('Received message type:', message.type);
       if (message.type === 'assistant_response') {
         setAgentResponse(message.text);
       }
     },
     onError: (error) => {
+      debug('Error occurred:', error);
       toast({
         title: "Error",
         description: error.message || "An error occurred during voice chat",
@@ -48,10 +59,15 @@ export function VoiceChat() {
   const handleStartStop = async () => {
     try {
       if (conversation.status === 'connected') {
+        debug('Stopping voice chat session');
+        debug('Stopping media recorder');
+        debug('Cleaning up WebSocket connection');
         await conversation.endSession();
       } else {
+        debug('Initiating WebSocket connection');
         // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
+        debug('Requesting microphone access');
         
         // Start conversation with journal context
         await conversation.startSession({ 
@@ -64,8 +80,10 @@ export function VoiceChat() {
             }
           }
         });
+        debug('Sending session configuration');
       }
     } catch (error) {
+      debug('Error in handleStartStop:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to start voice chat",
@@ -76,9 +94,19 @@ export function VoiceChat() {
 
   const handleVolumeChange = async (value: number[]) => {
     const newVolume = value[0];
+    debug('Setting volume to:', newVolume);
     setVolume(newVolume);
     await conversation.setVolume({ volume: newVolume });
   };
+
+  // Add debug panel to show connection state and events
+  const renderDebugInfo = () => (
+    <div className="p-2 text-xs bg-muted/20 rounded-lg mt-2">
+      <div>Status: {conversation.status}</div>
+      <div>Speaking: {conversation.isSpeaking ? 'Yes' : 'No'}</div>
+      <div>Can Send Feedback: {conversation.canSendFeedback ? 'Yes' : 'No'}</div>
+    </div>
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -126,6 +154,8 @@ export function VoiceChat() {
               </span>
             </div>
           </div>
+
+          {renderDebugInfo()}
 
           {agentResponse && (
             <div className="space-y-2">
