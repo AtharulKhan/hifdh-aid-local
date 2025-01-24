@@ -16,13 +16,17 @@ export function AISection({
   onOpenRouterKeyChange,
 }: AISectionProps) {
   const { toast } = useToast();
-  const [elevenLabsApiKey, setElevenLabsApiKey] = React.useState(() => 
-    localStorage.getItem('ELEVENLABS_API_KEY') || ''
+  const [vapiApiKey, setVapiApiKey] = React.useState(() => 
+    localStorage.getItem('VAPI_API_KEY') || ''
+  );
+  const [vapiAssistantId, setVapiAssistantId] = React.useState(() => 
+    localStorage.getItem('VAPI_ASSISTANT_ID') || ''
   );
 
   const handleSaveApiKeys = () => {
     localStorage.setItem('OPENROUTER_API_KEY', openrouterApiKey);
-    localStorage.setItem('ELEVENLABS_API_KEY', elevenLabsApiKey);
+    localStorage.setItem('VAPI_API_KEY', vapiApiKey);
+    localStorage.setItem('VAPI_ASSISTANT_ID', vapiAssistantId);
     toast({
       title: "Success",
       description: "API keys saved successfully",
@@ -60,25 +64,49 @@ export function AISection({
             </div>
 
             <div className="border-t pt-4">
-              <label className="text-sm font-medium mb-2 block">ElevenLabs API Key</label>
+              <label className="text-sm font-medium mb-2 block">Vapi API Key</label>
               <div className="flex gap-2">
                 <Input
                   type="password"
-                  value={elevenLabsApiKey}
-                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
-                  placeholder="Enter your ElevenLabs API key"
+                  value={vapiApiKey}
+                  onChange={(e) => setVapiApiKey(e.target.value)}
+                  placeholder="Enter your Vapi API key"
                   className="flex-1"
                 />
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 Get your API key from the{" "}
                 <a 
-                  href="https://elevenlabs.io/api" 
+                  href="https://vapi.ai/dashboard" 
                   className="text-primary hover:underline" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  ElevenLabs dashboard
+                  Vapi dashboard
+                </a>
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Vapi Assistant ID</label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={vapiAssistantId}
+                  onChange={(e) => setVapiAssistantId(e.target.value)}
+                  placeholder="Enter your Vapi Assistant ID"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Find your Assistant ID in the{" "}
+                <a 
+                  href="https://vapi.ai/dashboard/assistants" 
+                  className="text-primary hover:underline" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Vapi Assistants page
                 </a>
               </p>
             </div>
