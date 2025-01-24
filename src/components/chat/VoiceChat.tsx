@@ -92,12 +92,11 @@ export function VoiceChat() {
 
       // Start call with journal context
       await vapi.start(settings.vapiAssistantId, {
-        messages: [
-          {
-            role: "system",
-            content: `Current journal context: ${selectedJournals.map(j => j.content).join('\n')}`
+        overrides: {
+          agent: {
+            systemPrompt: `Current journal context: ${selectedJournals.map(j => j.content).join('\n')}`
           }
-        ]
+        }
       });
 
       vapiRef.current = vapi;
