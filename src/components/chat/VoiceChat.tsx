@@ -14,40 +14,54 @@ export function VoiceChat() {
   const [agentResponse, setAgentResponse] = React.useState('');
   const [status, setStatus] = React.useState<'idle' | 'connecting' | 'connected'>('idle');
   const [isRecording, setIsRecording] = React.useState(false);
+  const [debugLogs, setDebugLogs] = React.useState<string[]>([]);
   
   const wsRef = React.useRef<WebSocket | null>(null);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
-  const audioContextRef = React.useRef<AudioContext | null>(null);
+
+  const addDebugLog = (message: string) => {
+    console.log(`[VoiceChat Debug] ${message}`);
+    setDebugLogs(prev => [...prev, `${new Date().toISOString()} - ${message}`]);
+  };
 
   React.useEffect(() => {
     return () => {
       if (wsRef.current) {
+        addDebugLog('Cleaning up WebSocket connection');
         wsRef.current.close();
       }
       if (mediaRecorderRef.current) {
+        addDebugLog('Stopping media recorder');
         mediaRecorderRef.current.stop();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
       }
     };
   }, []);
 
   const startRecording = async () => {
     try {
+      addDebugLog('Requesting microphone access');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       
       mediaRecorderRef.current.ondataavailable = async (event) => {
         if (event.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
           const arrayBuffer = await event.data.arrayBuffer();
-          wsRef.current.send(arrayBuffer);
+          addDebugLog(`Sending audio chunk: ${event.data.size} bytes`);
+          
+          wsRef.current.send(JSON.stringify({
+            type: 'audio.input',
+            data: Array.from(new Uint8Array(arrayBuffer)),
+            format: 'webm'
+          }));
         }
       };
 
       mediaRecorderRef.current.start(500);
+      addDebugLog('Started recording');
       setIsRecording(true);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      addDebugLog(`Microphone error: ${errorMessage}`);
       toast({
         title: "Microphone Error",
         description: "Please enable microphone access",
@@ -59,10 +73,9 @@ export function VoiceChat() {
   const handleStartStop = async () => {
     try {
       if (status === 'connected') {
+        addDebugLog('Stopping current session');
         wsRef.current?.close();
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
+        mediaRecorderRef.current?.stop();
         setStatus('idle');
         setIsRecording(false);
         return;
@@ -70,6 +83,7 @@ export function VoiceChat() {
 
       const openAIKey = localStorage.getItem('OPENAI_API_KEY');
       if (!openAIKey) {
+        addDebugLog('OpenAI API key missing');
         toast({
           title: "API Key Missing",
           description: "Please set your OpenAI API key in settings",
@@ -79,48 +93,81 @@ export function VoiceChat() {
       }
 
       setStatus('connecting');
+      addDebugLog('Initiating WebSocket connection');
       
       const ws = new WebSocket(
-        'wss://api.openai.com/v1/audio/speech',
+        'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17',
         [
-          'openai-api-key.' + openAIKey,
+          'realtime',
+          `openai-insecure-api-key.${openAIKey}`,
+          'openai-beta.realtime-v1'
         ]
       );
 
       wsRef.current = ws;
 
       ws.onopen = () => {
+        addDebugLog('WebSocket connection established');
         setStatus('connected');
         toast({ 
           title: "Connected", 
           description: "Voice chat is now active" 
         });
         
-        ws.send(JSON.stringify({
+        const sessionConfig = {
           type: 'session.create',
-          context: {
-            messages: [{
-              role: "system",
-              content: `Journal context: ${selectedJournals.map(j => j.content).join('\n')}`
-            }]
+          session: {
+            model: {
+              messages: [{
+                role: "system",
+                content: `Journal context: ${selectedJournals.map(j => j.content).join('\n')}`
+              }]
+            },
+            audio: {
+              input: { enabled: true, format: 'webm' },
+              output: { enabled: true, format: 'wav' }
+            }
           }
-        }));
+        };
 
+        addDebugLog('Sending session configuration');
+        ws.send(JSON.stringify(sessionConfig));
         startRecording();
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'response') {
-            setAgentResponse(prev => `${prev}\n${data.content}`);
+          addDebugLog(`Received message type: ${data.type}`);
+          
+          if (data.type === 'response.update') {
+            setAgentResponse(prev => `${prev}\n${data.response.content}`);
+          }
+          
+          if (data.type === 'audio.output' && data.data) {
+            addDebugLog('Processing audio output');
+            const audioBlob = new Blob([new Uint8Array(data.data)], { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            
+            audio.onplay = () => addDebugLog('Started playing audio response');
+            audio.onended = () => {
+              addDebugLog('Finished playing audio response');
+              URL.revokeObjectURL(audioUrl);
+            };
+            
+            audio.play().catch(error => {
+              addDebugLog(`Audio playback error: ${error.message}`);
+            });
           }
         } catch (error) {
-          console.error('Failed to parse message:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          addDebugLog(`Message processing error: ${errorMessage}`);
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (error) => {
+        addDebugLog(`WebSocket error: ${error.type}`);
         toast({
           title: "Connection Error",
           description: "Failed to connect to voice service",
@@ -130,7 +177,8 @@ export function VoiceChat() {
         setIsRecording(false);
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        addDebugLog(`WebSocket closed: ${event.code} - ${event.reason || 'No reason provided'}`);
         setStatus('idle');
         setIsRecording(false);
         toast({ 
@@ -140,9 +188,11 @@ export function VoiceChat() {
       };
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      addDebugLog(`General error: ${errorMessage}`);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to start voice chat",
+        description: errorMessage,
         variant: "destructive"
       });
       setStatus('idle');
@@ -200,6 +250,21 @@ export function VoiceChat() {
           {agentResponse && (
             <div className="p-4 bg-primary/10 rounded-lg">
               <p className="text-sm whitespace-pre-wrap">{agentResponse}</p>
+            </div>
+          )}
+
+          {debugLogs.length > 0 && (
+            <div className="p-4 bg-yellow-500/10 rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Debug Logs:</h4>
+              <ScrollArea className="h-[100px]">
+                <div className="space-y-1">
+                  {debugLogs.map((log, index) => (
+                    <p key={index} className="text-xs text-muted-foreground font-mono">
+                      {log}
+                    </p>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           )}
 
