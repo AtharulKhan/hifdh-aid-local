@@ -18,6 +18,7 @@ export function VoiceChat() {
   
   const wsRef = React.useRef<WebSocket | null>(null);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
 
   const addDebugLog = (message: string) => {
     console.log(`[VoiceChat Debug] ${message}`);
@@ -34,25 +35,32 @@ export function VoiceChat() {
         addDebugLog('Stopping media recorder');
         mediaRecorderRef.current.stop();
       }
+      if (audioContextRef.current) {
+        addDebugLog('Closing audio context');
+        audioContextRef.current.close();
+      }
     };
   }, []);
 
   const startRecording = async () => {
     try {
       addDebugLog('Requesting microphone access');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true
+        } 
+      });
+      
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm; codecs=opus'
+      });
       
       mediaRecorderRef.current.ondataavailable = async (event) => {
         if (event.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
           const arrayBuffer = await event.data.arrayBuffer();
-          addDebugLog(`Sending audio chunk: ${event.data.size} bytes`);
-          
-          wsRef.current.send(JSON.stringify({
-            type: 'audio.input',
-            data: Array.from(new Uint8Array(arrayBuffer)),
-            format: 'webm'
-          }));
+          addDebugLog(`Sending raw audio chunk: ${arrayBuffer.byteLength} bytes`);
+          wsRef.current.send(arrayBuffer);
         }
       };
 
@@ -124,8 +132,16 @@ export function VoiceChat() {
               }]
             },
             audio: {
-              input: { enabled: true, format: 'webm' },
-              output: { enabled: true, format: 'wav' }
+              input: { 
+                enabled: true,
+                format: 'webm_opus',
+                sample_rate: 16000
+              },
+              output: { 
+                enabled: true,
+                format: 'wav',
+                sample_rate: 24000
+              }
             }
           }
         };
@@ -135,30 +151,34 @@ export function VoiceChat() {
         startRecording();
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
-          const data = JSON.parse(event.data);
-          addDebugLog(`Received message type: ${data.type}`);
-          
-          if (data.type === 'response.update') {
-            setAgentResponse(prev => `${prev}\n${data.response.content}`);
-          }
-          
-          if (data.type === 'audio.output' && data.data) {
-            addDebugLog('Processing audio output');
-            const audioBlob = new Blob([new Uint8Array(data.data)], { type: 'audio/wav' });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
+          if (typeof event.data === 'string') {
+            const data = JSON.parse(event.data);
+            addDebugLog(`Received message type: ${data.type}`);
             
-            audio.onplay = () => addDebugLog('Started playing audio response');
-            audio.onended = () => {
+            if (data.type === 'response.update') {
+              setAgentResponse(prev => `${prev}\n${data.response.content}`);
+            }
+          } else {
+            addDebugLog('Processing audio output');
+            const arrayBuffer = await event.data.arrayBuffer();
+            
+            if (!audioContextRef.current) {
+              audioContextRef.current = new AudioContext();
+            }
+            
+            const buffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+            const source = audioContextRef.current.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContextRef.current.destination);
+            
+            source.onended = () => {
               addDebugLog('Finished playing audio response');
-              URL.revokeObjectURL(audioUrl);
             };
             
-            audio.play().catch(error => {
-              addDebugLog(`Audio playback error: ${error.message}`);
-            });
+            source.start(0);
+            addDebugLog('Started playing audio response');
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -181,10 +201,19 @@ export function VoiceChat() {
         addDebugLog(`WebSocket closed: ${event.code} - ${event.reason || 'No reason provided'}`);
         setStatus('idle');
         setIsRecording(false);
-        toast({ 
-          title: "Disconnected", 
-          description: "Voice chat session ended" 
-        });
+        
+        if (event.code === 4001) {
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid API key",
+            variant: "destructive"
+          });
+        } else {
+          toast({ 
+            title: "Disconnected", 
+            description: "Voice chat session ended" 
+          });
+        }
       };
 
     } catch (error) {
