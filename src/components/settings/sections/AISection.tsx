@@ -19,14 +19,10 @@ export function AISection({
   const [elevenLabsApiKey, setElevenLabsApiKey] = React.useState(() => 
     localStorage.getItem('ELEVENLABS_API_KEY') || ''
   );
-  const [openAIApiKey, setOpenAIApiKey] = React.useState(() => 
-    localStorage.getItem('OPENAI_API_KEY') || ''
-  );
 
   const handleSaveApiKeys = () => {
     localStorage.setItem('OPENROUTER_API_KEY', openrouterApiKey);
     localStorage.setItem('ELEVENLABS_API_KEY', elevenLabsApiKey);
-    localStorage.setItem('OPENAI_API_KEY', openAIApiKey);
     toast({
       title: "Success",
       description: "API keys saved successfully",
@@ -83,30 +79,6 @@ export function AISection({
                   rel="noopener noreferrer"
                 >
                   ElevenLabs dashboard
-                </a>
-              </p>
-            </div>
-
-            <div className="border-t pt-4">
-              <label className="text-sm font-medium mb-2 block">OpenAI API Key</label>
-              <div className="flex gap-2">
-                <Input
-                  type="password"
-                  value={openAIApiKey}
-                  onChange={(e) => setOpenAIApiKey(e.target.value)}
-                  placeholder="Enter your OpenAI API key"
-                  className="flex-1"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Get your API key from the{" "}
-                <a 
-                  href="https://platform.openai.com/api-keys" 
-                  className="text-primary hover:underline" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  OpenAI dashboard
                 </a>
               </p>
             </div>
