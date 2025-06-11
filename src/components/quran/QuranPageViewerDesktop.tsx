@@ -93,37 +93,46 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
     return currentSurahVerses.map(verse => getDisplayText(verse)).join(' ');
   };
 
-  const getVisibleText = (): string => {
-    if (!hideVerses) {
-      return getCombinedText();
-    }
-    
-    const fullText = getCombinedText();
-    const words = fullText.split(' ');
-    
-    const sliderProgress = revelationRate[0] / 100;
-    
-    if (sliderProgress === 0) return '';
-    
-    const wordsToShow = Math.ceil(words.length * sliderProgress);
-    return words.slice(0, wordsToShow).join(' ');
-  };
-
   const getPaginatedText = (): { text: string; totalPages: number; hasNextPage: boolean } => {
-    const fullText = getVisibleText();
+    const fullText = getCombinedText();
     
     if (maxLines[0] === 0) {
-      return { text: fullText, totalPages: 1, hasNextPage: false };
+      // No pagination - apply revelation rate to full text
+      if (!hideVerses) {
+        return { text: fullText, totalPages: 1, hasNextPage: false };
+      }
+      
+      const words = fullText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) return { text: '', totalPages: 1, hasNextPage: false };
+      
+      const wordsToShow = Math.ceil(words.length * sliderProgress);
+      const visibleText = words.slice(0, wordsToShow).join(' ');
+      return { text: visibleText, totalPages: 1, hasNextPage: false };
     }
 
-    // Estimate characters per line (approximately 80-100 characters per line for Arabic text)
+    // With pagination enabled
     const avgCharsPerLine = 90;
     const maxCharsPerPage = maxLines[0] * avgCharsPerLine;
     
     if (fullText.length <= maxCharsPerPage) {
-      return { text: fullText, totalPages: 1, hasNextPage: false };
+      // Single page - apply revelation rate to this page
+      if (!hideVerses) {
+        return { text: fullText, totalPages: 1, hasNextPage: false };
+      }
+      
+      const words = fullText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) return { text: '', totalPages: 1, hasNextPage: false };
+      
+      const wordsToShow = Math.ceil(words.length * sliderProgress);
+      const visibleText = words.slice(0, wordsToShow).join(' ');
+      return { text: visibleText, totalPages: 1, hasNextPage: false };
     }
 
+    // Multiple pages
     const totalPages = Math.ceil(fullText.length / maxCharsPerPage);
     const startIndex = (currentPage - 1) * maxCharsPerPage;
     const endIndex = Math.min(startIndex + maxCharsPerPage, fullText.length);
@@ -136,7 +145,21 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
       }
     }
     
-    const pageText = fullText.substring(startIndex, adjustedEndIndex);
+    let pageText = fullText.substring(startIndex, adjustedEndIndex);
+    
+    // Apply revelation rate to current page content
+    if (hideVerses) {
+      const words = pageText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) {
+        pageText = '';
+      } else {
+        const wordsToShow = Math.ceil(words.length * sliderProgress);
+        pageText = words.slice(0, wordsToShow).join(' ');
+      }
+    }
+    
     const hasNextPage = currentPage < totalPages;
     
     return { text: pageText, totalPages, hasNextPage };
@@ -146,10 +169,12 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
 
   const goToNextPage = () => {
     setCurrentPage(prev => prev + 1);
+    setRevelationRate([100]); // Reset revelation rate for new page
   };
 
   const goToPreviousPage = () => {
     setCurrentPage(prev => Math.max(1, prev - 1));
+    setRevelationRate([100]); // Reset revelation rate for new page
   };
 
   return (
@@ -294,22 +319,21 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-4 shadow-sm">
           <div className="max-w-6xl mx-auto space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-green-700">Revelation Progress:</span>
+              <span className="text-sm font-medium text-green-700">
+                {maxLines[0] > 0 && totalPages > 1 ? `Page ${currentPage} Revelation Progress:` : 'Revelation Progress:'}
+              </span>
               <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
             </div>
             <Slider
               value={revelationRate}
-              onValueChange={(value) => {
-                setRevelationRate(value);
-                setCurrentPage(1);
-              }}
+              onValueChange={setRevelationRate}
               max={100}
               step={1}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-green-500">
               <span>Hidden</span>
-              <span>Fully Revealed</span>
+              <span>{maxLines[0] > 0 && totalPages > 1 ? 'Page Fully Revealed' : 'Fully Revealed'}</span>
             </div>
           </div>
         </div>
