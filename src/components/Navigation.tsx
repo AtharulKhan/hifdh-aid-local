@@ -1,16 +1,17 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Quran Review" }
+  { path: "/", icon: Home, label: "Quran Review" },
+  { path: "/page-view", icon: BookOpen, label: "Quran Review (Page)" }
 ];
 
 export const Navigation = () => {

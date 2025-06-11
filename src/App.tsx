@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Toaster } from "./components/ui/toaster";
@@ -8,6 +9,7 @@ import Journal from "./pages/Journal";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import Mindfulness from "./pages/Mindfulness";
+import PageView from "./pages/PageView";
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/page-view" element={<PageView />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/mindfulness" element={<Mindfulness />} />
