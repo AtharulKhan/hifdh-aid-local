@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -16,10 +17,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/chat", icon: MessageCircle, label: "AI Therapist" },
-  { path: "/journal", icon: BookOpen, label: "Mood Journal" },
-  { path: "/mindfulness", icon: Leaf, label: "Mindfulness" },
+  { path: "/", icon: Home, label: "Quran Review" },
+  { path: "/chat", icon: MessageCircle, label: "AI Assistant" },
+  { path: "/journal", icon: BookOpen, label: "Progress Journal" },
+  { path: "/mindfulness", icon: Leaf, label: "Reflection" },
   { path: "/progress", icon: Activity, label: "Progress" },
   { path: "/community", icon: Users, label: "Community" },
   { path: "/help", icon: HelpCircle, label: "Get Help" },
@@ -38,10 +39,10 @@ export const Navigation = () => {
     )}>
       <div className="p-4 flex justify-between items-center">
         <h1 className={cn(
-          "text-xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent",
+          "text-xl font-bold text-center bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent",
           isMinimized ? "hidden" : "hidden md:block"
         )}>
-          Mental Health Hub
+          Quran Hifz Aid
         </h1>
         <Button
           variant="ghost"
@@ -63,9 +64,9 @@ export const Navigation = () => {
             to={path}
             className={cn(
               "flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200",
-              "hover:bg-primary/5 hover:scale-105",
+              "hover:bg-green-50 hover:scale-105",
               location.pathname === path
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+                ? "bg-green-600 text-white shadow-lg shadow-green-600/20 hover:bg-green-700"
                 : "text-gray-600"
             )}
           >
@@ -81,4 +82,4 @@ export const Navigation = () => {
       </div>
     </nav>
   );
-}
+};
