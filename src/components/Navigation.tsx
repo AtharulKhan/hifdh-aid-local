@@ -34,7 +34,7 @@ export const Navigation = () => {
   return (
     <nav className={cn(
       "transition-all duration-300 ease-in-out",
-      "bg-white/80 backdrop-blur-xl border-r border-gray-200 min-h-screen shadow-lg animate-fadeIn",
+      "bg-white/95 backdrop-blur-xl border-r border-gray-100 min-h-screen shadow-sm animate-fadeIn",
       isMinimized ? "w-16" : "w-16 md:w-64"
     )}>
       <div className="p-4 flex justify-between items-center">
@@ -64,10 +64,10 @@ export const Navigation = () => {
             to={path}
             className={cn(
               "flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200",
-              "hover:bg-green-50 hover:scale-105",
+              "hover:bg-gray-50 hover:scale-105",
               location.pathname === path
-                ? "bg-green-600 text-white shadow-lg shadow-green-600/20 hover:bg-green-700"
-                : "text-gray-600"
+                ? "bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600"
+                : "text-gray-600 hover:text-gray-800"
             )}
           >
             <Icon className="h-5 w-5" />

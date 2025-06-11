@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +13,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
   const [versesPerPage, setVersesPerPage] = useState(5);
   const [showArabic, setShowArabic] = useState(true);
-  const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'full'>>({});
+  const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -51,7 +50,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     setVerseRevealStates({});
   };
 
-  const revealVerse = (verseId: number, revealType: 'partial' | 'full') => {
+  const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
     setVerseRevealStates(prev => ({
       ...prev,
       [verseId]: revealType
@@ -65,7 +64,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     if (revealState === 'hidden') {
       return '';
     } else if (revealState === 'partial') {
+      // Show first third of the verse
       return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
+    } else if (revealState === 'more') {
+      // Show first two thirds of the verse
+      return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
     } else {
       return verse.text;
     }
@@ -139,7 +142,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   
                   {verseRevealStates[verse.id] !== 'full' && (
                     <div className="flex justify-end space-x-2 mt-4">
-                      {verseRevealStates[verse.id] !== 'partial' && (
+                      {!verseRevealStates[verse.id] && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -154,11 +157,22 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => revealVerse(verse.id, 'partial')}
+                          onClick={() => revealVerse(verse.id, 'more')}
                           className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
                         >
                           <ArrowRight className="h-4 w-4 mr-1" />
                           Reveal More
+                        </Button>
+                      )}
+                      {verseRevealStates[verse.id] === 'more' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'full')}
+                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal Rest
                         </Button>
                       )}
                       <Button
