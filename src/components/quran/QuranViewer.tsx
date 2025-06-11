@@ -57,6 +57,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     const surahVerses = allVerses.filter(verse => verse.surah === currentVerse.surah);
     return Math.max(...surahVerses.map(verse => verse.ayah));
   };
+
   const handleNavigate = (verseId: number) => {
     setCurrentVerseId(verseId);
     setVerseRevealStates({});
@@ -79,9 +80,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       setVerseRange([1, Math.min(10, maxVerse)]);
     }
   };
+
   const handleVerseRangeChange = (value: number[]) => {
     setVerseRange([value[0], value[1]]);
   };
+
   const goToNextSurah = () => {
     if (!currentVerse) return;
     const nextSurahNumber = currentVerse.surah + 1;
@@ -90,6 +93,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       handleNavigate(nextSurahFirstVerse.id);
     }
   };
+
   const goToPreviousSurah = () => {
     if (!currentVerse) return;
     const prevSurahNumber = currentVerse.surah - 1;
@@ -100,6 +104,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       }
     }
   };
+
   const handleSurahSliderChange = (value: number[]) => {
     const targetSurah = value[0];
     const firstVerseOfSurah = allVerses.find(v => v.surah === targetSurah);
@@ -107,6 +112,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       handleNavigate(firstVerseOfSurah.id);
     }
   };
+
   const getTajweedText = (verse: QuranVerse): string => {
     const words: string[] = [];
     let wordIndex = 1;
@@ -119,12 +125,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     }
     return words.length > 0 ? words.join(' ') : verse.text;
   };
+
   const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
     setVerseRevealStates(prev => ({
       ...prev,
       [verseId]: revealType
     }));
   };
+
   const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     const verseTextElement = verseTextRefs.current[verseId];
@@ -132,10 +140,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     const rect = verseTextElement.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const textWidth = rect.width; // Actual width of the text content
+    const textWidth = rect.width;
     const height = rect.height;
 
-    // Allow hover area to extend slightly above the text (20px above)
     const extendedHoverArea = y >= -20 && y <= height;
     if (!extendedHoverArea) {
       setHoverWordCounts(prev => ({
@@ -148,12 +155,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     if (verse) {
       const verseText = showTajweed ? getTajweedText(verse) : verse.text;
       const words = verseText.split(' ');
-
-      // For Arabic text (right-to-left), calculate from the right side
-      // Use the actual text width, not the container width
       const percentageFromRight = Math.max(0, Math.min(1, (textWidth - x) / textWidth));
-
-      // Calculate word position based on percentage
       const wordsToShow = Math.ceil(words.length * percentageFromRight);
       setHoverWordCounts(prev => ({
         ...prev,
@@ -161,6 +163,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       }));
     }
   };
+
   const handleMouseLeave = (verseId: number) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     setHoverWordCounts(prev => ({
@@ -168,13 +171,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       [verseId]: 0
     }));
   };
+
   const getVerseDisplay = (verse: QuranVerse) => {
     const verseText = showTajweed ? getTajweedText(verse) : verse.text;
     const words = verseText.split(' ');
     const hoverWordCount = hoverWordCounts[verse.id] || 0;
     const sliderValue = verseSliderValues[verse.id] || 0;
 
-    // If slider is being used, use slider value instead of other reveal methods
     if (sliderValue > 0) {
       const wordsToShow = Math.ceil(words.length * (sliderValue / 100));
       return words.slice(0, wordsToShow).join(' ');
@@ -199,15 +202,19 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       return verseText;
     }
   };
+
   const handleVerseSliderChange = (verseId: number, value: number[]) => {
     setVerseSliderValues(prev => ({
       ...prev,
       [verseId]: value[0]
     }));
   };
-  return <div className="space-y-8 max-w-4xl mx-auto w-full overflow-x-hidden">
+
+  return (
+    <div className="space-y-8 max-w-4xl mx-auto w-full overflow-x-hidden">
       {/* Header with Surah Info */}
-      {currentVerse && <div className="bg-white p-3 sm:p-4 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
+      {currentVerse && (
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
           <div className="w-full space-y-3">
             {/* Surah Title */}
             <div className="w-full">
@@ -258,7 +265,8 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
               <span>{maxSurah}</span>
             </div>
           </div>
-        </div>}
+        </div>
+      )}
 
       {/* Collapsible Control Panel */}
       <Card className="p-3 sm:p-4 bg-blue-50 border-blue-100 w-full overflow-x-hidden">
@@ -462,5 +470,6 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
           </Button>
         </div>
       </Card>
-    </div>;
+    </div>
+  );
 };
