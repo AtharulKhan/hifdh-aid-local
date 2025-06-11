@@ -213,7 +213,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
               size="sm"
               onClick={goToPreviousSurah}
               disabled={currentSurah <= 1}
-              className="border-green-200 text-green-600 hover:bg-green-50"
+              className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
             >
               <SkipBack className="h-4 w-4 mr-1" />
               Previous Surah
@@ -230,7 +230,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
               size="sm"
               onClick={goToNextSurah}
               disabled={currentSurah >= maxSurah}
-              className="border-green-200 text-green-600 hover:bg-green-50"
+              className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
             >
               Next Surah
               <SkipForward className="h-4 w-4 ml-1" />
