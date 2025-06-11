@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,6 @@ interface QuranViewerProps {
 
 export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 }) => {
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
-  const [versesPerPage, setVersesPerPage] = useState(5);
   const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
   const [showTajweed, setShowTajweed] = useState(false);
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
@@ -25,42 +25,22 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
 
-  // Get current verses to display
+  // Get current verses to display - now shows all verses in the current surah
   const getCurrentVerses = (): QuranVerse[] => {
-    const verses: QuranVerse[] = [];
-    for (let i = 0; i < versesPerPage && currentVerseId + i <= maxVerseId; i++) {
-      const verse = getVerseById(currentVerseId + i);
-      if (verse) verses.push(verse);
-    }
-    return verses;
+    const currentVerse = getVerseById(currentVerseId);
+    if (!currentVerse) return [];
+    
+    // Get all verses for the current surah
+    return allVerses.filter(verse => verse.surah === currentVerse.surah);
   };
 
   const currentVerses = getCurrentVerses();
   const currentVerse = currentVerses[0];
 
-  const handleNavigate = (verseId: number, newVersesPerPage?: number) => {
+  const handleNavigate = (verseId: number) => {
     setCurrentVerseId(verseId);
-    if (newVersesPerPage) {
-      setVersesPerPage(newVersesPerPage);
-    }
     setVerseRevealStates({});
     setHoverWordCounts({});
-  };
-
-  const goToNextPage = () => {
-    if (currentVerseId + versesPerPage <= maxVerseId) {
-      setCurrentVerseId(currentVerseId + versesPerPage);
-      setVerseRevealStates({});
-      setHoverWordCounts({});
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentVerseId - versesPerPage >= 1) {
-      setCurrentVerseId(currentVerseId - versesPerPage);
-      setVerseRevealStates({});
-      setHoverWordCounts({});
-    }
   };
 
   const goToNextSurah = () => {
@@ -96,12 +76,6 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     }
     
     return words.length > 0 ? words.join(' ') : verse.text;
-  };
-
-  const handleVersesPerPageChange = (count: number) => {
-    setVersesPerPage(count);
-    setVerseRevealStates({});
-    setHoverWordCounts({});
   };
 
   const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
@@ -226,10 +200,10 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-              Page {Math.ceil(currentVerseId / versesPerPage)}
+              Surah {currentVerse.surah}
             </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600">
-              Verse {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} of {maxVerseId}
+              {currentVerses.length} verses
             </Badge>
           </div>
         </div>
@@ -251,21 +225,6 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           
           <CollapsibleContent className="pt-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-600">Verses per page:</span>
-                {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
-                  <Button
-                    key={count}
-                    variant={versesPerPage === count ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
-                    className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    {count}
-                  </Button>
-                ))}
-              </div>
-              
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-600">Tajweed:</span>
@@ -457,27 +416,27 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={goToPreviousPage}
-            disabled={currentVerseId <= 1}
+            onClick={goToPreviousSurah}
+            disabled={!currentVerse || currentVerse.surah <= 1}
             className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
             <ChevronRight className="h-4 w-4" />
-            <span>Previous Page</span>
+            <span>Previous Surah</span>
           </Button>
 
           <div className="flex items-center space-x-4">
             <span className="text-sm text-blue-600">
-              Page {Math.ceil(currentVerseId / versesPerPage)} of {Math.ceil(maxVerseId / versesPerPage)}
+              Surah {currentVerse?.surah || 1}
             </span>
           </div>
 
           <Button
             variant="outline"
-            onClick={goToNextPage}
-            disabled={currentVerseId + versesPerPage > maxVerseId}
+            onClick={goToNextSurah}
+            disabled={!currentVerse || !allVerses.find(v => v.surah === currentVerse.surah + 1)}
             className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
-            <span>Next Page</span>
+            <span>Next Surah</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
