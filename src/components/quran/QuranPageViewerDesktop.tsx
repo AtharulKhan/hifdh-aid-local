@@ -25,13 +25,18 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const [revelationRate, setRevelationRate] = useState([100]);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
+  const [maxVerses, setMaxVerses] = useState([0]); // 0 means no limit
   const [currentPage, setCurrentPage] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
   
   const getSurahVerses = (): QuranVerse[] => {
-    return allVerses.filter(verse => verse.surah === currentSurah);
+    const surahVerses = allVerses.filter(verse => verse.surah === currentSurah);
+    if (maxVerses[0] === 0) {
+      return surahVerses;
+    }
+    return surahVerses.slice(0, maxVerses[0]);
   };
 
   const currentSurahVerses = getSurahVerses();
@@ -177,6 +182,11 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
     setRevelationRate([100]); // Reset revelation rate for new page
   };
 
+  const handlePageSliderChange = (value: number[]) => {
+    setCurrentPage(value[0]);
+    setRevelationRate([100]); // Reset revelation rate for new page
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header with Surah Info */}
@@ -285,6 +295,31 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
                 />
               </div>
 
+              {/* Max Verses Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Max verses to show:</span>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {maxVerses[0] === 0 ? 'All verses' : `${maxVerses[0]} verses`}
+                  </span>
+                </div>
+                <Slider
+                  value={maxVerses}
+                  onValueChange={(value) => {
+                    setMaxVerses(value);
+                    setCurrentPage(1);
+                  }}
+                  max={Math.max(...allVerses.filter(v => v.surah === currentSurah).map((_, index) => index + 1))}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-green-500">
+                  <span>All verses</span>
+                  <span>{Math.max(...allVerses.filter(v => v.surah === currentSurah).map((_, index) => index + 1))} verses</span>
+                </div>
+              </div>
+
               {/* Max Lines Slider */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -374,30 +409,53 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
 
           {/* Pagination Controls */}
           {maxLines[0] > 0 && totalPages > 1 && (
-            <div className="absolute bottom-4 right-4 flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToPreviousPage}
-                disabled={currentPage <= 1}
-                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <span className="text-sm text-gray-600 px-2">
-                {currentPage} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToNextPage}
-                disabled={!hasNextPage}
-                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-3">
+              {/* Previous/Next Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage <= 1}
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600 px-2">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={!hasNextPage}
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Page Navigation Slider */}
+              <div className="w-48 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-blue-700">Quick Page Navigation:</span>
+                  <span className="text-xs text-blue-600 bg-blue-50 px-1 py-0.5 rounded">Page {currentPage}</span>
+                </div>
+                <Slider
+                  value={[currentPage]}
+                  onValueChange={handlePageSliderChange}
+                  max={totalPages}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-blue-500">
+                  <span>1</span>
+                  <span>{totalPages}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
