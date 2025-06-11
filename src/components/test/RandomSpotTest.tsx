@@ -98,6 +98,20 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     }
   };
 
+  // Get all words from all verses combined
+  const getAllWords = () => {
+    return currentVerses.flatMap(verse => verse.text.split(' '));
+  };
+
+  const getTotalWordCount = () => {
+    return getAllWords().length;
+  };
+
+  const getVisibleText = (wordCount: number) => {
+    const allWords = getAllWords();
+    return allWords.slice(0, wordCount).join(' ');
+  };
+
   useEffect(() => {
     generateRandomTest();
   }, [testScope, selectedSurah, selectedJuz, numberOfVerses]);
@@ -149,7 +163,8 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     return <div>Loading...</div>;
   }
 
-  const visibleVerses = Math.min(sliderValue[0], currentVerses.length);
+  const totalWords = getTotalWordCount();
+  const visibleWordCount = Math.min(sliderValue[0], totalWords);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -271,19 +286,19 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                 </Badge>
               </div>
               
-              {/* Verse Progress Slider */}
-              {numberOfVerses > 1 && (
+              {/* Word Progress Slider */}
+              {totalWords > 1 && (
                 <div className="space-y-3">
                   <div className="text-center">
                     <span className="text-sm text-gray-600">
-                      Showing {visibleVerses} of {numberOfVerses} verses
+                      Showing {visibleWordCount} of {totalWords} words
                     </span>
                   </div>
                   <div className="px-4">
                     <Slider
                       value={sliderValue}
                       onValueChange={setSliderValue}
-                      max={numberOfVerses}
+                      max={totalWords}
                       min={1}
                       step={1}
                       className="w-full"
@@ -298,31 +313,16 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                   Continue from this point... (recite {numberOfVerses} {numberOfVerses === 1 ? 'verse' : 'verses'})
                 </div>
                 
-                {/* Show verses based on slider or single verse */}
+                {/* Show progressive text based on slider */}
                 <div className="space-y-3">
                   {numberOfVerses === 1 ? (
                     <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                      {getPartialText(currentVerses[0].text)}
+                      {totalWords === 1 ? getPartialText(currentVerses[0].text) : getVisibleText(visibleWordCount)}
                     </div>
                   ) : (
-                    <>
-                      {/* First verse partial */}
-                      <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                        {getPartialText(currentVerses[0].text)}
-                      </div>
-                      
-                      {/* Additional verses revealed by slider */}
-                      {currentVerses.slice(1, visibleVerses).map((verse, index) => (
-                        <div key={verse.id} className="space-y-2">
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                            Verse {index + 2}: {verse.verse_key}
-                          </Badge>
-                          <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                            {verse.text}
-                          </div>
-                        </div>
-                      ))}
-                    </>
+                    <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                      {getVisibleText(visibleWordCount)}
+                    </div>
                   )}
                 </div>
               </div>
