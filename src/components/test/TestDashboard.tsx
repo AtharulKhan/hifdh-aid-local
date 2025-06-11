@@ -44,22 +44,22 @@ export const TestDashboard = () => {
       {/* Test Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Before & After Test */}
-        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500"
+        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-yellow-200"
               onClick={() => setActiveTest("before-after")}>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <ArrowRight className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-yellow-50 rounded-lg">
+                <ArrowRight className="h-6 w-6 text-yellow-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">Before & After Test</h3>
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700">Classic Hifz</Badge>
+                <Badge variant="secondary" className="bg-yellow-50 text-yellow-700">Classic Hifz</Badge>
               </div>
             </div>
             <p className="text-gray-600 text-sm">
               Given a random verse, recite the verse immediately before and after it. Perfect for testing verse connections.
             </p>
-            <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Button variant="outline" className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50">
               Start Test
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
