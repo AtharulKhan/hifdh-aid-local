@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, CheckCircle, XCircle, Play, Settings } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Play, Settings, Shuffle } from "lucide-react";
 import tajweedTestData from "@/data/tajweed-test.json";
 
 export const TajweedTest = () => {
@@ -13,6 +12,17 @@ export const TajweedTest = () => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [isTestActive, setIsTestActive] = useState(false);
+
+  // Calculate total number of examples available
+  const totalExamples = useMemo(() => {
+    let total = 0;
+    tajweedTestData.tajweed_examples.forEach(category => {
+      category.rules.forEach(rule => {
+        total += rule.examples.length;
+      });
+    });
+    return total;
+  }, []);
 
   // Generate random questions
   const generateQuestions = (count: number = 10) => {
@@ -39,6 +49,16 @@ export const TajweedTest = () => {
 
   const startTest = () => {
     const questions = generateQuestions(10);
+    setCurrentQuestions(questions);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setShowAnswer(false);
+    setIsTestActive(true);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const startRandomTest = () => {
+    const questions = generateQuestions(1);
     setCurrentQuestions(questions);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
@@ -104,6 +124,13 @@ export const TajweedTest = () => {
               Identify the correct Tajweed rule being applied in each verse.
             </p>
             
+            {/* Total Examples Counter */}
+            <div className="bg-white/70 p-3 rounded-lg border border-purple-200 inline-block">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 text-sm px-3 py-1">
+                📚 {totalExamples} Total Examples Available
+              </Badge>
+            </div>
+            
             {score.total > 0 && (
               <div className="bg-white/70 p-4 rounded-lg border border-purple-200">
                 <h3 className="font-semibold text-gray-800 mb-2">Previous Test Results</h3>
@@ -117,6 +144,10 @@ export const TajweedTest = () => {
               <Button onClick={startTest} className="bg-purple-600 hover:bg-purple-700">
                 <Play className="h-4 w-4 mr-2" />
                 Start New Test (10 Questions)
+              </Button>
+              <Button onClick={startRandomTest} variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
+                <Shuffle className="h-4 w-4 mr-2" />
+                Random Question
               </Button>
               {score.total > 0 && (
                 <Button variant="outline" onClick={resetTest}>
@@ -155,7 +186,10 @@ export const TajweedTest = () => {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-xl font-bold text-gray-800">Tajweed Test</h2>
-          <p className="text-gray-600">Question {currentQuestionIndex + 1} of {currentQuestions.length}</p>
+          <p className="text-gray-600">
+            Question {currentQuestionIndex + 1} of {currentQuestions.length}
+            {currentQuestions.length === 1 && " (Random)"}
+          </p>
         </div>
         <div className="flex items-center space-x-4">
           <Badge variant="outline" className="bg-purple-50 text-purple-700">
@@ -237,12 +271,30 @@ export const TajweedTest = () => {
                 Check Answer
               </Button>
             ) : (
-              <Button 
-                onClick={nextQuestion}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {currentQuestionIndex < currentQuestions.length - 1 ? "Next Question" : "Finish Test"}
-              </Button>
+              <div className="flex gap-3">
+                {currentQuestions.length > 1 && currentQuestionIndex < currentQuestions.length - 1 ? (
+                  <Button 
+                    onClick={nextQuestion}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Next Question
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={startRandomTest}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    <Shuffle className="h-4 w-4 mr-2" />
+                    Another Random Question
+                  </Button>
+                )}
+                <Button 
+                  onClick={resetTest}
+                  variant="outline"
+                >
+                  Back to Menu
+                </Button>
+              </div>
             )}
           </div>
 
