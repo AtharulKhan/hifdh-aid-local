@@ -1,12 +1,10 @@
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
@@ -15,46 +13,73 @@ interface QuranViewerProps {
 }
 
 export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 }) => {
-  const [currentSurah, setCurrentSurah] = useState(() => {
-    const startingVerse = getVerseById(startingVerseId);
-    return startingVerse ? startingVerse.surah : 1;
-  });
+  const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
+  const [versesPerPage, setVersesPerPage] = useState(5);
+  const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
   const [showTajweed, setShowTajweed] = useState(false);
-  const [showVerseNumbers, setShowVerseNumbers] = useState(true);
-  const [hideVerses, setHideVerses] = useState(false);
-  const [revelationRate, setRevelationRate] = useState([100]);
+  const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
+  const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
   
   const allVerses = getVersesArray();
-  
-  // Get all verses for the current surah
-  const getSurahVerses = (): QuranVerse[] => {
-    return allVerses.filter(verse => verse.surah === currentSurah);
+  const maxVerseId = allVerses.length;
+
+  // Get current verses to display
+  const getCurrentVerses = (): QuranVerse[] => {
+    const verses: QuranVerse[] = [];
+    for (let i = 0; i < versesPerPage && currentVerseId + i <= maxVerseId; i++) {
+      const verse = getVerseById(currentVerseId + i);
+      if (verse) verses.push(verse);
+    }
+    return verses;
   };
 
-  const currentSurahVerses = getSurahVerses();
-  const maxSurah = Math.max(...allVerses.map(v => v.surah));
+  const currentVerses = getCurrentVerses();
+  const currentVerse = currentVerses[0];
 
-  const handleNavigate = (verseId: number) => {
-    const verse = getVerseById(verseId);
-    if (verse) {
-      setCurrentSurah(verse.surah);
+  const handleNavigate = (verseId: number, newVersesPerPage?: number) => {
+    setCurrentVerseId(verseId);
+    if (newVersesPerPage) {
+      setVersesPerPage(newVersesPerPage);
     }
-    setRevelationRate([100]);
+    setVerseRevealStates({});
+    setHoverWordCounts({});
+  };
+
+  const goToNextPage = () => {
+    if (currentVerseId + versesPerPage <= maxVerseId) {
+      setCurrentVerseId(currentVerseId + versesPerPage);
+      setVerseRevealStates({});
+      setHoverWordCounts({});
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentVerseId - versesPerPage >= 1) {
+      setCurrentVerseId(currentVerseId - versesPerPage);
+      setVerseRevealStates({});
+      setHoverWordCounts({});
+    }
   };
 
   const goToNextSurah = () => {
-    if (currentSurah < maxSurah) {
-      setCurrentSurah(currentSurah + 1);
-      setRevelationRate([100]);
+    if (!currentVerse) return;
+    const nextSurahNumber = currentVerse.surah + 1;
+    const nextSurahFirstVerse = allVerses.find(v => v.surah === nextSurahNumber);
+    if (nextSurahFirstVerse) {
+      handleNavigate(nextSurahFirstVerse.id);
     }
   };
 
   const goToPreviousSurah = () => {
-    if (currentSurah > 1) {
-      setCurrentSurah(currentSurah - 1);
-      setRevelationRate([100]);
+    if (!currentVerse) return;
+    const prevSurahNumber = currentVerse.surah - 1;
+    if (prevSurahNumber >= 1) {
+      const prevSurahFirstVerse = allVerses.find(v => v.surah === prevSurahNumber);
+      if (prevSurahFirstVerse) {
+        handleNavigate(prevSurahFirstVerse.id);
+      }
     }
   };
 
@@ -73,87 +98,148 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     return words.length > 0 ? words.join(' ') : verse.text;
   };
 
-  const removeVerseNumbers = (text: string): string => {
-    return text.replace(/\s*[٠-٩]+\s*$/, '').trim();
+  const handleVersesPerPageChange = (count: number) => {
+    setVersesPerPage(count);
+    setVerseRevealStates({});
+    setHoverWordCounts({});
   };
 
-  const getDisplayText = (verse: QuranVerse): string => {
-    let text = showTajweed ? getTajweedText(verse) : verse.text;
-    if (!showVerseNumbers) {
-      text = removeVerseNumbers(text);
+  const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
+    setVerseRevealStates(prev => ({
+      ...prev,
+      [verseId]: revealType
+    }));
+  };
+
+  const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
+    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
+    
+    const verseTextElement = verseTextRefs.current[verseId];
+    if (!verseTextElement) return;
+    
+    const rect = verseTextElement.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const textWidth = rect.width; // Actual width of the text content
+    const height = rect.height;
+    
+    // Allow hover area to extend slightly above the text (20px above)
+    const extendedHoverArea = y >= -20 && y <= height;
+    
+    if (!extendedHoverArea) {
+      setHoverWordCounts(prev => ({
+        ...prev,
+        [verseId]: 0
+      }));
+      return;
     }
-    return text;
-  };
-
-  const getCombinedText = (): string => {
-    return currentSurahVerses.map(verse => getDisplayText(verse)).join(' ');
-  };
-
-  const getVisibleText = (): string => {
-    if (!hideVerses) {
-      return getCombinedText();
+    
+    const verse = getVerseById(verseId);
+    if (verse) {
+      const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+      const words = verseText.split(' ');
+      
+      // For Arabic text (right-to-left), calculate from the right side
+      // Use the actual text width, not the container width
+      const percentageFromRight = Math.max(0, Math.min(1, (textWidth - x) / textWidth));
+      
+      // Calculate word position based on percentage
+      const wordsToShow = Math.ceil(words.length * percentageFromRight);
+      
+      setHoverWordCounts(prev => ({
+        ...prev,
+        [verseId]: wordsToShow
+      }));
     }
+  };
+
+  const handleMouseLeave = (verseId: number) => {
+    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     
-    const fullText = getCombinedText();
-    const words = fullText.split(' ');
+    setHoverWordCounts(prev => ({
+      ...prev,
+      [verseId]: 0
+    }));
+  };
+
+  const getVerseDisplay = (verse: QuranVerse) => {
+    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+    const words = verseText.split(' ');
+    const hoverWordCount = hoverWordCounts[verse.id] || 0;
     
-    const sliderProgress = revelationRate[0] / 100;
-    
-    if (sliderProgress === 0) return '';
-    
-    const wordsToShow = Math.ceil(words.length * sliderProgress);
-    return words.slice(0, wordsToShow).join(' ');
+    if (viewMode === 'hidden') {
+      const revealState = verseRevealStates[verse.id] || 'hidden';
+      
+      if (revealState === 'hidden') {
+        if (hoverWordCount > 0) {
+          return words.slice(0, hoverWordCount).join(' ');
+        }
+        return '';
+      } else if (revealState === 'partial') {
+        return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
+      } else if (revealState === 'more') {
+        return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
+      } else {
+        return verseText;
+      }
+    } else if (viewMode === 'partial') {
+      return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
+    } else {
+      return verseText;
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header with Surah Info */}
-      <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
-        <div className="flex items-center justify-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToPreviousSurah}
-            disabled={currentSurah <= 1}
-            className="border-green-200 text-green-600 hover:bg-green-50"
-          >
-            <SkipBack className="h-4 w-4 mr-1" />
-            Previous Surah
-          </Button>
-          
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-700">
-              {getSurahName(currentSurah)}
-            </h2>
+      {currentVerse && (
+        <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
+          <div className="flex items-center justify-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousSurah}
+              disabled={currentVerse.surah <= 1}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              <SkipBack className="h-4 w-4 mr-1" />
+              Previous Surah
+            </Button>
+            
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-700">
+                {getSurahName(currentVerse.surah)}
+              </h2>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextSurah}
+              disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              Next Surah
+              <SkipForward className="h-4 w-4 ml-1" />
+            </Button>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToNextSurah}
-            disabled={currentSurah >= maxSurah}
-            className="border-green-200 text-green-600 hover:bg-green-50"
-          >
-            Next Surah
-            <SkipForward className="h-4 w-4 ml-1" />
-          </Button>
+          <div className="flex justify-center space-x-2">
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+              Page {Math.ceil(currentVerseId / versesPerPage)}
+            </Badge>
+            <Badge variant="outline" className="border-green-200 text-green-600">
+              Verse {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} of {maxVerseId}
+            </Badge>
+          </div>
         </div>
-        
-        <div className="flex justify-center space-x-2">
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-            Surah {currentSurah}
-          </Badge>
-          <Badge variant="outline" className="border-green-200 text-green-600">
-            {currentSurahVerses.length} verses
-          </Badge>
-        </div>
-      </div>
+      )}
 
       {/* Collapsible Control Panel */}
-      <Card className="p-4 bg-green-50 border-green-100">
+      <Card className="p-4 bg-blue-50 border-blue-100">
         <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
+            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-blue-700 hover:bg-blue-100">
               <span className="font-medium">Display Options</span>
               {isControlsExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -164,137 +250,234 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           </CollapsibleTrigger>
           
           <CollapsibleContent className="pt-4">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600">Show verse numbers:</span>
-                    <Switch
-                      checked={showVerseNumbers}
-                      onCheckedChange={setShowVerseNumbers}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600">Hide verses:</span>
-                    <Switch
-                      checked={hideVerses}
-                      onCheckedChange={(checked) => {
-                        setHideVerses(checked);
-                        if (!checked) {
-                          setRevelationRate([100]);
-                        } else {
-                          setRevelationRate([0]);
-                        }
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600">Tajweed:</span>
-                    <Switch
-                      checked={showTajweed}
-                      onCheckedChange={setShowTajweed}
-                      className="data-[state=checked]:bg-green-500"
-                    />
-                  </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-600">Verses per page:</span>
+                {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
+                  <Button
+                    key={count}
+                    variant={versesPerPage === count ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
+                    className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    {count}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+                  <Switch
+                    checked={showTajweed}
+                    onCheckedChange={setShowTajweed}
+                  />
                 </div>
                 
-                <QuranNavigationModal
-                  onNavigate={handleNavigate}
-                  currentVerseId={currentSurahVerses[0]?.id || 1}
-                  maxVerseId={allVerses.length}
-                />
+                <div className="flex space-x-2">
+                  <Button
+                    variant={viewMode === 'hidden' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('hidden')}
+                    className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Hide
+                  </Button>
+                  <Button
+                    variant={viewMode === 'partial' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('partial')}
+                    className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Show Partial
+                  </Button>
+                  <Button
+                    variant={viewMode === 'full' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('full')}
+                    className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Show Full
+                  </Button>
+                  <QuranNavigationModal
+                    onNavigate={handleNavigate}
+                    currentVerseId={currentVerseId}
+                    maxVerseId={maxVerseId}
+                  />
+                </div>
               </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
-      {/* Sticky Revelation Rate Slider */}
-      {hideVerses && (
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-4 shadow-sm">
-          <div className="max-w-6xl mx-auto space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-green-700">Revelation Progress:</span>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
-            </div>
-            <Slider
-              value={revelationRate}
-              onValueChange={setRevelationRate}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-green-500">
-              <span>Hidden</span>
-              <span>Fully Revealed</span>
-            </div>
+      {/* Verses Display */}
+      <div className="space-y-4">
+        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) ? (
+          currentVerses.map((verse) => (
+            <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="border-green-200 text-green-600">
+                    {verse.verse_key}
+                  </Badge>
+                </div>
+                
+                <div className="relative">
+                  <div 
+                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
+                    onMouseMove={(e) => handleMouseMove(verse.id, e)}
+                    onMouseLeave={() => handleMouseLeave(verse.id)}
+                    style={{
+                      opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
+                        (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
+                    }}
+                    ref={el => verseTextRefs.current[verse.id] = el}
+                  >
+                    <span className="inline-block text-right">
+                      {showTajweed ? (
+                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                      ) : (
+                        getVerseDisplay(verse)
+                      )}
+                    </span>
+                  </div>
+                  
+                  {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
+                    <div className="flex justify-end space-x-2 mt-4">
+                      {!verseRevealStates[verse.id] && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'partial')}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal Part
+                        </Button>
+                      )}
+                      {verseRevealStates[verse.id] === 'partial' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'more')}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal More
+                        </Button>
+                      )}
+                      {verseRevealStates[verse.id] === 'more' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'full')}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal Rest
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'full')}
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
+                      >
+                        <ChevronsRight className="h-4 w-4 mr-1" />
+                        Reveal All
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <div className="space-y-4">
+            {currentVerses.map((verse) => (
+              <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="border-green-200 text-green-600">
+                      {verse.verse_key}
+                    </Badge>
+                  </div>
+                  
+                  <div className="relative">
+                    <div 
+                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
+                      onMouseMove={(e) => handleMouseMove(verse.id, e)}
+                      onMouseLeave={() => handleMouseLeave(verse.id)}
+                      style={{
+                        opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
+                      }}
+                      ref={el => verseTextRefs.current[verse.id] = el}
+                    >
+                      <span className="inline-block text-right">
+                        {showTajweed ? (
+                          <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                        ) : (
+                          getVerseDisplay(verse)
+                        )}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'partial')}
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                      >
+                        <ArrowRight className="h-4 w-4 mr-1" />
+                        Reveal Part
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'full')}
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
+                      >
+                        <ChevronsRight className="h-4 w-4 mr-1" />
+                        Reveal All
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
-        </div>
-      )}
-
-      {/* Page Canvas */}
-      <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
-        <div className="relative min-h-[500px]">
-          {currentSurahVerses.length > 0 ? (
-            <div 
-              ref={containerRef}
-              className="w-full relative py-4"
-            >
-              <div 
-                className="font-arabic text-2xl leading-loose text-gray-800 transition-opacity duration-300 text-right px-4"
-                style={{ opacity: 1 }}
-              >
-                {showTajweed ? (
-                  <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
-                ) : (
-                  getVisibleText()
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">No verses to display</p>
-            </div>
-          )}
-          
-          {hideVerses && revelationRate[0] === 0 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
-                <p className="text-sm font-medium">Use the slider above to reveal verses</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
+        )}
+      </div>
 
       {/* Navigation Controls */}
-      <Card className="p-4 bg-green-50 border-green-100">
+      <Card className="p-4 bg-blue-50 border-blue-100">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={goToPreviousSurah}
-            disabled={currentSurah <= 1}
-            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
+            onClick={goToPreviousPage}
+            disabled={currentVerseId <= 1}
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
             <ChevronRight className="h-4 w-4" />
-            <span>Previous Surah</span>
+            <span>Previous Page</span>
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-green-600">
-              Surah {currentSurah} of {maxSurah}
+            <span className="text-sm text-blue-600">
+              Page {Math.ceil(currentVerseId / versesPerPage)} of {Math.ceil(maxVerseId / versesPerPage)}
             </span>
           </div>
 
           <Button
             variant="outline"
-            onClick={goToNextSurah}
-            disabled={currentSurah >= maxSurah}
-            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
+            onClick={goToNextPage}
+            disabled={currentVerseId + versesPerPage > maxVerseId}
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
-            <span>Next Surah</span>
+            <span>Next Page</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
