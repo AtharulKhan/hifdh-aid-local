@@ -23,6 +23,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   const [verseSliderValues, setVerseSliderValues] = useState<Record<number, number>>({});
+  const [nextWordCounts, setNextWordCounts] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [verseRange, setVerseRange] = useState<[number, number]>([1, 10]);
   const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -63,6 +64,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     setVerseRevealStates({});
     setHoverWordCounts({});
     setVerseSliderValues({});
+    setNextWordCounts({});
 
     // Update current juz
     const verse = getVerseById(verseId);
@@ -133,6 +135,32 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     }));
   };
 
+  const showNextWord = (verseId: number) => {
+    const verse = getVerseById(verseId);
+    if (!verse) return;
+    
+    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+    const words = verseText.split(' ');
+    const sliderValue = verseSliderValues[verseId] || 0;
+    const currentVisible = Math.ceil(words.length * (sliderValue / 100));
+    const nextWordCount = nextWordCounts[verseId] || 0;
+    const maxAdditional = words.length - currentVisible;
+    
+    if (nextWordCount < maxAdditional) {
+      setNextWordCounts(prev => ({
+        ...prev,
+        [verseId]: (prev[verseId] || 0) + 1
+      }));
+    }
+  };
+
+  const resetNextWords = (verseId: number) => {
+    setNextWordCounts(prev => ({
+      ...prev,
+      [verseId]: 0
+    }));
+  };
+
   const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     const verseTextElement = verseTextRefs.current[verseId];
@@ -177,10 +205,12 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     const words = verseText.split(' ');
     const hoverWordCount = hoverWordCounts[verse.id] || 0;
     const sliderValue = verseSliderValues[verse.id] || 0;
+    const nextWordCount = nextWordCounts[verse.id] || 0;
 
     if (sliderValue > 0) {
       const wordsToShow = Math.ceil(words.length * (sliderValue / 100));
-      return words.slice(0, wordsToShow).join(' ');
+      const totalVisible = Math.min(wordsToShow + nextWordCount, words.length);
+      return words.slice(0, totalVisible).join(' ');
     }
     if (viewMode === 'hidden') {
       const revealState = verseRevealStates[verse.id] || 'hidden';
@@ -207,6 +237,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     setVerseSliderValues(prev => ({
       ...prev,
       [verseId]: value[0]
+    }));
+    // Reset next word count when slider changes
+    setNextWordCounts(prev => ({
+      ...prev,
+      [verseId]: 0
     }));
   };
 
@@ -332,89 +367,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
         {/* Verses Display */}
         <div className="space-y-6 w-full overflow-x-hidden">
           {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) || Object.keys(verseSliderValues).some(key => verseSliderValues[Number(key)] > 0) ? (
-            currentVerses.map(verse => (
-              <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
-                <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <Badge variant="outline" className="border-green-200 text-green-600">
-                      {verse.verse_key}
-                    </Badge>
-                  </div>
-                  
-                  {/* Individual Verse Revelation Slider */}
-                  <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200 w-full overflow-x-hidden">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <span className="text-sm font-medium text-blue-700">Verse Revelation:</span>
-                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{verseSliderValues[verse.id] || 0}%</span>
-                    </div>
-                    <Slider value={[verseSliderValues[verse.id] || 0]} onValueChange={value => handleVerseSliderChange(verse.id, value)} max={100} step={1} className="w-full" />
-                    <div className="flex justify-between text-xs text-blue-500">
-                      <span>Hidden</span>
-                      <span>Fully Revealed</span>
-                    </div>
-                  </div>
-                  
-                  <div className="relative w-full overflow-x-hidden">
-                    <div 
-                      onMouseMove={e => handleMouseMove(verse.id, e)} 
-                      onMouseLeave={() => handleMouseLeave(verse.id)} 
-                      style={{
-                        opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] && !verseSliderValues[verse.id] ? 
-                          hoverWordCounts[verse.id] ? 0.7 + hoverWordCounts[verse.id] * 0.3 : 0.1 : 1
-                      }} 
-                      ref={el => verseTextRefs.current[verse.id] = el} 
-                      className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere mx-0 py-0 my-0"
-                    >
-                      <span className="inline-block text-right w-full break-words overflow-wrap-anywhere my-0 py-[26px]">
-                        {showTajweed ? (
-                          <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                        ) : (
-                          getVerseDisplay(verse)
-                        )}
-                      </span>
-                    </div>
-                    
-                    {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && !verseSliderValues[verse.id] && (
-                      <div className="flex flex-wrap justify-end gap-2 mt-4">
-                        {!verseRevealStates[verse.id] && (
-                          <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'partial')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
-                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            Reveal Part
-                          </Button>
-                        )}
-                        {verseRevealStates[verse.id] === 'partial' && (
-                          <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'more')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
-                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            Reveal More
-                          </Button>
-                        )}
-                        {verseRevealStates[verse.id] === 'more' && (
-                          <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'full')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
-                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            Reveal Rest
-                          </Button>
-                        )}
-                        <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'full')} className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in text-xs">
-                          <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          Reveal All
-                        </Button>
-                        <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
-                      </div>
-                    )}
+            currentVerses.map(verse => {
+              const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+              const words = verseText.split(' ');
+              const sliderValue = verseSliderValues[verse.id] || 0;
+              const nextWordCount = nextWordCounts[verse.id] || 0;
+              const currentVisible = Math.ceil(words.length * (sliderValue / 100));
+              const totalVisible = Math.min(currentVisible + nextWordCount, words.length);
 
-                    {/* Always show tafsir button when verse is fully revealed or in other view modes */}
-                    {(viewMode !== 'hidden' || verseRevealStates[verse.id] === 'full' || verseSliderValues[verse.id] > 0) && (
-                      <div className="flex justify-end mt-4">
-                        <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))
-          ) : (
-            <div className="space-y-6 w-full overflow-x-hidden">
-              {currentVerses.map(verse => (
+              return (
                 <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
                   <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -427,27 +388,65 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                     <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200 w-full overflow-x-hidden">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="text-sm font-medium text-blue-700">Verse Revelation:</span>
-                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{verseSliderValues[verse.id] || 0}%</span>
+                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          {verseSliderValues[verse.id] || 0}%
+                          {nextWordCount > 0 && (
+                            <span className="text-green-600 ml-1">
+                              (+{nextWordCount} {nextWordCount === 1 ? 'word' : 'words'})
+                            </span>
+                          )}
+                        </span>
                       </div>
-                      <Slider value={[verseSliderValues[verse.id] || 0]} onValueChange={value => handleVerseSliderChange(verse.id, value)} max={100} step={1} className="w-full" />
+                      <Slider 
+                        value={[verseSliderValues[verse.id] || 0]} 
+                        onValueChange={value => handleVerseSliderChange(verse.id, value)} 
+                        max={100} 
+                        step={1} 
+                        className="w-full" 
+                      />
                       <div className="flex justify-between text-xs text-blue-500">
                         <span>Hidden</span>
                         <span>Fully Revealed</span>
                       </div>
+                      
+                      {/* Show Next Word Button */}
+                      {sliderValue > 0 && totalVisible < words.length && (
+                        <div className="flex justify-center gap-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => showNextWord(verse.id)}
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          >
+                            <ArrowRight className="h-3 w-3 mr-1" />
+                            Show Next Word
+                          </Button>
+                          {nextWordCount > 0 && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => resetNextWords(verse.id)}
+                              className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="relative w-full overflow-x-hidden">
                       <div 
-                        className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere" 
                         onMouseMove={e => handleMouseMove(verse.id, e)} 
                         onMouseLeave={() => handleMouseLeave(verse.id)} 
                         style={{
-                          opacity: hoverWordCounts[verse.id] || verseSliderValues[verse.id] ? 
-                            verseSliderValues[verse.id] ? 1 : 0.7 + hoverWordCounts[verse.id] * 0.3 : 0.1
+                          opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] && !verseSliderValues[verse.id] ? 
+                            hoverWordCounts[verse.id] ? 0.7 + hoverWordCounts[verse.id] * 0.3 : 0.1 : 1
                         }} 
-                        ref={el => verseTextRefs.current[verse.id] = el}
+                        ref={el => verseTextRefs.current[verse.id] = el} 
+                        className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere mx-0 py-0 my-0"
                       >
-                        <span className="inline-block text-right w-full break-words overflow-wrap-anywhere">
+                        <span className="inline-block text-right w-full break-words overflow-wrap-anywhere my-0 py-[26px]">
                           {showTajweed ? (
                             <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
                           ) : (
@@ -456,12 +455,26 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                         </span>
                       </div>
                       
-                      {!verseSliderValues[verse.id] && (
+                      {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && !verseSliderValues[verse.id] && (
                         <div className="flex flex-wrap justify-end gap-2 mt-4">
-                          <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'partial')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
-                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            Reveal Part
-                          </Button>
+                          {!verseRevealStates[verse.id] && (
+                            <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'partial')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Reveal Part
+                            </Button>
+                          )}
+                          {verseRevealStates[verse.id] === 'partial' && (
+                            <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'more')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Reveal More
+                            </Button>
+                          )}
+                          {verseRevealStates[verse.id] === 'more' && (
+                            <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'full')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Reveal Rest
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'full')} className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in text-xs">
                             <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             Reveal All
@@ -469,10 +482,126 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                           <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
                         </div>
                       )}
+
+                      {/* Always show tafsir button when verse is fully revealed or in other view modes */}
+                      {(viewMode !== 'hidden' || verseRevealStates[verse.id] === 'full' || verseSliderValues[verse.id] > 0) && (
+                        <div className="flex justify-end mt-4">
+                          <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
-              ))}
+              );
+            })
+          ) : (
+            <div className="space-y-6 w-full overflow-x-hidden">
+              {currentVerses.map(verse => {
+                const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+                const words = verseText.split(' ');
+                const sliderValue = verseSliderValues[verse.id] || 0;
+                const nextWordCount = nextWordCounts[verse.id] || 0;
+                const currentVisible = Math.ceil(words.length * (sliderValue / 100));
+                const totalVisible = Math.min(currentVisible + nextWordCount, words.length);
+
+                return (
+                  <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
+                    <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <Badge variant="outline" className="border-green-200 text-green-600">
+                          {verse.verse_key}
+                        </Badge>
+                      </div>
+                      
+                      {/* Individual Verse Revelation Slider */}
+                      <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200 w-full overflow-x-hidden">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <span className="text-sm font-medium text-blue-700">Verse Revelation:</span>
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                            {verseSliderValues[verse.id] || 0}%
+                            {nextWordCount > 0 && (
+                              <span className="text-green-600 ml-1">
+                                (+{nextWordCount} {nextWordCount === 1 ? 'word' : 'words'})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <Slider 
+                          value={[verseSliderValues[verse.id] || 0]} 
+                          onValueChange={value => handleVerseSliderChange(verse.id, value)} 
+                          max={100} 
+                          step={1} 
+                          className="w-full" 
+                        />
+                        <div className="flex justify-between text-xs text-blue-500">
+                          <span>Hidden</span>
+                          <span>Fully Revealed</span>
+                        </div>
+                        
+                        {/* Show Next Word Button */}
+                        {sliderValue > 0 && totalVisible < words.length && (
+                          <div className="flex justify-center gap-2 pt-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => showNextWord(verse.id)}
+                              className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                            >
+                              <ArrowRight className="h-3 w-3 mr-1" />
+                              Show Next Word
+                            </Button>
+                            {nextWordCount > 0 && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => resetNextWords(verse.id)}
+                                className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="relative w-full overflow-x-hidden">
+                        <div 
+                          className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere" 
+                          onMouseMove={e => handleMouseMove(verse.id, e)} 
+                          onMouseLeave={() => handleMouseLeave(verse.id)} 
+                          style={{
+                            opacity: hoverWordCounts[verse.id] || verseSliderValues[verse.id] ? 
+                              verseSliderValues[verse.id] ? 1 : 0.7 + hoverWordCounts[verse.id] * 0.3 : 0.1
+                          }} 
+                          ref={el => verseTextRefs.current[verse.id] = el}
+                        >
+                          <span className="inline-block text-right w-full break-words overflow-wrap-anywhere">
+                            {showTajweed ? (
+                              <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                            ) : (
+                              getVerseDisplay(verse)
+                            )}
+                          </span>
+                        </div>
+                        
+                        {!verseSliderValues[verse.id] && (
+                          <div className="flex flex-wrap justify-end gap-2 mt-4">
+                            <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'partial')} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs">
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Reveal Part
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => revealVerse(verse.id, 'full')} className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in text-xs">
+                              <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Reveal All
+                            </Button>
+                            <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
