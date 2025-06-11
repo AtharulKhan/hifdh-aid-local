@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 
@@ -127,6 +128,13 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     return words.slice(0, halfLength).join(' ') + '...';
   };
 
+  const handleNumberOfVersesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (value >= 1 && value <= 10) {
+      setNumberOfVerses(value);
+    }
+  };
+
   if (currentVerses.length === 0) {
     return <div>Loading...</div>;
   }
@@ -180,19 +188,18 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Number of Verses</label>
-                <Select value={numberOfVerses.toString()} onValueChange={(value) => setNumberOfVerses(Number(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 verse</SelectItem>
-                    <SelectItem value="2">2 verses</SelectItem>
-                    <SelectItem value="3">3 verses</SelectItem>
-                    <SelectItem value="4">4 verses</SelectItem>
-                    <SelectItem value="5">5 verses</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="number-of-verses" className="text-sm font-medium text-gray-700">
+                  Number of Verses
+                </Label>
+                <Input
+                  id="number-of-verses"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={numberOfVerses}
+                  onChange={handleNumberOfVersesChange}
+                  className="w-full"
+                />
               </div>
 
               {testScope === "surah" && (
@@ -255,7 +262,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
               {/* First verse - partially shown */}
               <div className="space-y-2">
                 <div className="text-blue-800 font-medium text-center">
-                  Continue from this point...
+                  Continue from this point... (recite {numberOfVerses} {numberOfVerses === 1 ? 'verse' : 'verses'})
                 </div>
                 <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
                   {numberOfVerses === 1 
