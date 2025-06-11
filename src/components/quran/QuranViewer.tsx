@@ -259,6 +259,28 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               Verses {verseRange[0]}-{verseRange[1]} ({currentVerses.length} showing)
             </Badge>
           </div>
+
+          {/* Surah Navigation Slider - Now in header */}
+          <div className="space-y-2 bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs sm:text-sm font-medium text-green-700">Navigate to Surah:</span>
+              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                Surah {currentVerse.surah} of {maxSurah}
+              </span>
+            </div>
+            <Slider
+              value={[currentVerse.surah]}
+              onValueChange={handleSurahSliderChange}
+              max={maxSurah}
+              min={1}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-green-500">
+              <span>1</span>
+              <span>{maxSurah}</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -547,58 +569,34 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         )}
       </div>
 
-      {/* Navigation Controls */}
+      {/* Navigation Controls - Simplified without duplicate surah slider */}
       <Card className="p-4 bg-blue-50 border-blue-100 w-full overflow-x-hidden">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={goToPreviousSurah}
-              disabled={!currentVerse || currentVerse.surah <= 1}
-              className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span>Previous Surah</span>
-            </Button>
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={goToPreviousSurah}
+            disabled={!currentVerse || currentVerse.surah <= 1}
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Previous Surah</span>
+          </Button>
 
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-blue-600">
-                Surah {currentVerse?.surah || 1} of {maxSurah}
-              </span>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={goToNextSurah}
-              disabled={!currentVerse || !allVerses.find(v => v.surah === currentVerse.surah + 1)}
-              className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
-            >
-              <span>Next Surah</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-blue-600">
+              Surah {currentVerse?.surah || 1} of {maxSurah}
+            </span>
           </div>
 
-          {/* Surah Navigation Slider */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-700">Navigate to Surah:</span>
-              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                Surah {currentVerse?.surah || 1}
-              </span>
-            </div>
-            <Slider
-              value={[currentVerse?.surah || 1]}
-              onValueChange={handleSurahSliderChange}
-              max={maxSurah}
-              min={1}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-blue-500">
-              <span>1</span>
-              <span>{maxSurah}</span>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            onClick={goToNextSurah}
+            disabled={!currentVerse || !allVerses.find(v => v.surah === currentVerse.surah + 1)}
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+          >
+            <span>Next Surah</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </Card>
     </div>
