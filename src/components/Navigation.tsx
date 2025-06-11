@@ -2,7 +2,14 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
+  MessageCircle, 
+  BookOpen, 
+  Leaf, 
+  Activity,
+  Users,
+  HelpCircle,
   Home,
+  Settings,
   PanelLeftClose,
   PanelLeft
 } from "lucide-react";
@@ -10,7 +17,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Quran Review" }
+  { path: "/", icon: Home, label: "Quran Review" },
+  { path: "/chat", icon: MessageCircle, label: "AI Assistant" },
+  { path: "/journal", icon: BookOpen, label: "Progress Journal" },
+  { path: "/mindfulness", icon: Leaf, label: "Reflection" },
+  { path: "/progress", icon: Activity, label: "Progress" },
+  { path: "/community", icon: Users, label: "Community" },
+  { path: "/help", icon: HelpCircle, label: "Get Help" },
+  { path: "/settings", icon: Settings, label: "Settings" }
 ];
 
 export const Navigation = () => {

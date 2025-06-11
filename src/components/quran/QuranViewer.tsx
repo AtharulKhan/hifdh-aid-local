@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -51,23 +50,6 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     setVerseRevealStates({});
   };
 
-  const toggleArabicVisibility = () => {
-    setShowArabic(!showArabic);
-    // When showing Arabic text, show full verses by default
-    // When hiding Arabic text, reset reveal states
-    if (!showArabic) {
-      // Show full verses when enabling Arabic view
-      const newStates: Record<number, 'hidden' | 'partial' | 'more' | 'full'> = {};
-      currentVerses.forEach(verse => {
-        newStates[verse.id] = 'full';
-      });
-      setVerseRevealStates(newStates);
-    } else {
-      // Reset to hidden when disabling Arabic view
-      setVerseRevealStates({});
-    }
-  };
-
   const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
     setVerseRevealStates(prev => ({
       ...prev,
@@ -112,7 +94,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       )}
 
       {/* Control Panel */}
-      <Card className="p-4 bg-blue-50 border-blue-100">
+      <Card className="p-4 bg-green-50 border-green-100">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-600">Verses per page:</span>
@@ -122,7 +104,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 variant={versesPerPage === count ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleVersesPerPageChange(count)}
-                className={versesPerPage === count ? "bg-blue-400 text-white hover:bg-blue-500" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+                className={versesPerPage === count ? "bg-green-400 text-white hover:bg-green-500" : "border-green-200 text-green-700 hover:bg-green-100"}
               >
                 {count}
               </Button>
@@ -132,8 +114,8 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           <Button
             variant="outline"
             size="sm"
-            onClick={toggleArabicVisibility}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100"
+            onClick={() => setShowArabic(!showArabic)}
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100"
           >
             {showArabic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             <span>{showArabic ? "Hide" : "Show"} Arabic Text</span>
@@ -224,20 +206,20 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       </div>
 
       {/* Navigation Controls */}
-      <Card className="p-4 bg-blue-50 border-blue-100">
+      <Card className="p-4 bg-green-50 border-green-100">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             onClick={goToPreviousPage}
             disabled={currentVerseId <= 1}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
           >
             <ChevronRight className="h-4 w-4" />
             <span>Previous Page</span>
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-blue-600">
+            <span className="text-sm text-green-600">
               Page {Math.ceil(currentVerseId / versesPerPage)} of {Math.ceil(maxVerseId / versesPerPage)}
             </span>
           </div>
@@ -246,7 +228,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             onClick={goToNextPage}
             disabled={currentVerseId + versesPerPage > maxVerseId}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
           >
             <span>Next Page</span>
             <ChevronLeft className="h-4 w-4" />
