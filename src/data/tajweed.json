@@ -1,0 +1,12 @@
+
+{
+  "1:1:1": { "id": 1, "surah": "1", "ayah": "1", "word": "1", "location": "1:1:1", "text": "بِسۡمِ" },
+  "1:1:2": { "id": 2, "surah": "1", "ayah": "1", "word": "2", "location": "1:1:2", "text": "<rule class=\"ham_wasl\">ٱ</rule>للَّهِ" },
+  "1:1:3": { "id": 3, "surah": "1", "ayah": "1", "word": "3", "location": "1:1:3", "text": "<rule class=\"ham_wasl\">ٱ</rule><rule class=\"laam_shamsiyah\">ل</rule>رَّحۡمَ<rule class=\"madda_normal\">ـٰ</rule>نِ" },
+  "1:1:4": { "id": 4, "surah": "1", "ayah": "1", "word": "4", "location": "1:1:4", "text": "<rule class=\"ham_wasl\">ٱ</rule><rule class=\"laam_shamsiyah\">ل</rule>رَّح<rule class=\"madda_permissible\">ِي</rule>مِ" },
+  "1:1:5": { "id": 5, "surah": "1", "ayah": "1", "word": "5", "location": "1:1:5", "text": "١" },
+  "2:1:1": { "id": 37, "surah": "2", "ayah": "1", "word": "1", "location": "2:1:1", "text": "ا<rule class=\"madda_necessary\">لٓ</rule><rule class=\"madda_necessary\">مٓ</rule>" },
+  "2:1:2": { "id": 38, "surah": "2", "ayah": "1", "word": "2", "location": "2:1:2", "text": "١" },
+  "3:1:1": { "id": 6440, "surah": "3", "ayah": "1", "word": "1", "location": "3:1:1", "text": "ا<rule class=\"madda_necessary\">لٓ</rule><rule class=\"madda_necessary\">مٓ</rule>" },
+  "3:1:2": { "id": 6441, "surah": "3", "ayah": "1", "word": "2", "location": "3:1:2", "text": "١" }
+}
