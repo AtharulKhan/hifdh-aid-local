@@ -4,76 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, CheckCircle, XCircle, Play, Settings } from "lucide-react";
-
-// Mock data based on the testing JSON structure provided
-const tajweedTestData = {
-  tajweed_examples: [
-    {
-      category_name_en: "Noon & Meem Mushaddad",
-      category_name_ar: "النون والميم المشددتين",
-      rules: [
-        {
-          rule_name_en: "Ghunnah on Noon Mushaddad",
-          rule_name_ar: "غنة النون المشددة",
-          rule_type: "ghunnah",
-          description: "A 2-count nasalization (Ghunnah) on a Noon with a shaddah (نّ).",
-          examples: [
-            {
-              arabic_text: "مِنَ الْجِنَّةِ وَالنَّاسِ",
-              highlighted_word: "النَّاسِ",
-              transliteration: "an-naas",
-              rule_trigger: "نّ",
-              surah_reference: "An-Nas (114:6)"
-            },
-            {
-              arabic_text: "إِنَّ الَّذِينَ كَفَرُوا",
-              highlighted_word: "إِنَّ",
-              transliteration: "inna",
-              rule_trigger: "نّ",
-              surah_reference: "Al-Baqarah (2:6)"
-            }
-          ]
-        },
-        {
-          rule_name_en: "Ghunnah on Meem Mushaddad",
-          rule_name_ar: "غنة الميم المشددة",
-          rule_type: "ghunnah",
-          description: "A 2-count nasalization (Ghunnah) on a Meem with a shaddah (مّ).",
-          examples: [
-            {
-              arabic_text: "عَمَّ يَتَسَاءَلُونَ",
-              highlighted_word: "عَمَّ",
-              transliteration: "amma",
-              rule_trigger: "مّ",
-              surah_reference: "An-Naba (78:1)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      category_name_en: "Rules of Noon Saakinah & Tanween",
-      category_name_ar: "أحكام النون الساكنة والتنوين",
-      rules: [
-        {
-          rule_name_en: "Al-Idh'har (The Clarification)",
-          rule_name_ar: "الإِظْهَار",
-          rule_type: "noon_saakinah_tanween",
-          description: "Pronouncing the 'n' sound clearly, without Ghunnah. Occurs before throat letters.",
-          examples: [
-            {
-              arabic_text: "وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ",
-              highlighted_word: "غَاسِقٍ إِذَا",
-              transliteration: "ghaasiqin idhaa",
-              rule_trigger: "ـٍ followed by ء",
-              surah_reference: "Al-Falaq (113:3)"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-};
+import tajweedTestData from "@/data/tajweed-test.json";
 
 export const TajweedTest = () => {
   const [currentQuestions, setCurrentQuestions] = useState<any[]>([]);

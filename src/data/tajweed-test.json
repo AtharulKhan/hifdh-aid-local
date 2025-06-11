@@ -1,0 +1,491 @@
+
+{
+  "tajweed_examples": [
+    {
+      "category_name_en": "Noon & Meem Mushaddad",
+      "category_name_ar": "النون والميم المشددتين",
+      "rules": [
+        {
+          "rule_name_en": "Ghunnah on Noon Mushaddad",
+          "rule_name_ar": "غنة النون المشددة",
+          "rule_type": "ghunnah",
+          "description": "A 2-count nasalization (Ghunnah) on a Noon with a shaddah (نّ).",
+          "examples": [
+            {
+              "arabic_text": "مِنَ الْجِنَّةِ وَالنَّاسِ",
+              "highlighted_word": "النَّاسِ",
+              "transliteration": "an-naas",
+              "rule_trigger": "نّ",
+              "surah_reference": "An-Nas (114:6)",
+              "audio_file_name": "ghunnah_noon_01.mp3"
+            },
+            {
+              "arabic_text": "إِنَّ الَّذِينَ كَفَرُوا",
+              "highlighted_word": "إِنَّ",
+              "transliteration": "inna",
+              "rule_trigger": "نّ",
+              "surah_reference": "Al-Baqarah (2:6)",
+              "audio_file_name": "ghunnah_noon_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Ghunnah on Meem Mushaddad",
+          "rule_name_ar": "غنة الميم المشددة",
+          "rule_type": "ghunnah",
+          "description": "A 2-count nasalization (Ghunnah) on a Meem with a shaddah (مّ).",
+          "examples": [
+            {
+              "arabic_text": "عَمَّ يَتَسَاءَلُونَ",
+              "highlighted_word": "عَمَّ",
+              "transliteration": "amma",
+              "rule_trigger": "مّ",
+              "surah_reference": "An-Naba (78:1)",
+              "audio_file_name": "ghunnah_meem_01.mp3"
+            },
+            {
+              "arabic_text": "فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ",
+              "highlighted_word": "فَأَمَّا",
+              "transliteration": "fa-ammaa",
+              "rule_trigger": "مّ",
+              "surah_reference": "Ad-Duha (93:9)",
+              "audio_file_name": "ghunnah_meem_02.mp3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name_en": "Rules of Noon Saakinah & Tanween",
+      "category_name_ar": "أحكام النون الساكنة والتنوين",
+      "rules": [
+        {
+          "rule_name_en": "Al-Idh'har (The Clarification)",
+          "rule_name_ar": "الإِظْهَار",
+          "rule_type": "noon_saakinah_tanween",
+          "description": "Pronouncing the 'n' sound of Noon Saakinah or Tanween clearly, without Ghunnah. Occurs before the throat letters (ء, ه, ع, ح, غ, خ).",
+          "examples": [
+            {
+              "arabic_text": "وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+              "highlighted_word": "غَاسِقٍ إِذَا",
+              "transliteration": "ghaasiqin idhaa",
+              "rule_trigger": "ـٍ followed by ء",
+              "surah_reference": "Al-Falaq (113:3)",
+              "audio_file_name": "idhar_01.mp3"
+            },
+            {
+              "arabic_text": "أَنْعَمْتَ عَلَيْهِمْ",
+              "highlighted_word": "أَنْعَمْتَ",
+              "transliteration": "an'amta",
+              "rule_trigger": "نْ followed by ع",
+              "surah_reference": "Al-Fatiha (1:7)",
+              "audio_file_name": "idhar_02.mp3"
+            },
+            {
+              "arabic_text": "عَذَابٌ عَظِيمٌ",
+              "highlighted_word": "عَذَابٌ عَظِيمٌ",
+              "transliteration": "adhaabun 'adheem",
+              "rule_trigger": "ـٌ followed by ع",
+              "surah_reference": "Al-Baqarah (2:7)",
+              "audio_file_name": "idhar_03.mp3"
+            },
+            {
+              "arabic_text": "فَصَلِّ لِرَبِّكَ وَانْحَرْ",
+              "highlighted_word": "وَانْحَرْ",
+              "transliteration": "wanhar",
+              "rule_trigger": "نْ followed by ح",
+              "surah_reference": "Al-Kawthar (108:2)",
+              "audio_file_name": "idhar_04.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Al-Idgham (The Merging)",
+          "rule_name_ar": "الإِدْغَام",
+          "rule_type": "noon_saakinah_tanween",
+          "description": "Merging the 'n' sound into the next letter. Letters are ي, ر, م, ل, و, ن. Has two types: with Ghunnah (ي, ن, م, و) and without Ghunnah (ل, ر).",
+          "examples": [
+            {
+              "arabic_text": "مَنْ يَعْمَلْ سُوءًا",
+              "highlighted_word": "مَنْ يَعْمَلْ",
+              "transliteration": "mayy-ya'mal",
+              "rule_trigger": "نْ followed by ي (with Ghunnah)",
+              "surah_reference": "An-Nisa (4:123)",
+              "audio_file_name": "idgham_ghunnah_01.mp3"
+            },
+            {
+              "arabic_text": "وُجُوهٌ يَوْمَئِذٍ نَاعِمَةٌ",
+              "highlighted_word": "يَوْمَئِذٍ نَاعِمَةٌ",
+              "transliteration": "yawma-idhin-naa'imah",
+              "rule_trigger": "ـٍ followed by ن (with Ghunnah)",
+              "surah_reference": "Al-Ghashiyah (88:8)",
+              "audio_file_name": "idgham_ghunnah_02.mp3"
+            },
+            {
+              "arabic_text": "مِنْ رَبِّهِمْ",
+              "highlighted_word": "مِنْ رَبِّهِمْ",
+              "transliteration": "mir-rabbihim",
+              "rule_trigger": "نْ followed by ر (without Ghunnah)",
+              "surah_reference": "Al-Baqarah (2:5)",
+              "audio_file_name": "idgham_no_ghunnah_01.mp3"
+            },
+            {
+              "arabic_text": "هُدًى لِلْمُتَّقِينَ",
+              "highlighted_word": "هُدًى لِلْمُتَّقِينَ",
+              "transliteration": "hudallil-muttaqeen",
+              "rule_trigger": "ـً followed by ل (without Ghunnah)",
+              "surah_reference": "Al-Baqarah (2:2)",
+              "audio_file_name": "idgham_no_ghunnah_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Al-Iqlab (The Conversion)",
+          "rule_name_ar": "الإِقْلَاب",
+          "rule_type": "noon_saakinah_tanween",
+          "description": "Converting the 'n' sound into a hidden Meem (م) sound with Ghunnah. Occurs before the letter Baa' (ب).",
+          "examples": [
+            {
+              "arabic_text": "مِنْ بَعْدِ مَا جَاءَتْهُمُ",
+              "highlighted_word": "مِنْ بَعْدِ",
+              "transliteration": "mim-ba'di",
+              "rule_trigger": "نْ followed by ب",
+              "surah_reference": "Al-Baqarah (2:213)",
+              "audio_file_name": "iqlab_01.mp3"
+            },
+            {
+              "arabic_text": "وَاللهُ عَلِيمٌ بِذَاتِ الصُّدُورِ",
+              "highlighted_word": "عَلِيمٌ بِذَاتِ",
+              "transliteration": "'aleemum-bidhaati",
+              "rule_trigger": "ـٌ followed by ب",
+              "surah_reference": "Al-Ma'idah (5:7)",
+              "audio_file_name": "iqlab_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Al-Ikhfa' (The Hiding)",
+          "rule_name_ar": "الإِخْفَاء",
+          "rule_type": "noon_saakinah_tanween",
+          "description": "Hiding the 'n' sound with a light Ghunnah, between Idh'har and Idgham. Occurs before the remaining 15 letters.",
+          "examples": [
+            {
+              "arabic_text": "إِنْ كُنْتُمْ صَادِقِينَ",
+              "highlighted_word": "إِنْ كُنْتُمْ",
+              "transliteration": "in kuntum",
+              "rule_trigger": "نْ followed by ك",
+              "surah_reference": "Al-Baqarah (2:23)",
+              "audio_file_name": "ikhfa_01.mp3"
+            },
+            {
+              "arabic_text": "وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+              "highlighted_word": "وَمِنْ شَرِّ",
+              "transliteration": "wa min sharri",
+              "rule_trigger": "نْ followed by ش",
+              "surah_reference": "Al-Falaq (113:5)",
+              "audio_file_name": "ikhfa_02.mp3"
+            },
+            {
+              "arabic_text": "نَارًا ذَاتَ لَهَبٍ",
+              "highlighted_word": "نَارًا ذَاتَ",
+              "transliteration": "naaran dhaata",
+              "rule_trigger": "ـً followed by ذ",
+              "surah_reference": "Al-Masad (111:3)",
+              "audio_file_name": "ikhfa_03.mp3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name_en": "Rules of Meem Saakinah",
+      "category_name_ar": "أحكام الميم الساكنة",
+      "rules": [
+        {
+          "rule_name_en": "Ikhfa' ash-Shafawi (Labial Hiding)",
+          "rule_name_ar": "الإِخْفَاء الشَّفَوِي",
+          "rule_type": "meem_saakinah",
+          "description": "Hiding the Meem Saakinah (مْ) with Ghunnah when followed by Baa' (ب).",
+          "examples": [
+            {
+              "arabic_text": "تَرْمِيهِمْ بِحِجَارَةٍ",
+              "highlighted_word": "تَرْمِيهِمْ بِحِجَارَةٍ",
+              "transliteration": "tarmeehim bihijarah",
+              "rule_trigger": "مْ followed by ب",
+              "surah_reference": "Al-Fil (105:4)",
+              "audio_file_name": "ikhfa_shafawi_01.mp3"
+            },
+            {
+              "arabic_text": "فَبَشِّرْهُمْ بِعَذَابٍ أَلِيمٍ",
+              "highlighted_word": "فَبَشِّرْهُمْ بِعَذَابٍ",
+              "transliteration": "fabashirhum bi'adhaab",
+              "rule_trigger": "مْ followed by ب",
+              "surah_reference": "Al-Imran (3:21)",
+              "audio_file_name": "ikhfa_shafawi_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Idgham ash-Shafawi (Labial Merging)",
+          "rule_name_ar": "الإِدْغَام الشَّفَوِي",
+          "rule_type": "meem_saakinah",
+          "description": "Merging a Meem Saakinah (مْ) with Ghunnah into a following Meem (م).",
+          "examples": [
+            {
+              "arabic_text": "أَطْعَمَهُمْ مِنْ جُوعٍ",
+              "highlighted_word": "أَطْعَمَهُمْ مِنْ",
+              "transliteration": "at'amahum-min",
+              "rule_trigger": "مْ followed by م",
+              "surah_reference": "Quraysh (106:4)",
+              "audio_file_name": "idgham_shafawi_01.mp3"
+            },
+            {
+              "arabic_text": "إِنَّهَا عَلَيْهِمْ مُؤْصَدَةٌ",
+              "highlighted_word": "عَلَيْهِمْ مُؤْصَدَةٌ",
+              "transliteration": "alayhim-mu'sadah",
+              "rule_trigger": "مْ followed by م",
+              "surah_reference": "Al-Humazah (104:8)",
+              "audio_file_name": "idgham_shafawi_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Idh'har ash-Shafawi (Labial Clarification)",
+          "rule_name_ar": "الإِظْهَار الشَّفَوِي",
+          "rule_type": "meem_saakinah",
+          "description": "Pronouncing Meem Saakinah (مْ) clearly when followed by any letter other than ب or م.",
+          "examples": [
+            {
+              "arabic_text": "لَكُمْ دِينُكُمْ وَلِيَ دِينِ",
+              "highlighted_word": "لَكُمْ دِينُكُمْ",
+              "transliteration": "lakum deenukum",
+              "rule_trigger": "مْ followed by د",
+              "surah_reference": "Al-Kafirun (109:6)",
+              "audio_file_name": "idhar_shafawi_01.mp3"
+            },
+            {
+              "arabic_text": "أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ",
+              "highlighted_word": "أَلَمْ تَرَ",
+              "transliteration": "alam tara",
+              "rule_trigger": "مْ followed by ت",
+              "surah_reference": "Al-Fil (105:1)",
+              "audio_file_name": "idhar_shafawi_02.mp3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name_en": "Rules of Madd (Elongation)",
+      "category_name_ar": "أحكام المد",
+      "rules": [
+        {
+          "rule_name_en": "Madd Tabi'i (Natural Madd)",
+          "rule_name_ar": "المد الطبيعي",
+          "rule_type": "madd",
+          "description": "The natural 2-count elongation of a madd letter (ـَا, ـُو, ـِي) not followed by a Hamza or Sukoon.",
+          "examples": [
+            {
+              "arabic_text": "قَالَ",
+              "highlighted_word": "قَالَ",
+              "transliteration": "qaala",
+              "rule_trigger": "Alif madd (ـَا)",
+              "surah_reference": "Al-Baqarah (2:30)",
+              "audio_file_name": "madd_tabii_01.mp3"
+            },
+            {
+              "arabic_text": "يَقُولُ",
+              "highlighted_word": "يَقُولُ",
+              "transliteration": "yaqoolu",
+              "rule_trigger": "Waw madd (ـُو)",
+              "surah_reference": "Al-Baqarah (2:8)",
+              "audio_file_name": "madd_tabii_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Madd al-Muttasil (Attached Madd)",
+          "rule_name_ar": "المد المتصل",
+          "rule_type": "madd",
+          "description": "Obligatory 4 or 5 count elongation when a madd letter is followed by a Hamza in the same word.",
+          "examples": [
+            {
+              "arabic_text": "وَالسَّمَاءِ وَالطَّارِقِ",
+              "highlighted_word": "السَّمَاءِ",
+              "transliteration": "as-samaaa'i",
+              "rule_trigger": "Madd letter followed by hamza in one word",
+              "surah_reference": "At-Tariq (86:1)",
+              "audio_file_name": "madd_muttasil_01.mp3"
+            },
+            {
+              "arabic_text": "إِذَا جَاءَ نَصْرُ اللَّهِ",
+              "highlighted_word": "جَاءَ",
+              "transliteration": "jaaa'a",
+              "rule_trigger": "Madd letter followed by hamza in one word",
+              "surah_reference": "An-Nasr (110:1)",
+              "audio_file_name": "madd_muttasil_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Madd al-Munfasil (Detached Madd)",
+          "rule_name_ar": "المد المنفصل",
+          "rule_type": "madd",
+          "description": "Permissible 2, 4, or 5 count elongation when a madd letter at the end of a word is followed by a Hamza at the start of the next.",
+          "examples": [
+            {
+              "arabic_text": "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",
+              "highlighted_word": "إِنَّا أَعْطَيْنَاكَ",
+              "transliteration": "innaa a'taynaak",
+              "rule_trigger": "Madd letter at end of word, hamza at start of next",
+              "surah_reference": "Al-Kawthar (108:1)",
+              "audio_file_name": "madd_munfasil_01.mp3"
+            },
+            {
+              "arabic_text": "يَا أَيُّهَا النَّاسُ",
+              "highlighted_word": "يَا أَيُّهَا",
+              "transliteration": "yaa ayyuha",
+              "rule_trigger": "Madd letter at end of word, hamza at start of next",
+              "surah_reference": "An-Nisa (4:1)",
+              "audio_file_name": "madd_munfasil_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Madd Lazim (Necessary Madd)",
+          "rule_name_ar": "المد اللازم",
+          "rule_type": "madd",
+          "description": "Obligatory 6-count elongation when a madd letter is followed by a permanent sukoon.",
+          "examples": [
+            {
+              "arabic_text": "وَلَا الضَّالِّينَ",
+              "highlighted_word": "الضَّالِّينَ",
+              "transliteration": "ad-daaallleen",
+              "rule_trigger": "Kalimi Muthakkal (Heavy Word Madd)",
+              "surah_reference": "Al-Fatiha (1:7)",
+              "audio_file_name": "madd_lazim_01.mp3"
+            },
+            {
+              "arabic_text": "الْحَاقَّةُ",
+              "highlighted_word": "الْحَاقَّةُ",
+              "transliteration": "al-haaaqqah",
+              "rule_trigger": "Kalimi Muthakkal (Heavy Word Madd)",
+              "surah_reference": "Al-Haqqah (69:1)",
+              "audio_file_name": "madd_lazim_02.mp3"
+            },
+            {
+              "arabic_text": "آلْآنَ وَقَدْ عَصَيْتَ",
+              "highlighted_word": "آلْآنَ",
+              "transliteration": "aaal-aana",
+              "rule_trigger": "Kalimi Mukhaffaf (Light Word Madd)",
+              "surah_reference": "Yunus (10:91)",
+              "audio_file_name": "madd_lazim_03.mp3"
+            },
+            {
+              "arabic_text": "قٓ ۚ وَالْقُرْآنِ الْمَجِيدِ",
+              "highlighted_word": "قٓ",
+              "transliteration": "Qaaaf",
+              "rule_trigger": "Harfi Mukhaffaf (Light Letter Madd)",
+              "surah_reference": "Qaf (50:1)",
+              "audio_file_name": "madd_lazim_04.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Madd 'Arid lis-Sukoon (Temporary Madd)",
+          "rule_name_ar": "المد العارض للسكون",
+          "rule_type": "madd",
+          "description": "Permissible 2, 4, or 6 count elongation when stopping on a word where a madd letter is followed by the final letter.",
+          "examples": [
+            {
+              "arabic_text": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+              "highlighted_word": "الْعَالَمِينَ (when stopping)",
+              "transliteration": "al-'aalameen",
+              "rule_trigger": "Stopping on a word with a madd letter before the final letter",
+              "surah_reference": "Al-Fatiha (1:2)",
+              "audio_file_name": "madd_arid_01.mp3"
+            },
+            {
+              "arabic_text": "مَالِكِ يَوْمِ الدِّينِ",
+              "highlighted_word": "الدِّينِ (when stopping)",
+              "transliteration": "ad-deen",
+              "rule_trigger": "Stopping on a word with a madd letter before the final letter",
+              "surah_reference": "Al-Fatiha (1:4)",
+              "audio_file_name": "madd_arid_02.mp3"
+            }
+          ]
+        },
+        {
+          "rule_name_en": "Madd Leen (Easy Madd)",
+          "rule_name_ar": "مد اللين",
+          "rule_type": "madd",
+          "description": "Permissible 2, 4, or 6 count elongation when stopping on a word where a 'leen' letter (ـَوْ or ـَيْ) is followed by the final letter.",
+          "examples": [
+            {
+              "arabic_text": "لِإِيلَافِ قُرَيْشٍ",
+              "highlighted_word": "قُرَيْشٍ (when stopping)",
+              "transliteration": "quraysh",
+              "rule_trigger": "Stopping on a word with a leen letter before the final letter",
+              "surah_reference": "Quraysh (106:1)",
+              "audio_file_name": "madd_leen_01.mp3"
+            },
+            {
+              "arabic_text": "وَآمَنَهُمْ مِنْ خَوْفٍ",
+              "highlighted_word": "خَوْفٍ (when stopping)",
+              "transliteration": "khawf",
+              "rule_trigger": "Stopping on a word with a leen letter before the final letter",
+              "surah_reference": "Quraysh (106:4)",
+              "audio_file_name": "madd_leen_02.mp3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name_en": "Qalqalah (Vibration)",
+      "category_name_ar": "القلقلة",
+      "rules": [
+        {
+          "rule_name_en": "Qalqalah",
+          "rule_name_ar": "القلقلة",
+          "rule_type": "qalqalah",
+          "description": "A vibration/echo on a saakin letter from the group ق, ط, ب, ج, د.",
+          "examples": [
+            {
+              "arabic_text": "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+              "highlighted_word": "الْفَلَقِ (when stopping)",
+              "transliteration": "al-falaq",
+              "rule_trigger": "Stopping on a Qalqalah letter (ق)",
+              "surah_reference": "Al-Falaq (113:1)",
+              "audio_file_name": "qalqalah_kubra_01.mp3"
+            },
+            {
+              "arabic_text": "قُلْ هُوَ اللَّهُ أَحَدٌ",
+              "highlighted_word": "أَحَدٌ (when stopping)",
+              "transliteration": "ahad",
+              "rule_trigger": "Stopping on a Qalqalah letter (د)",
+              "surah_reference": "Al-Ikhlas (112:1)",
+              "audio_file_name": "qalqalah_kubra_02.mp3"
+            },
+            {
+              "arabic_text": "وَخَلَقْنَاكُمْ أَزْوَاجًا",
+              "highlighted_word": "خَلَقْنَاكُمْ",
+              "transliteration": "khalaqnaakum",
+              "rule_trigger": "Qalqalah letter (ق) saakin in the middle of a word",
+              "surah_reference": "An-Naba (78:8)",
+              "audio_file_name": "qalqalah_sughra_01.mp3"
+            },
+            {
+              "arabic_text": "وَتَبَّ",
+              "highlighted_word": "وَتَبَّ (when stopping)",
+              "transliteration": "wa tabb",
+              "rule_trigger": "Stopping on a Qalqalah letter (ب) with a shaddah",
+              "surah_reference": "Al-Masad (111:1)",
+              "audio_file_name": "qalqalah_akbar_01.mp3"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
