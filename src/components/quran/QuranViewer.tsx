@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, ArrowRight, ChevronsRight } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse } from "@/data/quranData";
 
 interface QuranViewerProps {
@@ -12,8 +12,9 @@ interface QuranViewerProps {
 
 export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 }) => {
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
-  const [versesPerPage, setVersesPerPage] = useState(15);
+  const [versesPerPage, setVersesPerPage] = useState(5);
   const [showArabic, setShowArabic] = useState(true);
+  const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'full'>>({});
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -34,50 +35,73 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const goToNextPage = () => {
     if (currentVerseId + versesPerPage <= maxVerseId) {
       setCurrentVerseId(currentVerseId + versesPerPage);
+      setVerseRevealStates({});
     }
   };
 
   const goToPreviousPage = () => {
     if (currentVerseId - versesPerPage >= 1) {
       setCurrentVerseId(currentVerseId - versesPerPage);
+      setVerseRevealStates({});
     }
   };
 
   const handleVersesPerPageChange = (count: number) => {
     setVersesPerPage(count);
+    setVerseRevealStates({});
+  };
+
+  const revealVerse = (verseId: number, revealType: 'partial' | 'full') => {
+    setVerseRevealStates(prev => ({
+      ...prev,
+      [verseId]: revealType
+    }));
+  };
+
+  const getVerseDisplay = (verse: QuranVerse) => {
+    const revealState = verseRevealStates[verse.id] || 'hidden';
+    const words = verse.text.split(' ');
+    
+    if (revealState === 'hidden') {
+      return '';
+    } else if (revealState === 'partial') {
+      return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
+    } else {
+      return verse.text;
+    }
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header with Surah Info */}
       {currentVerse && (
-        <div className="page-header p-4 rounded-lg text-center space-y-2">
+        <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
           <h2 className="text-xl font-bold text-gray-700">
             {getSurahName(currentVerse.surah)}
           </h2>
           <div className="flex justify-center space-x-2">
-            <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-              صفحة {Math.ceil(currentVerseId / versesPerPage)}
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+              Page {Math.ceil(currentVerseId / versesPerPage)}
             </Badge>
-            <Badge variant="outline" className="border-gray-300 text-gray-600">
-              آية {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} من {maxVerseId}
+            <Badge variant="outline" className="border-green-200 text-green-600">
+              Verse {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} of {maxVerseId}
             </Badge>
           </div>
         </div>
       )}
 
       {/* Control Panel */}
-      <Card className="p-4 bg-gray-50 border-gray-200">
+      <Card className="p-4 bg-green-50 border-green-100">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-600">آيات في الصفحة:</span>
-            {[5, 10, 15, 20].map((count) => (
+            <span className="text-sm font-medium text-gray-600">Verses per page:</span>
+            {[1, 3, 5, 10].map((count) => (
               <Button
                 key={count}
                 variant={versesPerPage === count ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleVersesPerPageChange(count)}
-                className={versesPerPage === count ? "bg-gray-600 text-white" : "border-gray-300 text-gray-600"}
+                className={versesPerPage === count ? "bg-green-600 text-white" : "border-green-200 text-green-700 hover:bg-green-100"}
               >
                 {count}
               </Button>
@@ -88,58 +112,90 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             size="sm"
             onClick={() => setShowArabic(!showArabic)}
-            className="flex items-center space-x-2 border-gray-300 text-gray-600"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100"
           >
             {showArabic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            <span>{showArabic ? "إخفاء" : "إظهار"} النص العربي</span>
+            <span>{showArabic ? "Hide" : "Show"} Arabic Text</span>
           </Button>
         </div>
       </Card>
 
-      {/* Quran Page Display */}
-      <Card className="quran-page p-8">
+      {/* Verses Display */}
+      <div className="space-y-4">
         {showArabic ? (
-          <div className="quran-text space-y-6">
-            {currentVerses.map((verse, index) => (
-              <React.Fragment key={verse.id}>
-                <p className="leading-relaxed">
-                  {verse.text}
-                </p>
-                {(index + 1) % 5 === 0 && index < currentVerses.length - 1 && (
-                  <div className="page-margin"></div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+          currentVerses.map((verse) => (
+            <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="border-green-200 text-green-600">
+                    {verse.verse_key}
+                  </Badge>
+                </div>
+                
+                <div className="relative">
+                  <div className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem]">
+                    {getVerseDisplay(verse)}
+                  </div>
+                  
+                  {verseRevealStates[verse.id] !== 'full' && (
+                    <div className="flex justify-end space-x-2 mt-4">
+                      {!verseRevealStates[verse.id] && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'partial')}
+                          className="border-green-200 text-green-700 hover:bg-green-100"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal Part
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'full')}
+                        className="border-green-200 text-green-700 hover:bg-green-100"
+                      >
+                        <ChevronsRight className="h-4 w-4 mr-1" />
+                        Reveal All
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
         ) : (
-          <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            <div className="text-center space-y-4">
-              <div className="text-6xl text-gray-300">📖</div>
-              <p className="text-gray-500 text-lg">النص العربي مخفي لممارسة الحفظ</p>
-              <p className="text-gray-400 text-sm">
-                صفحة {Math.ceil(currentVerseId / versesPerPage)} • {currentVerses.length} آية
-              </p>
+          <Card className="p-8 bg-white border border-green-100">
+            <div className="flex items-center justify-center h-96 bg-green-50 rounded-lg border-2 border-dashed border-green-200">
+              <div className="text-center space-y-4">
+                <div className="text-6xl text-green-300">📖</div>
+                <p className="text-green-700 text-lg">Arabic text hidden for memorization practice</p>
+                <p className="text-green-500 text-sm">
+                  Page {Math.ceil(currentVerseId / versesPerPage)} • {currentVerses.length} verses
+                </p>
+              </div>
             </div>
-          </div>
+          </Card>
         )}
-      </Card>
+      </div>
 
       {/* Navigation Controls */}
-      <Card className="p-4 bg-gray-50 border-gray-200">
+      <Card className="p-4 bg-green-50 border-green-100">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             onClick={goToPreviousPage}
             disabled={currentVerseId <= 1}
-            className="flex items-center space-x-2 border-gray-300 text-gray-600 disabled:opacity-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
           >
             <ChevronRight className="h-4 w-4" />
-            <span>الصفحة السابقة</span>
+            <span>Previous Page</span>
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-500">
-              صفحة {Math.ceil(currentVerseId / versesPerPage)} من {Math.ceil(maxVerseId / versesPerPage)}
+            <span className="text-sm text-green-600">
+              Page {Math.ceil(currentVerseId / versesPerPage)} of {Math.ceil(maxVerseId / versesPerPage)}
             </span>
           </div>
 
@@ -147,9 +203,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             onClick={goToNextPage}
             disabled={currentVerseId + versesPerPage > maxVerseId}
-            className="flex items-center space-x-2 border-gray-300 text-gray-600 disabled:opacity-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
           >
-            <span>الصفحة التالية</span>
+            <span>Next Page</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
