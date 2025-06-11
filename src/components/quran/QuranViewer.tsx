@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,12 +80,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     const width = rect.width;
     
     // For Arabic text (right-to-left), calculate from the right side
+    // Add 1 to ensure we always show at least the first word when hovering
     const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
     
     const verse = getVerseById(verseId);
     if (verse) {
       const words = verse.text.split(' ');
-      const wordsToShow = Math.floor(words.length * percentageFromRight);
+      const wordsToShow = Math.max(1, Math.ceil(words.length * percentageFromRight));
       
       setHoverWordCounts(prev => ({
         ...prev,
