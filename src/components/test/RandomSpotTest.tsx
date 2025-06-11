@@ -17,7 +17,8 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   const [testScope, setTestScope] = useState<TestScope>("surah");
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
-  const [currentVerse, setCurrentVerse] = useState<QuranVerse | null>(null);
+  const [numberOfVerses, setNumberOfVerses] = useState<number>(1);
+  const [currentVerses, setCurrentVerses] = useState<QuranVerse[]>([]);
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [showSettings, setShowSettings] = useState(false);
@@ -58,15 +59,45 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     }
 
     if (eligibleVerses.length > 0) {
-      const randomVerse = eligibleVerses[Math.floor(Math.random() * eligibleVerses.length)];
-      setCurrentVerse(randomVerse);
+      // Find a random starting verse that has enough consecutive verses
+      const maxStartIndex = Math.max(0, eligibleVerses.length - numberOfVerses);
+      let attempts = 0;
+      let consecutiveVerses: QuranVerse[] = [];
+      
+      while (attempts < 50 && consecutiveVerses.length < numberOfVerses) {
+        const randomStartIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+        const startVerse = eligibleVerses[randomStartIndex];
+        
+        // Try to get consecutive verses
+        consecutiveVerses = [];
+        for (let i = 0; i < numberOfVerses; i++) {
+          const nextVerse = allVerses.find(v => 
+            v.surah === startVerse.surah && 
+            v.ayah === startVerse.ayah + i
+          );
+          if (nextVerse && eligibleVerses.includes(nextVerse)) {
+            consecutiveVerses.push(nextVerse);
+          } else {
+            break;
+          }
+        }
+        attempts++;
+      }
+      
+      // If we couldn't find consecutive verses, just take individual verses
+      if (consecutiveVerses.length < numberOfVerses) {
+        const shuffled = [...eligibleVerses].sort(() => 0.5 - Math.random());
+        consecutiveVerses = shuffled.slice(0, numberOfVerses);
+      }
+      
+      setCurrentVerses(consecutiveVerses);
       setShowAnswer(false);
     }
   };
 
   useEffect(() => {
     generateRandomTest();
-  }, [testScope, selectedSurah, selectedJuz]);
+  }, [testScope, selectedSurah, selectedJuz, numberOfVerses]);
 
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
@@ -79,17 +110,24 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   };
 
   const getScopeDescription = () => {
+    const verseText = numberOfVerses === 1 ? "verse" : "verses";
     switch (testScope) {
       case "surah":
-        return `Random verse from ${getSurahName(selectedSurah)}`;
+        return `${numberOfVerses} random ${verseText} from ${getSurahName(selectedSurah)}`;
       case "juz":
-        return `Random verse from Juz ${selectedJuz}`;
+        return `${numberOfVerses} random ${verseText} from Juz ${selectedJuz}`;
       case "entire":
-        return "Random verse from the entire Quran";
+        return `${numberOfVerses} random ${verseText} from the entire Quran`;
     }
   };
 
-  if (!currentVerse) {
+  const getPartialText = (text: string) => {
+    const words = text.split(' ');
+    const halfLength = Math.ceil(words.length / 2);
+    return words.slice(0, halfLength).join(' ') + '...';
+  };
+
+  if (currentVerses.length === 0) {
     return <div>Loading...</div>;
   }
 
@@ -126,7 +164,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-800">Test Configuration</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Test Scope</label>
                 <Select value={testScope} onValueChange={(value: TestScope) => setTestScope(value)}>
@@ -137,6 +175,22 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                     <SelectItem value="surah">Within a Surah</SelectItem>
                     <SelectItem value="juz">Within a Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Number of Verses</label>
+                <Select value={numberOfVerses.toString()} onValueChange={(value) => setNumberOfVerses(Number(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 verse</SelectItem>
+                    <SelectItem value="2">2 verses</SelectItem>
+                    <SelectItem value="3">3 verses</SelectItem>
+                    <SelectItem value="4">4 verses</SelectItem>
+                    <SelectItem value="5">5 verses</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -191,12 +245,24 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
 
           {/* Question */}
           <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div className="text-center space-y-3">
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                {currentVerse.verse_key} - {getSurahName(currentVerse.surah)}
-              </Badge>
-              <div className="text-blue-800 font-medium">
-                Continue from this verse...
+            <div className="space-y-4">
+              <div className="text-center">
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                  Starting from: {currentVerses[0].verse_key} - {getSurahName(currentVerses[0].surah)}
+                </Badge>
+              </div>
+              
+              {/* First verse - partially shown */}
+              <div className="space-y-2">
+                <div className="text-blue-800 font-medium text-center">
+                  Continue from this point...
+                </div>
+                <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                  {numberOfVerses === 1 
+                    ? getPartialText(currentVerses[0].text)
+                    : getPartialText(currentVerses[0].text)
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -235,16 +301,18 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
           {/* Answer Section */}
           {showAnswer && (
             <div className="space-y-4 border-t pt-4">
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div className="space-y-2">
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                    Verse: {currentVerse.verse_key}
-                  </Badge>
-                  <div className="font-arabic text-2xl text-right leading-loose text-gray-800">
-                    {currentVerse.text}
+              {currentVerses.map((verse, index) => (
+                <div key={verse.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                      Verse {index + 1}: {verse.verse_key}
+                    </Badge>
+                    <div className="font-arabic text-2xl text-right leading-loose text-gray-800">
+                      {verse.text}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           )}
         </div>
