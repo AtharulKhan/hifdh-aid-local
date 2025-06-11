@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Eye, EyeOff, ArrowRight, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, ChevronsRight } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse } from "@/data/quranData";
+import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranViewerProps {
   startingVerseId?: number;
@@ -31,6 +31,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
 
   const currentVerses = getCurrentVerses();
   const currentVerse = currentVerses[0];
+
+  const handleNavigate = (verseId: number, newVersesPerPage?: number) => {
+    setCurrentVerseId(verseId);
+    if (newVersesPerPage) {
+      setVersesPerPage(newVersesPerPage);
+    }
+    setVerseRevealStates({});
+  };
 
   const goToNextPage = () => {
     if (currentVerseId + versesPerPage <= maxVerseId) {
@@ -110,7 +118,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 variant={versesPerPage === count ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
-                className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+                className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
               >
                 {count}
               </Button>
@@ -122,15 +130,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               variant={viewMode === 'hidden' ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode('hidden')}
-              className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+              className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
             >
-              Hide Arabic
+              Hide
             </Button>
             <Button
               variant={viewMode === 'partial' ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode('partial')}
-              className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+              className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
             >
               Show Partial
             </Button>
@@ -138,10 +146,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               variant={viewMode === 'full' ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode('full')}
-              className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+              className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
             >
               Show Full
             </Button>
+            <QuranNavigationModal
+              onNavigate={handleNavigate}
+              currentVerseId={currentVerseId}
+              maxVerseId={maxVerseId}
+            />
           </div>
         </div>
       </Card>
@@ -264,7 +277,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             onClick={goToPreviousPage}
             disabled={currentVerseId <= 1}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
             <ChevronRight className="h-4 w-4" />
             <span>Previous Page</span>
@@ -280,7 +293,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             onClick={goToNextPage}
             disabled={currentVerseId + versesPerPage > maxVerseId}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
           >
             <span>Next Page</span>
             <ChevronLeft className="h-4 w-4" />
