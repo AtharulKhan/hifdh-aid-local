@@ -14,8 +14,8 @@ import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Quran Review" },
-  { path: "/page-view", icon: BookOpen, label: "Quran Review (Page)" }
+  { path: "/", icon: Home, label: "Quran Review (by Verse)" },
+  { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" }
 ];
 
 export const Navigation = () => {
