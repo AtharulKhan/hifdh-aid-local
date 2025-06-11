@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, ArrowRight, ChevronsRight } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse } from "@/data/quranData";
+import { Switch } from "@/components/ui/switch";
+import { ChevronLeft, ChevronRight, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranViewerProps {
@@ -15,6 +16,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
   const [versesPerPage, setVersesPerPage] = useState(5);
   const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
+  const [showTajweed, setShowTajweed] = useState(false);
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   
@@ -59,6 +61,41 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     }
   };
 
+  const goToNextSurah = () => {
+    if (!currentVerse) return;
+    const nextSurahNumber = currentVerse.surah + 1;
+    const nextSurahFirstVerse = allVerses.find(v => v.surah === nextSurahNumber);
+    if (nextSurahFirstVerse) {
+      handleNavigate(nextSurahFirstVerse.id);
+    }
+  };
+
+  const goToPreviousSurah = () => {
+    if (!currentVerse) return;
+    const prevSurahNumber = currentVerse.surah - 1;
+    if (prevSurahNumber >= 1) {
+      const prevSurahFirstVerse = allVerses.find(v => v.surah === prevSurahNumber);
+      if (prevSurahFirstVerse) {
+        handleNavigate(prevSurahFirstVerse.id);
+      }
+    }
+  };
+
+  const getTajweedText = (verse: QuranVerse): string => {
+    const words: string[] = [];
+    let wordIndex = 1;
+    
+    while (true) {
+      const tajweedKey = `${verse.surah}:${verse.ayah}:${wordIndex}`;
+      const tajweedWord = tajweedData[tajweedKey];
+      if (!tajweedWord) break;
+      words.push(tajweedWord.text);
+      wordIndex++;
+    }
+    
+    return words.length > 0 ? words.join(' ') : verse.text;
+  };
+
   const handleVersesPerPageChange = (count: number) => {
     setVersesPerPage(count);
     setVerseRevealStates({});
@@ -94,14 +131,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     
     const verse = getVerseById(verseId);
     if (verse) {
-      const words = verse.text.split(' ');
+      const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+      const words = verseText.split(' ');
       
       // For Arabic text (right-to-left), calculate from the right side
       const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
       
       // Calculate total characters to get more precise positioning
-      const totalText = verse.text;
-      const totalChars = totalText.length;
+      const totalChars = verseText.length;
       const charsToReveal = Math.floor(totalChars * percentageFromRight);
       
       // Find which word contains the character at this position
@@ -143,7 +180,8 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   };
 
   const getVerseDisplay = (verse: QuranVerse) => {
-    const words = verse.text.split(' ');
+    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+    const words = verseText.split(' ');
     const hoverWordCount = hoverWordCounts[verse.id] || 0;
     
     if (viewMode === 'hidden') {
@@ -159,12 +197,12 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       } else if (revealState === 'more') {
         return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
       } else {
-        return verse.text;
+        return verseText;
       }
     } else if (viewMode === 'partial') {
       return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
     } else {
-      return verse.text;
+      return verseText;
     }
   };
 
@@ -173,9 +211,36 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       {/* Header with Surah Info */}
       {currentVerse && (
         <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
-          <h2 className="text-xl font-bold text-gray-700">
-            {getSurahName(currentVerse.surah)}
-          </h2>
+          <div className="flex items-center justify-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousSurah}
+              disabled={currentVerse.surah <= 1}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              <SkipBack className="h-4 w-4 mr-1" />
+              Previous Surah
+            </Button>
+            
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-700">
+                {getSurahName(currentVerse.surah)}
+              </h2>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextSurah}
+              disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              Next Surah
+              <SkipForward className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+          
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
               Page {Math.ceil(currentVerseId / versesPerPage)}
@@ -205,36 +270,46 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             ))}
           </div>
           
-          <div className="flex space-x-2">
-            <Button
-              variant={viewMode === 'hidden' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('hidden')}
-              className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-            >
-              Hide
-            </Button>
-            <Button
-              variant={viewMode === 'partial' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('partial')}
-              className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-            >
-              Show Partial
-            </Button>
-            <Button
-              variant={viewMode === 'full' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('full')}
-              className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-            >
-              Show Full
-            </Button>
-            <QuranNavigationModal
-              onNavigate={handleNavigate}
-              currentVerseId={currentVerseId}
-              maxVerseId={maxVerseId}
-            />
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+              <Switch
+                checked={showTajweed}
+                onCheckedChange={setShowTajweed}
+              />
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button
+                variant={viewMode === 'hidden' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode('hidden')}
+                className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+              >
+                Hide
+              </Button>
+              <Button
+                variant={viewMode === 'partial' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode('partial')}
+                className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+              >
+                Show Partial
+              </Button>
+              <Button
+                variant={viewMode === 'full' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode('full')}
+                className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+              >
+                Show Full
+              </Button>
+              <QuranNavigationModal
+                onNavigate={handleNavigate}
+                currentVerseId={currentVerseId}
+                maxVerseId={maxVerseId}
+              />
+            </div>
           </div>
         </div>
       </Card>
@@ -260,8 +335,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
                         (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
                     }}
+                    dangerouslySetInnerHTML={showTajweed ? { __html: getVerseDisplay(verse) } : undefined}
                   >
-                    {getVerseDisplay(verse)}
+                    {!showTajweed && getVerseDisplay(verse)}
                   </div>
                   
                   {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
@@ -333,8 +409,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       style={{
                         opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
                       }}
+                      dangerouslySetInnerHTML={showTajweed ? { __html: getVerseDisplay(verse) } : undefined}
                     >
-                      {getVerseDisplay(verse)}
+                      {!showTajweed && getVerseDisplay(verse)}
                     </div>
                     
                     <div className="flex justify-end space-x-2 mt-4">
