@@ -77,12 +77,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     const rect = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const width = rect.width;
-    const percentage = Math.max(0, Math.min(1, x / width));
+    
+    // For Arabic text (right-to-left), calculate from the right side
+    const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
     
     const verse = getVerseById(verseId);
     if (verse) {
       const words = verse.text.split(' ');
-      const wordsToShow = Math.floor(words.length * percentage);
+      const wordsToShow = Math.floor(words.length * percentageFromRight);
       
       setHoverWordCounts(prev => ({
         ...prev,
