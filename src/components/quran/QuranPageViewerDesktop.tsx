@@ -203,50 +203,74 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header with Surah Info */}
-      <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
-        <div className="flex items-center justify-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToPreviousSurah}
-            disabled={currentSurah <= 1}
-            className="border-green-200 text-green-600 hover:bg-green-50"
-          >
-            <SkipBack className="h-4 w-4 mr-1" />
-            Previous Surah
-          </Button>
-          
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-700">
-              {getSurahName(currentSurah)}
-            </h2>
+      {/* Header with Surah Info and Navigation */}
+      <div className="bg-white p-4 rounded-lg border border-green-100 space-y-4">
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousSurah}
+              disabled={currentSurah <= 1}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              <SkipBack className="h-4 w-4 mr-1" />
+              Previous Surah
+            </Button>
+            
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-700">
+                {getSurahName(currentSurah)}
+              </h2>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextSurah}
+              disabled={currentSurah >= maxSurah}
+              className="border-green-200 text-green-600 hover:bg-green-50"
+            >
+              Next Surah
+              <SkipForward className="h-4 w-4 ml-1" />
+            </Button>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToNextSurah}
-            disabled={currentSurah >= maxSurah}
-            className="border-green-200 text-green-600 hover:bg-green-50"
-          >
-            Next Surah
-            <SkipForward className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-        
-        <div className="flex justify-center space-x-2">
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-            Surah {currentSurah}
-          </Badge>
-          <Badge variant="outline" className="border-green-200 text-green-600">
-            Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
-          </Badge>
-          {maxLines[0] > 0 && totalPages > 1 && (
-            <Badge variant="outline" className="border-blue-200 text-blue-600">
-              Page {currentPage} of {totalPages}
+          <div className="flex justify-center space-x-2">
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+              Surah {currentSurah}
             </Badge>
-          )}
+            <Badge variant="outline" className="border-green-200 text-green-600">
+              Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
+            </Badge>
+            {maxLines[0] > 0 && totalPages > 1 && (
+              <Badge variant="outline" className="border-blue-200 text-blue-600">
+                Page {currentPage} of {totalPages}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Surah Navigation Slider */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-green-700">Navigate to Surah:</span>
+            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+              Surah {currentSurah} of {maxSurah}
+            </span>
+          </div>
+          <Slider
+            value={[currentSurah]}
+            onValueChange={handleSurahSliderChange}
+            max={maxSurah}
+            min={1}
+            step={1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-green-500">
+            <span>1</span>
+            <span>{maxSurah}</span>
+          </div>
         </div>
       </div>
 
@@ -474,61 +498,8 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
           )}
         </div>
       </Card>
-
-      {/* Navigation Controls */}
-      <Card className="p-4 bg-green-50 border-green-100">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={goToPreviousSurah}
-              disabled={currentSurah <= 1}
-              className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span>Previous Surah</span>
-            </Button>
-
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-green-600">
-                Surah {currentSurah} of {maxSurah}
-              </span>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={goToNextSurah}
-              disabled={currentSurah >= maxSurah}
-              className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
-            >
-              <span>Next Surah</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Surah Navigation Slider */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-green-700">Navigate to Surah:</span>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                Surah {currentSurah}
-              </span>
-            </div>
-            <Slider
-              value={[currentSurah]}
-              onValueChange={handleSurahSliderChange}
-              max={maxSurah}
-              min={1}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-green-500">
-              <span>1</span>
-              <span>{maxSurah}</span>
-            </div>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };
+
+</edits_to_apply>
