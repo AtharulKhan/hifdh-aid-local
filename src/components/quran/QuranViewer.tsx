@@ -101,7 +101,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 variant={versesPerPage === count ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleVersesPerPageChange(count)}
-                className={versesPerPage === count ? "bg-green-600 text-white" : "border-green-200 text-green-700 hover:bg-green-100"}
+                className={versesPerPage === count ? "bg-green-400 text-white hover:bg-green-500" : "border-green-200 text-green-700 hover:bg-green-100"}
               >
                 {count}
               </Button>
@@ -139,22 +139,33 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   
                   {verseRevealStates[verse.id] !== 'full' && (
                     <div className="flex justify-end space-x-2 mt-4">
-                      {!verseRevealStates[verse.id] && (
+                      {verseRevealStates[verse.id] !== 'partial' && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'partial')}
-                          className="border-green-200 text-green-700 hover:bg-green-100"
+                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
                         >
                           <ArrowRight className="h-4 w-4 mr-1" />
                           Reveal Part
+                        </Button>
+                      )}
+                      {verseRevealStates[verse.id] === 'partial' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'partial')}
+                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal More
                         </Button>
                       )}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-700 hover:bg-green-100"
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-50"
                       >
                         <ChevronsRight className="h-4 w-4 mr-1" />
                         Reveal All
