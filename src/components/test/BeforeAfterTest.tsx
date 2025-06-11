@@ -3,27 +3,67 @@ import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse } from "@/data/quranData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 
 interface BeforeAfterTestProps {
   onBack: () => void;
 }
 
+type TestScope = "surah" | "juz" | "entire";
+
 export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack }) => {
+  const [testScope, setTestScope] = useState<TestScope>("entire");
+  const [selectedSurah, setSelectedSurah] = useState<number>(1);
+  const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [currentVerse, setCurrentVerse] = useState<QuranVerse | null>(null);
   const [beforeVerse, setBeforeVerse] = useState<QuranVerse | null>(null);
   const [afterVerse, setAfterVerse] = useState<QuranVerse | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [showSettings, setShowSettings] = useState(false);
 
   const allVerses = getVersesArray();
+  const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
 
   const generateRandomTest = () => {
+    let eligibleVerses: QuranVerse[] = [];
+
+    switch (testScope) {
+      case "surah":
+        eligibleVerses = allVerses.filter(verse => verse.surah === selectedSurah);
+        break;
+      case "juz":
+        const juzInfo = getJuzInfo(selectedJuz);
+        if (juzInfo) {
+          eligibleVerses = allVerses.filter(verse => {
+            const verseMapping = juzInfo.verse_mapping;
+            const surahKey = verse.surah.toString();
+            
+            if (verseMapping[surahKey]) {
+              const range = verseMapping[surahKey];
+              if (range.includes('-')) {
+                const [start, end] = range.split('-').map(Number);
+                return verse.ayah >= start && verse.ayah <= end;
+              } else {
+                return verse.ayah === parseInt(range);
+              }
+            }
+            return false;
+          });
+        }
+        break;
+      case "entire":
+        eligibleVerses = allVerses;
+        break;
+    }
+
     // Get a random verse that has both before and after verses
-    const validVerses = allVerses.filter((verse, index) => 
-      index > 0 && index < allVerses.length - 1
-    );
+    const validVerses = eligibleVerses.filter((verse, index) => {
+      const verseIndex = allVerses.findIndex(v => v.id === verse.id);
+      return verseIndex > 0 && verseIndex < allVerses.length - 1;
+    });
     
     if (validVerses.length === 0) return;
     
@@ -38,7 +78,7 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack }) => {
 
   useEffect(() => {
     generateRandomTest();
-  }, []);
+  }, [testScope, selectedSurah, selectedJuz]);
 
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
@@ -48,6 +88,17 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack }) => {
   const handleIncorrect = () => {
     setScore(prev => ({ correct: prev.correct, total: prev.total + 1 }));
     generateRandomTest();
+  };
+
+  const getScopeDescription = () => {
+    switch (testScope) {
+      case "surah":
+        return `from ${getSurahName(selectedSurah)}`;
+      case "juz":
+        return `from Juz ${selectedJuz}`;
+      case "entire":
+        return `from the entire Quran`;
+    }
   };
 
   if (!currentVerse || !beforeVerse || !afterVerse) {
@@ -66,6 +117,14 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack }) => {
           <Badge variant="outline" className="bg-blue-50 text-blue-700">
             Score: {score.correct}/{score.total}
           </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
           <Button variant="outline" size="sm" onClick={generateRandomTest}>
             <RefreshCw className="h-4 w-4 mr-2" />
             New Question
@@ -73,13 +132,74 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack }) => {
         </div>
       </div>
 
+      {/* Settings Panel */}
+      {showSettings && (
+        <Card className="p-4 bg-gray-50 border-gray-200">
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Test Configuration</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Test Scope</label>
+                <Select value={testScope} onValueChange={(value: TestScope) => setTestScope(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="surah">Within a Surah</SelectItem>
+                    <SelectItem value="juz">Within a Juz</SelectItem>
+                    <SelectItem value="entire">Entire Quran</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {testScope === "surah" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Surah</label>
+                  <Select value={selectedSurah.toString()} onValueChange={(value) => setSelectedSurah(Number(value))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {surahNumbers.map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}. {getSurahName(num)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {testScope === "juz" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Juz</label>
+                  <Select value={selectedJuz.toString()} onValueChange={(value) => setSelectedJuz(Number(value))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 30 }, (_, i) => i + 1).map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          Juz {num}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Test Card */}
       <Card className="p-6 border-l-4 border-l-blue-500">
         <div className="space-y-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Before & After Test</h2>
             <p className="text-gray-600">
-              Recite the verse before and after the given verse
+              Recite the verse before and after the given verse {getScopeDescription()}
             </p>
           </div>
 
