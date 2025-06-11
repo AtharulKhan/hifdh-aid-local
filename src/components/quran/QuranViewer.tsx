@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
@@ -14,13 +14,17 @@ interface QuranViewerProps {
 
 export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 }) => {
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
-  const [versesPerPage, setVersesPerPage] = useState(5);
-  const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
+  const [versesPerPage, setVersesPerPage] = useState(() => {
+    // Default to showing full surah
+    const startingVerse = getVerseById(startingVerseId);
+    return 1000; // Large number to show full surah by default
+  });
   const [showTajweed, setShowTajweed] = useState(false);
-  const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
-  const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  
+  const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
+  const [hoverProgress, setHoverProgress] = useState<Record<number, number>>({});
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -43,23 +47,23 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     if (newVersesPerPage) {
       setVersesPerPage(newVersesPerPage);
     }
-    setVerseRevealStates({});
-    setHoverWordCounts({});
+    setActiveRowIndex(null);
+    setHoverProgress({});
   };
 
   const goToNextPage = () => {
     if (currentVerseId + versesPerPage <= maxVerseId) {
       setCurrentVerseId(currentVerseId + versesPerPage);
-      setVerseRevealStates({});
-      setHoverWordCounts({});
+      setActiveRowIndex(null);
+      setHoverProgress({});
     }
   };
 
   const goToPreviousPage = () => {
     if (currentVerseId - versesPerPage >= 1) {
       setCurrentVerseId(currentVerseId - versesPerPage);
-      setVerseRevealStates({});
-      setHoverWordCounts({});
+      setActiveRowIndex(null);
+      setHoverProgress({});
     }
   };
 
@@ -100,97 +104,67 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
 
   const handleVersesPerPageChange = (count: number) => {
     setVersesPerPage(count);
-    setVerseRevealStates({});
-    setHoverWordCounts({});
+    setActiveRowIndex(null);
+    setHoverProgress({});
   };
 
-  const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
-    setVerseRevealStates(prev => ({
-      ...prev,
-      [verseId]: revealType
-    }));
-  };
-
-  const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
-    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
+  const handleRowMouseMove = (event: React.MouseEvent<HTMLDivElement>, rowIndex: number) => {
+    if (activeRowIndex !== null && activeRowIndex !== rowIndex) return;
     
-    const verseTextElement = verseTextRefs.current[verseId];
-    if (!verseTextElement) return;
+    const rowElement = rowRefs.current[rowIndex];
+    if (!rowElement) return;
     
-    const rect = verseTextElement.getBoundingClientRect();
+    setActiveRowIndex(rowIndex);
+    
+    const rect = rowElement.getBoundingClientRect();
     const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const textWidth = rect.width; // Actual width of the text content
-    const height = rect.height;
+    const width = rect.width;
     
-    // Allow hover area to extend slightly above the text (20px above)
-    const extendedHoverArea = y >= -20 && y <= height;
+    const progress = Math.max(0, Math.min(1, x / width));
     
-    if (!extendedHoverArea) {
-      setHoverWordCounts(prev => ({
-        ...prev,
-        [verseId]: 0
-      }));
-      return;
-    }
-    
-    const verse = getVerseById(verseId);
-    if (verse) {
-      const verseText = showTajweed ? getTajweedText(verse) : verse.text;
-      const words = verseText.split(' ');
-      
-      // For Arabic text (right-to-left), calculate from the right side
-      // Use the actual text width, not the container width
-      const percentageFromRight = Math.max(0, Math.min(1, (textWidth - x) / textWidth));
-      
-      // Calculate word position based on percentage
-      const wordsToShow = Math.ceil(words.length * percentageFromRight);
-      
-      setHoverWordCounts(prev => ({
-        ...prev,
-        [verseId]: wordsToShow
-      }));
-    }
-  };
-
-  const handleMouseLeave = (verseId: number) => {
-    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
-    
-    setHoverWordCounts(prev => ({
+    setHoverProgress(prev => ({
       ...prev,
-      [verseId]: 0
+      [rowIndex]: progress
     }));
   };
 
-  const getVerseDisplay = (verse: QuranVerse) => {
-    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
-    const words = verseText.split(' ');
-    const hoverWordCount = hoverWordCounts[verse.id] || 0;
-    
-    if (viewMode === 'hidden') {
-      const revealState = verseRevealStates[verse.id] || 'hidden';
-      
-      if (revealState === 'hidden') {
-        if (hoverWordCount > 0) {
-          return words.slice(0, hoverWordCount).join(' ');
-        }
-        return '';
-      } else if (revealState === 'partial') {
-        return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
-      } else if (revealState === 'more') {
-        return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
-      } else {
-        return verseText;
-      }
-    } else if (viewMode === 'partial') {
-      return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
-    } else {
-      return verseText;
+  const handleRowMouseLeave = (rowIndex: number) => {
+    if (activeRowIndex === rowIndex) {
+      setActiveRowIndex(null);
     }
+    
+    setHoverProgress(prev => {
+      const newProgress = { ...prev };
+      delete newProgress[rowIndex];
+      return newProgress;
+    });
   };
+
+  const getVisibleText = (verse: QuranVerse, rowIndex: number): string => {
+    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+    
+    if (activeRowIndex !== rowIndex || !hoverProgress[rowIndex]) {
+      return verseText; // Show full text by default
+    }
+    
+    const words = verseText.split(' ');
+    const wordsToShow = Math.ceil(words.length * hoverProgress[rowIndex]);
+    
+    if (wordsToShow === 0) return '';
+    return words.slice(-wordsToShow).join(' ');
+  };
+
+  const rows = currentVerses.map((verse, index) => ({
+    verse,
+    index
+  }));
+
+  if (rowRefs.current.length !== rows.length) {
+    rowRefs.current = Array(rows.length).fill(null);
+  }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header with Surah Info */}
       {currentVerse && (
         <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2">
@@ -229,7 +203,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               Page {Math.ceil(currentVerseId / versesPerPage)}
             </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600">
-              Verse {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} of {maxVerseId}
+              Verses {currentVerse.ayah} - {Math.min(currentVerseId + versesPerPage - 1, maxVerseId)} of {maxVerseId}
             </Badge>
           </div>
         </div>
@@ -253,13 +227,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-gray-600">Verses per page:</span>
-                {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
+                {[5, 10, 15, 20, 30, 'Surah'].map((count) => (
                   <Button
                     key={count}
-                    variant={versesPerPage === count ? "default" : "outline"}
+                    variant={versesPerPage === (count === 'Surah' ? 1000 : count as number) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
-                    className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                    className={versesPerPage === (count === 'Surah' ? 1000 : count as number) ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
                   >
                     {count}
                   </Button>
@@ -275,37 +249,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   />
                 </div>
                 
-                <div className="flex space-x-2">
-                  <Button
-                    variant={viewMode === 'hidden' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('hidden')}
-                    className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Hide
-                  </Button>
-                  <Button
-                    variant={viewMode === 'partial' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('partial')}
-                    className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Show Partial
-                  </Button>
-                  <Button
-                    variant={viewMode === 'full' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('full')}
-                    className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Show Full
-                  </Button>
-                  <QuranNavigationModal
-                    onNavigate={handleNavigate}
-                    currentVerseId={currentVerseId}
-                    maxVerseId={maxVerseId}
-                  />
-                </div>
+                <QuranNavigationModal
+                  onNavigate={handleNavigate}
+                  currentVerseId={currentVerseId}
+                  maxVerseId={maxVerseId}
+                />
               </div>
             </div>
           </CollapsibleContent>
@@ -313,144 +261,40 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       </Card>
 
       {/* Verses Display */}
-      <div className="space-y-4">
-        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) ? (
-          currentVerses.map((verse) => (
-            <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="border-green-200 text-green-600">
-                    {verse.verse_key}
+      <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
+        <div className="relative min-h-[500px]">
+          {rows.length > 0 ? (
+            <div className="space-y-8">
+              {rows.map((row, rowIndex) => (
+                <div 
+                  key={row.verse.id} 
+                  ref={el => rowRefs.current[rowIndex] = el}
+                  className="w-full cursor-pointer relative py-4 border-b border-green-50 last:border-0"
+                  onMouseMove={(e) => handleRowMouseMove(e, rowIndex)}
+                  onMouseLeave={() => handleRowMouseLeave(rowIndex)}
+                >
+                  <Badge variant="outline" className="absolute top-1 right-0 border-green-200 text-green-600 text-xs">
+                    {row.verse.verse_key}
                   </Badge>
-                </div>
-                
-                <div className="relative">
                   <div 
-                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
-                    onMouseMove={(e) => handleMouseMove(verse.id, e)}
-                    onMouseLeave={() => handleMouseLeave(verse.id)}
-                    style={{
-                      opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
-                        (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
-                    }}
-                    ref={el => verseTextRefs.current[verse.id] = el}
+                    className="font-arabic text-2xl leading-loose text-gray-800 text-right px-4"
                   >
-                    <span className="inline-block text-right">
-                      {showTajweed ? (
-                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                      ) : (
-                        getVerseDisplay(verse)
-                      )}
-                    </span>
-                  </div>
-                  
-                  {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
-                    <div className="flex justify-end space-x-2 mt-4">
-                      {!verseRevealStates[verse.id] && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => revealVerse(verse.id, 'partial')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
-                        >
-                          <ArrowRight className="h-4 w-4 mr-1" />
-                          Reveal Part
-                        </Button>
-                      )}
-                      {verseRevealStates[verse.id] === 'partial' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => revealVerse(verse.id, 'more')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
-                        >
-                          <ArrowRight className="h-4 w-4 mr-1" />
-                          Reveal More
-                        </Button>
-                      )}
-                      {verseRevealStates[verse.id] === 'more' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => revealVerse(verse.id, 'full')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
-                        >
-                          <ArrowRight className="h-4 w-4 mr-1" />
-                          Reveal Rest
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
-                      >
-                        <ChevronsRight className="h-4 w-4 mr-1" />
-                        Reveal All
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <div className="space-y-4">
-            {currentVerses.map((verse) => (
-              <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="border-green-200 text-green-600">
-                      {verse.verse_key}
-                    </Badge>
-                  </div>
-                  
-                  <div className="relative">
-                    <div 
-                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
-                      onMouseMove={(e) => handleMouseMove(verse.id, e)}
-                      onMouseLeave={() => handleMouseLeave(verse.id)}
-                      style={{
-                        opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
-                      }}
-                      ref={el => verseTextRefs.current[verse.id] = el}
-                    >
-                      <span className="inline-block text-right">
-                        {showTajweed ? (
-                          <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                        ) : (
-                          getVerseDisplay(verse)
-                        )}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => revealVerse(verse.id, 'partial')}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
-                      >
-                        <ArrowRight className="h-4 w-4 mr-1" />
-                        Reveal Part
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
-                      >
-                        <ChevronsRight className="h-4 w-4 mr-1" />
-                        Reveal All
-                      </Button>
-                    </div>
+                    {showTajweed ? (
+                      <span dangerouslySetInnerHTML={{ __html: getVisibleText(row.verse, rowIndex) }} />
+                    ) : (
+                      getVisibleText(row.verse, rowIndex)
+                    )}
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">No verses to display</p>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Navigation Controls */}
       <Card className="p-4 bg-blue-50 border-blue-100">
