@@ -216,42 +216,46 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     <div className="space-y-6 max-w-4xl mx-auto w-full overflow-x-hidden">
       {/* Header with Surah Info */}
       {currentVerse && (
-        <div className="bg-white p-4 rounded-lg border border-green-100 text-center space-y-2 w-full overflow-x-hidden">
-          <div className="flex items-center justify-center space-x-4 flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToPreviousSurah}
-              disabled={currentVerse.surah <= 1}
-              className="border-green-200 text-green-600 hover:bg-green-50 shrink-0"
-            >
-              <SkipBack className="h-4 w-4 mr-1" />
-              Previous Surah
-            </Button>
-            
-            <div className="text-center min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-gray-700 break-words">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
+          <div className="w-full space-y-3">
+            {/* Surah Title */}
+            <div className="w-full">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-700 break-words px-2">
                 {getSurahName(currentVerse.surah)}
               </h2>
             </div>
             
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToNextSurah}
-              disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)}
-              className="border-green-200 text-green-600 hover:bg-green-50 shrink-0"
-            >
-              Next Surah
-              <SkipForward className="h-4 w-4 ml-1" />
-            </Button>
+            {/* Navigation Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousSurah}
+                disabled={currentVerse.surah <= 1}
+                className="border-green-200 text-green-600 hover:bg-green-50 w-full sm:w-auto text-xs sm:text-sm"
+              >
+                <SkipBack className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                Previous Surah
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextSurah}
+                disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)}
+                className="border-green-200 text-green-600 hover:bg-green-50 w-full sm:w-auto text-xs sm:text-sm"
+              >
+                Next Surah
+                <SkipForward className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+              </Button>
+            </div>
           </div>
           
-          <div className="flex justify-center space-x-2 flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 w-full">
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 text-xs">
               Surah {currentVerse.surah}
             </Badge>
-            <Badge variant="outline" className="border-green-200 text-green-600">
+            <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
               Verses {verseRange[0]}-{verseRange[1]} ({currentVerses.length} showing)
             </Badge>
           </div>
@@ -349,7 +353,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) || Object.keys(verseSliderValues).some(key => verseSliderValues[Number(key)] > 0) ? (
           currentVerses.map((verse) => (
             <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
-              <div className="p-6 space-y-4 w-full overflow-x-hidden">
+              <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <Badge variant="outline" className="border-green-200 text-green-600">
                     {verse.verse_key}
@@ -377,7 +381,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 
                 <div className="relative w-full overflow-x-hidden">
                   <div 
-                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere"
+                    className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere"
                     onMouseMove={(e) => handleMouseMove(verse.id, e)}
                     onMouseLeave={() => handleMouseLeave(verse.id)}
                     style={{
@@ -386,7 +390,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                     }}
                     ref={el => verseTextRefs.current[verse.id] = el}
                   >
-                    <span className="inline-block text-right w-full break-words">
+                    <span className="inline-block text-right w-full break-words overflow-wrap-anywhere">
                       {showTajweed ? (
                         <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
                       ) : (
@@ -396,15 +400,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   </div>
                   
                   {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && !verseSliderValues[verse.id] && (
-                    <div className="flex justify-end space-x-2 mt-4 flex-wrap gap-2">
+                    <div className="flex flex-wrap justify-end gap-2 mt-4">
                       {!verseRevealStates[verse.id] && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'partial')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs"
                         >
-                          <ArrowRight className="h-4 w-4 mr-1" />
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal Part
                         </Button>
                       )}
@@ -413,9 +417,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'more')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs"
                         >
-                          <ArrowRight className="h-4 w-4 mr-1" />
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal More
                         </Button>
                       )}
@@ -424,9 +428,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'full')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs"
                         >
-                          <ArrowRight className="h-4 w-4 mr-1" />
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal Rest
                         </Button>
                       )}
@@ -434,9 +438,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         variant="outline"
                         size="sm"
                         onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in text-xs"
                       >
-                        <ChevronsRight className="h-4 w-4 mr-1" />
+                        <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         Reveal All
                       </Button>
                     </div>
@@ -449,7 +453,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           <div className="space-y-4 w-full overflow-x-hidden">
             {currentVerses.map((verse) => (
               <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
-                <div className="p-6 space-y-4 w-full overflow-x-hidden">
+                <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <Badge variant="outline" className="border-green-200 text-green-600">
                       {verse.verse_key}
@@ -477,7 +481,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   
                   <div className="relative w-full overflow-x-hidden">
                     <div 
-                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere"
+                      className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere"
                       onMouseMove={(e) => handleMouseMove(verse.id, e)}
                       onMouseLeave={() => handleMouseLeave(verse.id)}
                       style={{
@@ -486,7 +490,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       }}
                       ref={el => verseTextRefs.current[verse.id] = el}
                     >
-                      <span className="inline-block text-right w-full break-words">
+                      <span className="inline-block text-right w-full break-words overflow-wrap-anywhere">
                         {showTajweed ? (
                           <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
                         ) : (
@@ -496,23 +500,23 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                     </div>
                     
                     {!verseSliderValues[verse.id] && (
-                      <div className="flex justify-end space-x-2 mt-4 flex-wrap gap-2">
+                      <div className="flex flex-wrap justify-end gap-2 mt-4">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'partial')}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in text-xs"
                         >
-                          <ArrowRight className="h-4 w-4 mr-1" />
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal Part
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'full')}
-                          className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
+                          className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in text-xs"
                         >
-                          <ChevronsRight className="h-4 w-4 mr-1" />
+                          <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal All
                         </Button>
                       </div>
