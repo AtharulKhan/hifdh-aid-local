@@ -20,10 +20,9 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   });
   const [showTajweed, setShowTajweed] = useState(false);
   const [showVerseNumbers, setShowVerseNumbers] = useState(true);
-  const [hideVerses, setHideVerses] = useState(true); // New setting to control verse hiding
+  const [hideVerses, setHideVerses] = useState(true);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const [hoverProgress, setHoverProgress] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState<{ row: number; progress: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
@@ -41,23 +40,20 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     if (verse) {
       setCurrentSurah(verse.surah);
     }
-    setHoverProgress(0);
-    setIsHovering(false);
+    setHoverPosition(null);
   };
 
   const goToNextSurah = () => {
     if (currentSurah < maxSurah) {
       setCurrentSurah(currentSurah + 1);
-      setHoverProgress(0);
-      setIsHovering(false);
+      setHoverPosition(null);
     }
   };
 
   const goToPreviousSurah = () => {
     if (currentSurah > 1) {
       setCurrentSurah(currentSurah - 1);
-      setHoverProgress(0);
-      setIsHovering(false);
+      setHoverPosition(null);
     }
   };
 
@@ -77,7 +73,6 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   };
 
   const removeVerseNumbers = (text: string): string => {
-    // Remove Arabic-Indic numerals and their surrounding marks
     return text.replace(/\s*[٠-٩]+\s*$/, '').trim();
   };
 
@@ -89,50 +84,72 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     return text;
   };
 
-  // Combine all verses into one continuous text
-  const getCombinedText = (): string => {
-    return currentSurahVerses.map(verse => getDisplayText(verse)).join(' ');
+  // Split text into rows for display
+  const getTextRows = (): string[] => {
+    const fullText = currentSurahVerses.map(verse => getDisplayText(verse)).join(' ');
+    const words = fullText.split(' ');
+    const rows: string[] = [];
+    
+    // Estimate words per row (this is a rough calculation)
+    const wordsPerRow = Math.ceil(words.length / Math.max(1, Math.ceil(words.length / 15)));
+    
+    for (let i = 0; i < words.length; i += wordsPerRow) {
+      rows.push(words.slice(i, i + wordsPerRow).join(' '));
+    }
+    
+    return rows;
   };
 
-  const getVisibleText = (): string => {
+  const getVisibleRows = (): string[] => {
     if (!hideVerses) {
-      // If not hiding verses, always show full text
-      return getCombinedText();
+      return getTextRows();
     }
     
-    if (!isHovering || hoverProgress === 0) {
-      // Show empty when not hovering and verses are hidden
-      return '';
+    if (!hoverPosition) {
+      return getTextRows().map(() => '');
     }
     
-    const fullText = getCombinedText();
-    const words = fullText.split(' ');
-    const wordsToShow = Math.ceil(words.length * hoverProgress);
-    
-    if (wordsToShow === 0) return '';
-    return words.slice(0, wordsToShow).join(' ');
+    const rows = getTextRows();
+    return rows.map((row, index) => {
+      if (index < hoverPosition.row) {
+        return '';
+      } else if (index === hoverPosition.row) {
+        const words = row.split(' ');
+        const wordsToShow = Math.ceil(words.length * hoverPosition.progress);
+        return wordsToShow === 0 ? '' : words.slice(0, wordsToShow).join(' ');
+      } else {
+        return '';
+      }
+    });
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !hideVerses) return;
     
-    setIsHovering(true);
-    
     const rect = containerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
     const width = rect.width;
+    const height = rect.height;
     
-    // Calculate progress from right to left (for Arabic text) with slower reveal
-    const rawProgress = Math.max(0, Math.min(1, (width - x) / width));
-    // Apply easing to make it slower - using quadratic easing
-    const progress = rawProgress * rawProgress;
-    setHoverProgress(progress);
+    // Calculate which row we're hovering over
+    const rows = getTextRows();
+    const rowHeight = height / rows.length;
+    const currentRow = Math.floor(y / rowHeight);
+    
+    if (currentRow >= 0 && currentRow < rows.length) {
+      // Calculate progress from right to left (for Arabic text) with slower reveal
+      const rawProgress = Math.max(0, Math.min(1, (width - x) / width));
+      // Apply cubic easing to make it much slower
+      const progress = Math.pow(rawProgress, 3);
+      
+      setHoverPosition({ row: currentRow, progress });
+    }
   };
 
   const handleMouseLeave = () => {
     if (hideVerses) {
-      setIsHovering(false);
-      setHoverProgress(0);
+      setHoverPosition(null);
     }
   };
 
@@ -243,15 +260,16 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              <div 
-                className="font-arabic text-2xl leading-loose text-gray-800 transition-opacity duration-300 text-right px-4"
-                style={{ opacity: 1 }}
-              >
-                {showTajweed ? (
-                  <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
-                ) : (
-                  getVisibleText()
-                )}
+              <div className="font-arabic text-2xl leading-loose text-gray-800 text-right px-4">
+                {getVisibleRows().map((row, index) => (
+                  <div key={index} className="mb-2">
+                    {showTajweed ? (
+                      <span dangerouslySetInnerHTML={{ __html: row }} />
+                    ) : (
+                      row
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
@@ -261,10 +279,10 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           )}
           
           {/* Hover instruction - only show when verses are hidden and not hovering */}
-          {hideVerses && !isHovering && (
+          {hideVerses && !hoverPosition && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-center">
-                <p className="text-sm font-medium">Hover over the text to reveal verses progressively</p>
+                <p className="text-sm font-medium">Hover over the text to reveal verses row by row</p>
               </div>
             </div>
           )}
