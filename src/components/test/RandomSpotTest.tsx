@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 
@@ -23,6 +24,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [showSettings, setShowSettings] = useState(false);
+  const [sliderValue, setSliderValue] = useState<number[]>([1]);
 
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
@@ -100,6 +102,14 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     generateRandomTest();
   }, [testScope, selectedSurah, selectedJuz, numberOfVerses]);
 
+  useEffect(() => {
+    setSliderValue([1]);
+  }, [currentVerses]);
+
+  useEffect(() => {
+    setSliderValue([1]);
+  }, [numberOfVerses]);
+
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
     generateRandomTest();
@@ -138,6 +148,8 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   if (currentVerses.length === 0) {
     return <div>Loading...</div>;
   }
+
+  const visibleVerses = Math.min(sliderValue[0], currentVerses.length);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -259,16 +271,59 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                 </Badge>
               </div>
               
-              {/* First verse - partially shown */}
+              {/* Verse Progress Slider */}
+              {numberOfVerses > 1 && (
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <span className="text-sm text-gray-600">
+                      Showing {visibleVerses} of {numberOfVerses} verses
+                    </span>
+                  </div>
+                  <div className="px-4">
+                    <Slider
+                      value={sliderValue}
+                      onValueChange={setSliderValue}
+                      max={numberOfVerses}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Continue instruction */}
               <div className="space-y-2">
                 <div className="text-blue-800 font-medium text-center">
                   Continue from this point... (recite {numberOfVerses} {numberOfVerses === 1 ? 'verse' : 'verses'})
                 </div>
-                <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                  {numberOfVerses === 1 
-                    ? getPartialText(currentVerses[0].text)
-                    : getPartialText(currentVerses[0].text)
-                  }
+                
+                {/* Show verses based on slider or single verse */}
+                <div className="space-y-3">
+                  {numberOfVerses === 1 ? (
+                    <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                      {getPartialText(currentVerses[0].text)}
+                    </div>
+                  ) : (
+                    <>
+                      {/* First verse partial */}
+                      <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                        {getPartialText(currentVerses[0].text)}
+                      </div>
+                      
+                      {/* Additional verses revealed by slider */}
+                      {currentVerses.slice(1, visibleVerses).map((verse, index) => (
+                        <div key={verse.id} className="space-y-2">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                            Verse {index + 2}: {verse.verse_key}
+                          </Badge>
+                          <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                            {verse.text}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
