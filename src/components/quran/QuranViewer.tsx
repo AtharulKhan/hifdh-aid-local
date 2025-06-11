@@ -114,22 +114,16 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     
-    // Get the actual text element instead of the container
-    const textElement = event.currentTarget.querySelector('.verse-text') as HTMLElement;
-    if (!textElement) return;
-    
-    const textRect = textElement.getBoundingClientRect();
-    const containerRect = event.currentTarget.getBoundingClientRect();
-    
-    const x = event.clientX - textRect.left;
-    const y = event.clientY - containerRect.top;
-    const width = textRect.width;
-    const height = containerRect.height;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const width = rect.width;
+    const height = rect.height;
     
     // Allow hover area to extend slightly above the text (20px above)
     const extendedHoverArea = y >= -20 && y <= height;
     
-    if (!extendedHoverArea || x < 0 || x > width) {
+    if (!extendedHoverArea) {
       setHoverWordCounts(prev => ({
         ...prev,
         [verseId]: 0
@@ -356,7 +350,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 
                 <div className="relative">
                   <div 
-                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer flex justify-end"
+                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
                     onMouseMove={(e) => handleMouseMove(verse.id, e)}
                     onMouseLeave={() => handleMouseLeave(verse.id)}
                     style={{
@@ -364,13 +358,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
                     }}
                   >
-                    <div className="verse-text inline-block">
-                      {showTajweed ? (
-                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                      ) : (
-                        getVerseDisplay(verse)
-                      )}
-                    </div>
+                    {showTajweed ? (
+                      <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                    ) : (
+                      getVerseDisplay(verse)
+                    )}
                   </div>
                   
                   {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
@@ -436,20 +428,18 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   
                   <div className="relative">
                     <div 
-                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer flex justify-end"
+                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
                       onMouseMove={(e) => handleMouseMove(verse.id, e)}
                       onMouseLeave={() => handleMouseLeave(verse.id)}
                       style={{
                         opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
                       }}
                     >
-                      <div className="verse-text inline-block">
-                        {showTajweed ? (
-                          <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                        ) : (
-                          getVerseDisplay(verse)
-                        )}
-                      </div>
+                      {showTajweed ? (
+                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                      ) : (
+                        getVerseDisplay(verse)
+                      )}
                     </div>
                     
                     <div className="flex justify-end space-x-2 mt-4">
