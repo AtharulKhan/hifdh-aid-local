@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,9 +25,24 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [hoverProgress, setHoverProgress] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [isSliderFixed, setIsSliderFixed] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const controlsRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
+
+  // Handle scroll to make slider sticky
+  useEffect(() => {
+    const handleScroll = () => {
+      if (controlsRef.current) {
+        const controlsRect = controlsRef.current.getBoundingClientRect();
+        setIsSliderFixed(controlsRect.top <= 0);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Get all verses for the current surah
   const getSurahVerses = (): QuranVerse[] => {
@@ -186,7 +200,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       </div>
 
       {/* Collapsible Control Panel */}
-      <Card className="p-4 bg-blue-50 border-blue-100">
+      <Card ref={controlsRef} className="p-4 bg-blue-50 border-blue-100">
         <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-blue-700 hover:bg-blue-100">
@@ -242,31 +256,35 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                   maxVerseId={allVerses.length}
                 />
               </div>
-              
-              {/* Revelation Rate Slider */}
-              {hideVerses && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Revelation Progress:</span>
-                    <span className="text-xs text-gray-500">{revelationRate[0]}%</span>
-                  </div>
-                  <Slider
-                    value={revelationRate}
-                    onValueChange={setRevelationRate}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Hidden</span>
-                    <span>Fully Revealed</span>
-                  </div>
-                </div>
-              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
       </Card>
+
+      {/* Fixed Slider when scrolling */}
+      {isSliderFixed && hideVerses && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-blue-100 shadow-sm">
+          <div className="max-w-6xl mx-auto p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600">Revelation Progress:</span>
+                <span className="text-xs text-gray-500">{revelationRate[0]}%</span>
+              </div>
+              <Slider
+                value={revelationRate}
+                onValueChange={setRevelationRate}
+                max={100}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Hidden</span>
+                <span>Fully Revealed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Page Canvas */}
       <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
@@ -305,6 +323,29 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           )}
         </div>
       </Card>
+
+      {/* Original Slider in Controls (hidden when fixed slider is active) */}
+      {!isSliderFixed && hideVerses && (
+        <Card className="p-4 bg-blue-50 border-blue-100">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600">Revelation Progress:</span>
+              <span className="text-xs text-gray-500">{revelationRate[0]}%</span>
+            </div>
+            <Slider
+              value={revelationRate}
+              onValueChange={setRevelationRate}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Hidden</span>
+              <span>Fully Revealed</span>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Navigation Controls */}
       <Card className="p-4 bg-blue-50 border-blue-100">
