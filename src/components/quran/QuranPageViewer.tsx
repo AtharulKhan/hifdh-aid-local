@@ -21,11 +21,9 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   });
   const [showTajweed, setShowTajweed] = useState(false);
   const [showVerseNumbers, setShowVerseNumbers] = useState(true);
-  const [hideVerses, setHideVerses] = useState(true);
-  const [revelationRate, setRevelationRate] = useState([0]); // Slider value from 0-100
+  const [hideVerses, setHideVerses] = useState(false); // Default to showing all verses
+  const [revelationRate, setRevelationRate] = useState([100]); // Default to 100% (show all)
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const [hoverProgress, setHoverProgress] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
@@ -43,26 +41,20 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     if (verse) {
       setCurrentSurah(verse.surah);
     }
-    setHoverProgress(0);
-    setIsHovering(false);
-    setRevelationRate([0]); // Reset slider when navigating
+    setRevelationRate([100]); // Reset to show all when navigating
   };
 
   const goToNextSurah = () => {
     if (currentSurah < maxSurah) {
       setCurrentSurah(currentSurah + 1);
-      setHoverProgress(0);
-      setIsHovering(false);
-      setRevelationRate([0]); // Reset slider when navigating
+      setRevelationRate([100]); // Reset to show all when navigating
     }
   };
 
   const goToPreviousSurah = () => {
     if (currentSurah > 1) {
       setCurrentSurah(currentSurah - 1);
-      setHoverProgress(0);
-      setIsHovering(false);
-      setRevelationRate([0]); // Reset slider when navigating
+      setRevelationRate([100]); // Reset to show all when navigating
     }
   };
 
@@ -108,37 +100,12 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     const fullText = getCombinedText();
     const words = fullText.split(' ');
     
-    // Use slider value primarily, hover as secondary
     const sliderProgress = revelationRate[0] / 100;
-    const effectiveProgress = Math.max(sliderProgress, isHovering ? hoverProgress : 0);
     
-    if (effectiveProgress === 0) return '';
+    if (sliderProgress === 0) return '';
     
-    const wordsToShow = Math.ceil(words.length * effectiveProgress);
+    const wordsToShow = Math.ceil(words.length * sliderProgress);
     return words.slice(0, wordsToShow).join(' ');
-  };
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !hideVerses) return;
-    
-    setIsHovering(true);
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const width = rect.width;
-    
-    // Calculate progress from right to left (for Arabic text) with slower reveal
-    const rawProgress = Math.max(0, Math.min(1, (width - x) / width));
-    // Apply easing to make it slower - using quadratic easing
-    const progress = rawProgress * rawProgress;
-    setHoverProgress(progress);
-  };
-
-  const handleMouseLeave = () => {
-    if (hideVerses) {
-      setIsHovering(false);
-      setHoverProgress(0);
-    }
   };
 
   return (
@@ -186,10 +153,10 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       </div>
 
       {/* Collapsible Control Panel */}
-      <Card className="p-4 bg-blue-50 border-blue-100">
+      <Card className="p-4 bg-green-50 border-green-100">
         <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-blue-700 hover:bg-blue-100">
+            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
               <span className="font-medium">Display Options</span>
               {isControlsExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -231,7 +198,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                     <Switch
                       checked={showTajweed}
                       onCheckedChange={setShowTajweed}
-                      className="data-[state=checked]:bg-green-300 data-[state=unchecked]:bg-green-100"
+                      className="data-[state=checked]:bg-green-500"
                     />
                   </div>
                 </div>
@@ -242,31 +209,33 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                   maxVerseId={allVerses.length}
                 />
               </div>
-              
-              {/* Revelation Rate Slider */}
-              {hideVerses && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Revelation Progress:</span>
-                    <span className="text-xs text-gray-500">{revelationRate[0]}%</span>
-                  </div>
-                  <Slider
-                    value={revelationRate}
-                    onValueChange={setRevelationRate}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Hidden</span>
-                    <span>Fully Revealed</span>
-                  </div>
-                </div>
-              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
       </Card>
+
+      {/* Sticky Revelation Rate Slider */}
+      {hideVerses && (
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-4 shadow-sm">
+          <div className="max-w-6xl mx-auto space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-green-700">Revelation Progress:</span>
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
+            </div>
+            <Slider
+              value={revelationRate}
+              onValueChange={setRevelationRate}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-green-500">
+              <span>Hidden</span>
+              <span>Fully Revealed</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Page Canvas */}
       <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
@@ -274,9 +243,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           {currentSurahVerses.length > 0 ? (
             <div 
               ref={containerRef}
-              className="w-full cursor-pointer relative py-4"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              className="w-full relative py-4"
             >
               <div 
                 className="font-arabic text-2xl leading-loose text-gray-800 transition-opacity duration-300 text-right px-4"
@@ -296,10 +263,10 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           )}
           
           {/* Instructions - show when verses are hidden */}
-          {hideVerses && revelationRate[0] === 0 && !isHovering && (
+          {hideVerses && revelationRate[0] === 0 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-center">
-                <p className="text-sm font-medium">Use the slider above or hover over the text to reveal verses</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
+                <p className="text-sm font-medium">Use the slider above to reveal verses</p>
               </div>
             </div>
           )}
@@ -307,20 +274,20 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       </Card>
 
       {/* Navigation Controls */}
-      <Card className="p-4 bg-blue-50 border-blue-100">
+      <Card className="p-4 bg-green-50 border-green-100">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             onClick={goToPreviousSurah}
             disabled={currentSurah <= 1}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
           >
             <ChevronRight className="h-4 w-4" />
             <span>Previous Surah</span>
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-blue-600">
+            <span className="text-sm text-green-600">
               Surah {currentSurah} of {maxSurah}
             </span>
           </div>
@@ -329,7 +296,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
             variant="outline"
             onClick={goToNextSurah}
             disabled={currentSurah >= maxSurah}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50"
           >
             <span>Next Surah</span>
             <ChevronLeft className="h-4 w-4" />
