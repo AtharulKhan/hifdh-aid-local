@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +13,7 @@ interface QuranViewerProps {
 export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 }) => {
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
   const [versesPerPage, setVersesPerPage] = useState(5);
-  const [showArabic, setShowArabic] = useState(true);
+  const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   
   const allVerses = getVersesArray();
@@ -58,17 +59,22 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   };
 
   const getVerseDisplay = (verse: QuranVerse) => {
-    const revealState = verseRevealStates[verse.id] || 'hidden';
-    const words = verse.text.split(' ');
-    
-    if (revealState === 'hidden') {
-      return '';
-    } else if (revealState === 'partial') {
-      // Show first third of the verse
+    if (viewMode === 'hidden') {
+      const revealState = verseRevealStates[verse.id] || 'hidden';
+      const words = verse.text.split(' ');
+      
+      if (revealState === 'hidden') {
+        return '';
+      } else if (revealState === 'partial') {
+        return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
+      } else if (revealState === 'more') {
+        return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
+      } else {
+        return verse.text;
+      }
+    } else if (viewMode === 'partial') {
+      const words = verse.text.split(' ');
       return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
-    } else if (revealState === 'more') {
-      // Show first two thirds of the verse
-      return words.slice(0, Math.ceil(words.length * 2 / 3)).join(' ') + '...';
     } else {
       return verse.text;
     }
@@ -94,38 +100,55 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       )}
 
       {/* Control Panel */}
-      <Card className="p-4 bg-green-50 border-green-100">
+      <Card className="p-4 bg-blue-50 border-blue-100">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-600">Verses per page:</span>
-            {[1, 3, 5, 10].map((count) => (
+            {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
               <Button
                 key={count}
                 variant={versesPerPage === count ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleVersesPerPageChange(count)}
-                className={versesPerPage === count ? "bg-green-400 text-white hover:bg-green-500" : "border-green-200 text-green-700 hover:bg-green-100"}
+                onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
+                className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
               >
                 {count}
               </Button>
             ))}
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowArabic(!showArabic)}
-            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100"
-          >
-            {showArabic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            <span>{showArabic ? "Hide" : "Show"} Arabic Text</span>
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              variant={viewMode === 'hidden' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode('hidden')}
+              className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+            >
+              Hide Arabic
+            </Button>
+            <Button
+              variant={viewMode === 'partial' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode('partial')}
+              className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+            >
+              Show Partial
+            </Button>
+            <Button
+              variant={viewMode === 'full' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode('full')}
+              className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100"}
+            >
+              Show Full
+            </Button>
+          </div>
         </div>
       </Card>
 
       {/* Verses Display */}
       <div className="space-y-4">
-        {showArabic ? (
+        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 ? (
           currentVerses.map((verse) => (
             <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
               <div className="space-y-4">
@@ -140,7 +163,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                     {getVerseDisplay(verse)}
                   </div>
                   
-                  {verseRevealStates[verse.id] !== 'full' && (
+                  {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
                     <div className="flex justify-end space-x-2 mt-4">
                       {!verseRevealStates[verse.id] && (
                         <Button
@@ -191,35 +214,64 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             </Card>
           ))
         ) : (
-          <Card className="p-8 bg-white border border-green-100">
-            <div className="flex items-center justify-center h-96 bg-green-50 rounded-lg border-2 border-dashed border-green-200">
-              <div className="text-center space-y-4">
-                <div className="text-6xl text-green-300">📖</div>
-                <p className="text-green-700 text-lg">Arabic text hidden for memorization practice</p>
-                <p className="text-green-500 text-sm">
-                  Page {Math.ceil(currentVerseId / versesPerPage)} • {currentVerses.length} verses
-                </p>
-              </div>
-            </div>
-          </Card>
+          <div className="space-y-4">
+            {currentVerses.map((verse) => (
+              <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="border-green-200 text-green-600">
+                      {verse.verse_key}
+                    </Badge>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem]">
+                      {/* Empty space for hidden verses */}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'partial')}
+                        className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                      >
+                        <ArrowRight className="h-4 w-4 mr-1" />
+                        Reveal Part
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revealVerse(verse.id, 'full')}
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-50"
+                      >
+                        <ChevronsRight className="h-4 w-4 mr-1" />
+                        Reveal All
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
 
       {/* Navigation Controls */}
-      <Card className="p-4 bg-green-50 border-green-100">
+      <Card className="p-4 bg-blue-50 border-blue-100">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             onClick={goToPreviousPage}
             disabled={currentVerseId <= 1}
-            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
           >
             <ChevronRight className="h-4 w-4" />
             <span>Previous Page</span>
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-green-600">
+            <span className="text-sm text-blue-600">
               Page {Math.ceil(currentVerseId / versesPerPage)} of {Math.ceil(maxVerseId / versesPerPage)}
             </span>
           </div>
@@ -228,7 +280,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             variant="outline"
             onClick={goToNextPage}
             disabled={currentVerseId + versesPerPage > maxVerseId}
-            className="flex items-center space-x-2 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
+            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
           >
             <span>Next Page</span>
             <ChevronLeft className="h-4 w-4" />
