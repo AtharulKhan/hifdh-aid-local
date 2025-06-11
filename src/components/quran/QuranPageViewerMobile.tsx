@@ -24,16 +24,29 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
   const [hideVerses, setHideVerses] = useState(false);
   const [revelationRate, setRevelationRate] = useState([100]);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
+  const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
+  const [currentPage, setCurrentPage] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
   
   const getSurahVerses = (): QuranVerse[] => {
-    return allVerses.filter(verse => verse.surah === currentSurah);
+    const surahVerses = allVerses.filter(verse => verse.surah === currentSurah);
+    
+    // Apply verse range filtering
+    if (verseRange[1] === 0) {
+      // No end limit, show from start verse to end of surah
+      return surahVerses.slice(verseRange[0] - 1);
+    } else {
+      // Show verses in the specified range
+      return surahVerses.slice(verseRange[0] - 1, verseRange[1]);
+    }
   };
 
   const currentSurahVerses = getSurahVerses();
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
+  const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
 
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
@@ -41,12 +54,15 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
       setCurrentSurah(verse.surah);
     }
     setRevelationRate([100]);
+    setCurrentPage(1);
   };
 
   const goToNextSurah = () => {
     if (currentSurah < maxSurah) {
       setCurrentSurah(currentSurah + 1);
       setRevelationRate([100]);
+      setCurrentPage(1);
+      setVerseRange([1, 0]); // Reset verse range for new surah
     }
   };
 
@@ -54,6 +70,8 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
     if (currentSurah > 1) {
       setCurrentSurah(currentSurah - 1);
       setRevelationRate([100]);
+      setCurrentPage(1);
+      setVerseRange([1, 0]); // Reset verse range for new surah
     }
   };
 
@@ -88,20 +106,88 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
     return currentSurahVerses.map(verse => getDisplayText(verse)).join(' ');
   };
 
-  const getVisibleText = (): string => {
-    if (!hideVerses) {
-      return getCombinedText();
+  const getPaginatedText = (): { text: string; totalPages: number; hasNextPage: boolean } => {
+    const fullText = getCombinedText();
+    
+    if (maxLines[0] === 0) {
+      // No pagination - apply revelation rate to full text
+      if (!hideVerses) {
+        return { text: fullText, totalPages: 1, hasNextPage: false };
+      }
+      
+      const words = fullText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) return { text: '', totalPages: 1, hasNextPage: false };
+      
+      const wordsToShow = Math.ceil(words.length * sliderProgress);
+      const visibleText = words.slice(0, wordsToShow).join(' ');
+      return { text: visibleText, totalPages: 1, hasNextPage: false };
+    }
+
+    // With pagination enabled
+    const avgCharsPerLine = 70; // Smaller for mobile
+    const maxCharsPerPage = maxLines[0] * avgCharsPerLine;
+    
+    if (fullText.length <= maxCharsPerPage) {
+      // Single page - apply revelation rate to this page
+      if (!hideVerses) {
+        return { text: fullText, totalPages: 1, hasNextPage: false };
+      }
+      
+      const words = fullText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) return { text: '', totalPages: 1, hasNextPage: false };
+      
+      const wordsToShow = Math.ceil(words.length * sliderProgress);
+      const visibleText = words.slice(0, wordsToShow).join(' ');
+      return { text: visibleText, totalPages: 1, hasNextPage: false };
+    }
+
+    // Multiple pages
+    const totalPages = Math.ceil(fullText.length / maxCharsPerPage);
+    const startIndex = (currentPage - 1) * maxCharsPerPage;
+    const endIndex = Math.min(startIndex + maxCharsPerPage, fullText.length);
+    
+    // Find word boundaries to avoid cutting words
+    let adjustedEndIndex = endIndex;
+    if (endIndex < fullText.length) {
+      while (adjustedEndIndex > startIndex && fullText[adjustedEndIndex] !== ' ') {
+        adjustedEndIndex--;
+      }
     }
     
-    const fullText = getCombinedText();
-    const words = fullText.split(' ');
+    let pageText = fullText.substring(startIndex, adjustedEndIndex);
     
-    const sliderProgress = revelationRate[0] / 100;
+    // Apply revelation rate to current page content
+    if (hideVerses) {
+      const words = pageText.split(' ');
+      const sliderProgress = revelationRate[0] / 100;
+      
+      if (sliderProgress === 0) {
+        pageText = '';
+      } else {
+        const wordsToShow = Math.ceil(words.length * sliderProgress);
+        pageText = words.slice(0, wordsToShow).join(' ');
+      }
+    }
     
-    if (sliderProgress === 0) return '';
+    const hasNextPage = currentPage < totalPages;
     
-    const wordsToShow = Math.ceil(words.length * sliderProgress);
-    return words.slice(0, wordsToShow).join(' ');
+    return { text: pageText, totalPages, hasNextPage };
+  };
+
+  const { text: displayText, totalPages, hasNextPage } = getPaginatedText();
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => prev + 1);
+    setRevelationRate([100]); // Reset revelation rate for new page
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+    setRevelationRate([100]); // Reset revelation rate for new page
   };
 
   return (
@@ -117,8 +203,13 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
               Surah {currentSurah}
             </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
-              {currentSurahVerses.length} verses
+              Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
             </Badge>
+            {maxLines[0] > 0 && totalPages > 1 && (
+              <Badge variant="outline" className="border-blue-200 text-blue-600 text-xs">
+                Page {currentPage} of {totalPages}
+              </Badge>
+            )}
           </div>
         </div>
       </Card>
@@ -162,6 +253,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
                       } else {
                         setRevelationRate([0]);
                       }
+                      setCurrentPage(1);
                     }}
                   />
                 </div>
@@ -173,6 +265,56 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
                     onCheckedChange={setShowTajweed}
                     className="data-[state=checked]:bg-green-500"
                   />
+                </div>
+              </div>
+
+              {/* Verse Range Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-green-700">Verse range to show:</span>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
+                  </span>
+                </div>
+                <Slider
+                  value={verseRange}
+                  onValueChange={(value) => {
+                    setVerseRange(value);
+                    setCurrentPage(1);
+                  }}
+                  max={totalSurahVerses}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-green-500">
+                  <span>1</span>
+                  <span>{totalSurahVerses}</span>
+                </div>
+              </div>
+
+              {/* Max Lines Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-green-700">Max lines per page:</span>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {maxLines[0] === 0 ? 'No limit' : `${maxLines[0]} lines`}
+                  </span>
+                </div>
+                <Slider
+                  value={maxLines}
+                  onValueChange={(value) => {
+                    setMaxLines(value);
+                    setCurrentPage(1);
+                  }}
+                  max={30}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-green-500">
+                  <span>No limit</span>
+                  <span>30 lines</span>
                 </div>
               </div>
               
@@ -193,7 +335,9 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
         <div className="sticky top-16 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-3 shadow-sm mx-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-green-700">Progress:</span>
+              <span className="text-xs font-medium text-green-700">
+                {maxLines[0] > 0 && totalPages > 1 ? `Page ${currentPage} Progress:` : 'Progress:'}
+              </span>
               <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
             </div>
             <Slider
@@ -220,9 +364,9 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
                 style={{ opacity: 1, lineHeight: '2.5' }}
               >
                 {showTajweed ? (
-                  <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
+                  <span dangerouslySetInnerHTML={{ __html: displayText }} />
                 ) : (
-                  getVisibleText()
+                  displayText
                 )}
               </div>
             </div>
@@ -236,6 +380,38 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
                 <p className="text-xs font-medium">Use the slider above to reveal verses</p>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Pagination Controls */}
+          {maxLines[0] > 0 && totalPages > 1 && (
+            <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
+              {/* Previous/Next Buttons */}
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage <= 1}
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                  Prev
+                </Button>
+                <span className="text-xs text-gray-600 px-1">
+                  {currentPage}/{totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={!hasNextPage}
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
+                >
+                  Next
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           )}
