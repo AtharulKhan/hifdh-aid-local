@@ -7,7 +7,7 @@ const PageView = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className={`${isMobile ? 'px-0 py-4' : 'container mx-auto px-4 py-8'}`}>
+    <div className={`bg-[#F9FAFB] min-h-screen ${isMobile ? 'px-0 py-4' : 'container mx-auto px-4 py-8'}`}>
       <QuranPageViewer />
     </div>
   );
