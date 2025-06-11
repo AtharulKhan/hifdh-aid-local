@@ -113,7 +113,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     
-    const rect = event.currentTarget.getBoundingClientRect();
+    // Get the actual text container (the inline-block div with the text)
+    const textContainer = event.currentTarget;
+    const rect = textContainer.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const width = rect.width;
