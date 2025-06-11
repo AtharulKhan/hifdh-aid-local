@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +20,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -114,10 +114,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
     if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
     
-    const rect = event.currentTarget.getBoundingClientRect();
+    const verseTextElement = verseTextRefs.current[verseId];
+    if (!verseTextElement) return;
+    
+    const rect = verseTextElement.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const width = rect.width;
+    const textWidth = rect.width; // Actual width of the text content
     const height = rect.height;
     
     // Allow hover area to extend slightly above the text (20px above)
@@ -137,42 +140,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       const words = verseText.split(' ');
       
       // For Arabic text (right-to-left), calculate from the right side
-      const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
+      // Use the actual text width, not the container width
+      const percentageFromRight = Math.max(0, Math.min(1, (textWidth - x) / textWidth));
       
-      // Calculate character position
-      const totalChars = verseText.length;
-      const targetCharIndex = Math.floor(totalChars * percentageFromRight);
-      
-      // Find which word contains this character
-      let currentCharIndex = 0;
-      let wordsToShow = 0;
-      
-      for (let i = 0; i < words.length; i++) {
-        const wordLength = words[i].length;
-        const spaceLength = i < words.length - 1 ? 1 : 0;
-        const wordEndIndex = currentCharIndex + wordLength;
-        
-        // If our target character is within this word's range, show up to this word
-        if (targetCharIndex >= currentCharIndex && targetCharIndex <= wordEndIndex) {
-          wordsToShow = i + 1;
-          break;
-        }
-        
-        currentCharIndex = wordEndIndex + spaceLength;
-        
-        // If we've passed our target, show up to this word
-        if (currentCharIndex > targetCharIndex) {
-          wordsToShow = i + 1;
-          break;
-        }
-      }
-      
-      // Ensure we show at least some words when hovering near the text
-      const finalWordsToShow = Math.max(0, Math.min(words.length, wordsToShow));
+      // Calculate word position based on percentage
+      const wordsToShow = Math.ceil(words.length * percentageFromRight);
       
       setHoverWordCounts(prev => ({
         ...prev,
-        [verseId]: finalWordsToShow
+        [verseId]: wordsToShow
       }));
     }
   };
@@ -357,12 +333,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
                         (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
                     }}
+                    ref={el => verseTextRefs.current[verse.id] = el}
                   >
-                    {showTajweed ? (
-                      <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                    ) : (
-                      getVerseDisplay(verse)
-                    )}
+                    <span className="inline-block text-right">
+                      {showTajweed ? (
+                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                      ) : (
+                        getVerseDisplay(verse)
+                      )}
+                    </span>
                   </div>
                   
                   {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
@@ -434,12 +413,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       style={{
                         opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
                       }}
+                      ref={el => verseTextRefs.current[verse.id] = el}
                     >
-                      {showTajweed ? (
-                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
-                      ) : (
-                        getVerseDisplay(verse)
-                      )}
+                      <span className="inline-block text-right">
+                        {showTajweed ? (
+                          <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                        ) : (
+                          getVerseDisplay(verse)
+                        )}
+                      </span>
                     </div>
                     
                     <div className="flex justify-end space-x-2 mt-4">
