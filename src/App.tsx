@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Toaster } from "./components/ui/toaster";
 import { AudioProvider } from "./contexts/AudioContext";
+import { useIsMobile } from "./hooks/use-mobile";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Journal from "./pages/Journal";
@@ -12,12 +13,14 @@ import Mindfulness from "./pages/Mindfulness";
 import PageView from "./pages/PageView";
 
 function App() {
+  const isMobile = useIsMobile();
+
   return (
     <Router>
       <AudioProvider>
-        <div className="flex min-h-screen bg-background">
+        <div className="flex min-h-screen bg-background w-full">
           <Navigation />
-          <main className="flex-1">
+          <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/page-view" element={<PageView />} />
