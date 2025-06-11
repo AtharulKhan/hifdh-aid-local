@@ -213,7 +213,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto w-full overflow-x-hidden">
+    <div className="space-y-8 max-w-4xl mx-auto w-full overflow-x-hidden">
       {/* Header with Surah Info */}
       {currentVerse && (
         <div className="bg-white p-3 sm:p-4 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
@@ -390,10 +390,10 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         </Collapsible>
       </Card>
 
-      {/* More spacing before verses section */}
-      <div className="pt-4">
+      {/* More spacing before verses section - increased spacing for clear separation */}
+      <div className="pt-8">
         {/* Verses Display */}
-        <div className="space-y-4 w-full overflow-x-hidden">
+        <div className="space-y-6 w-full overflow-x-hidden">
           {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) || Object.keys(verseSliderValues).some(key => verseSliderValues[Number(key)] > 0) ? (
             currentVerses.map((verse) => (
               <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
@@ -494,7 +494,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               </Card>
             ))
           ) : (
-            <div className="space-y-4 w-full overflow-x-hidden">
+            <div className="space-y-6 w-full overflow-x-hidden">
               {currentVerses.map((verse) => (
                 <Card key={verse.id} className="bg-white border border-green-100 shadow-sm w-full overflow-x-hidden">
                   <div className="p-4 sm:p-6 space-y-4 w-full overflow-x-hidden">
