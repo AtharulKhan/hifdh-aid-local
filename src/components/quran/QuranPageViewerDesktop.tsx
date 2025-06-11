@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,7 +24,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const [revelationRate, setRevelationRate] = useState([100]);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
-  const [maxVerses, setMaxVerses] = useState([0]); // 0 means no limit
+  const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
   const [currentPage, setCurrentPage] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
@@ -33,14 +32,20 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   
   const getSurahVerses = (): QuranVerse[] => {
     const surahVerses = allVerses.filter(verse => verse.surah === currentSurah);
-    if (maxVerses[0] === 0) {
-      return surahVerses;
+    
+    // Apply verse range filtering
+    if (verseRange[1] === 0) {
+      // No end limit, show from start verse to end of surah
+      return surahVerses.slice(verseRange[0] - 1);
+    } else {
+      // Show verses in the specified range
+      return surahVerses.slice(verseRange[0] - 1, verseRange[1]);
     }
-    return surahVerses.slice(0, maxVerses[0]);
   };
 
   const currentSurahVerses = getSurahVerses();
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
+  const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
 
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
@@ -56,6 +61,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
       setCurrentSurah(currentSurah + 1);
       setRevelationRate([100]);
       setCurrentPage(1);
+      setVerseRange([1, 0]); // Reset verse range for new surah
     }
   };
 
@@ -64,6 +70,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
       setCurrentSurah(currentSurah - 1);
       setRevelationRate([100]);
       setCurrentPage(1);
+      setVerseRange([1, 0]); // Reset verse range for new surah
     }
   };
 
@@ -226,7 +233,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
             Surah {currentSurah}
           </Badge>
           <Badge variant="outline" className="border-green-200 text-green-600">
-            {currentSurahVerses.length} verses
+            Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
           </Badge>
           {maxLines[0] > 0 && totalPages > 1 && (
             <Badge variant="outline" className="border-blue-200 text-blue-600">
@@ -295,28 +302,28 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
                 />
               </div>
 
-              {/* Max Verses Slider */}
+              {/* Verse Range Slider */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-700">Max verses to show:</span>
+                  <span className="text-sm font-medium text-green-700">Verse range to show:</span>
                   <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                    {maxVerses[0] === 0 ? 'All verses' : `${maxVerses[0]} verses`}
+                    {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
                   </span>
                 </div>
                 <Slider
-                  value={maxVerses}
+                  value={verseRange}
                   onValueChange={(value) => {
-                    setMaxVerses(value);
+                    setVerseRange(value);
                     setCurrentPage(1);
                   }}
-                  max={Math.max(...allVerses.filter(v => v.surah === currentSurah).map((_, index) => index + 1))}
-                  min={0}
+                  max={totalSurahVerses}
+                  min={1}
                   step={1}
                   className="w-full"
                 />
                 <div className="flex justify-between text-xs text-green-500">
-                  <span>All verses</span>
-                  <span>{Math.max(...allVerses.filter(v => v.surah === currentSurah).map((_, index) => index + 1))} verses</span>
+                  <span>1</span>
+                  <span>{totalSurahVerses}</span>
                 </div>
               </div>
 
