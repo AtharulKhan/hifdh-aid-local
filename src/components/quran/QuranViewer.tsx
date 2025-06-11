@@ -92,17 +92,39 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       return;
     }
     
-    // For Arabic text (right-to-left), calculate from the right side
-    // Adjust calculation so words reveal when mouse reaches their beginning
-    const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
-    
     const verse = getVerseById(verseId);
     if (verse) {
       const words = verse.text.split(' ');
-      // Calculate words to show - use floor instead of ceil to reveal at word beginning
-      const wordsToShow = Math.max(0, Math.floor(words.length * percentageFromRight));
-      // Add 1 to include the current word being hovered over
-      const finalWordsToShow = Math.min(words.length, wordsToShow + 1);
+      
+      // For Arabic text (right-to-left), calculate from the right side
+      const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
+      
+      // Calculate total characters to get more precise positioning
+      const totalText = verse.text;
+      const totalChars = totalText.length;
+      const charsToReveal = Math.floor(totalChars * percentageFromRight);
+      
+      // Find which word contains the character at this position
+      let currentCharCount = 0;
+      let wordsToShow = 0;
+      
+      for (let i = 0; i < words.length; i++) {
+        const wordLength = words[i].length + (i < words.length - 1 ? 1 : 0); // +1 for space
+        if (currentCharCount + wordLength <= charsToReveal) {
+          wordsToShow = i + 1;
+          currentCharCount += wordLength;
+        } else {
+          // If we're partially into a word, show it if we're past halfway through it
+          const partialProgress = (charsToReveal - currentCharCount) / words[i].length;
+          if (partialProgress > 0.3) { // Show word when 30% into it
+            wordsToShow = i + 1;
+          }
+          break;
+        }
+      }
+      
+      // Ensure we show at least some words when hovering near the text
+      const finalWordsToShow = Math.max(0, Math.min(words.length, wordsToShow));
       
       setHoverWordCounts(prev => ({
         ...prev,
