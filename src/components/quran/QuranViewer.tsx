@@ -137,25 +137,30 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       // For Arabic text (right-to-left), calculate from the right side
       const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
       
-      // Calculate total characters to get more precise positioning
+      // Calculate character position
       const totalChars = verseText.length;
-      const charsToReveal = Math.floor(totalChars * percentageFromRight);
+      const targetCharIndex = Math.floor(totalChars * percentageFromRight);
       
-      // Find which word contains the character at this position
-      let currentCharCount = 0;
+      // Find which word contains this character
+      let currentCharIndex = 0;
       let wordsToShow = 0;
       
       for (let i = 0; i < words.length; i++) {
-        const wordLength = words[i].length + (i < words.length - 1 ? 1 : 0); // +1 for space
-        if (currentCharCount + wordLength <= charsToReveal) {
+        const wordLength = words[i].length;
+        const spaceLength = i < words.length - 1 ? 1 : 0;
+        const wordEndIndex = currentCharIndex + wordLength;
+        
+        // If our target character is within this word's range, show up to this word
+        if (targetCharIndex >= currentCharIndex && targetCharIndex <= wordEndIndex) {
           wordsToShow = i + 1;
-          currentCharCount += wordLength;
-        } else {
-          // If we're partially into a word, show it if we're past halfway through it
-          const partialProgress = (charsToReveal - currentCharCount) / words[i].length;
-          if (partialProgress > 0.3) { // Show word when 30% into it
-            wordsToShow = i + 1;
-          }
+          break;
+        }
+        
+        currentCharIndex = wordEndIndex + spaceLength;
+        
+        // If we've passed our target, show up to this word
+        if (currentCharIndex > targetCharIndex) {
+          wordsToShow = i + 1;
           break;
         }
       }
@@ -335,9 +340,12 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
                         (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
                     }}
-                    dangerouslySetInnerHTML={showTajweed ? { __html: getVerseDisplay(verse) } : undefined}
                   >
-                    {!showTajweed && getVerseDisplay(verse)}
+                    {showTajweed ? (
+                      <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                    ) : (
+                      getVerseDisplay(verse)
+                    )}
                   </div>
                   
                   {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
@@ -409,9 +417,12 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       style={{
                         opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
                       }}
-                      dangerouslySetInnerHTML={showTajweed ? { __html: getVerseDisplay(verse) } : undefined}
                     >
-                      {!showTajweed && getVerseDisplay(verse)}
+                      {showTajweed ? (
+                        <span dangerouslySetInnerHTML={{ __html: getVerseDisplay(verse) }} />
+                      ) : (
+                        getVerseDisplay(verse)
+                      )}
                     </div>
                     
                     <div className="flex justify-end space-x-2 mt-4">
