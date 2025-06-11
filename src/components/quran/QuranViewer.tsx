@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [versesPerPage, setVersesPerPage] = useState(5);
   const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
+  const [hoverRevealStates, setHoverRevealStates] = useState<Record<number, number>>({});
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -38,12 +40,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       setVersesPerPage(newVersesPerPage);
     }
     setVerseRevealStates({});
+    setHoverRevealStates({});
   };
 
   const goToNextPage = () => {
     if (currentVerseId + versesPerPage <= maxVerseId) {
       setCurrentVerseId(currentVerseId + versesPerPage);
       setVerseRevealStates({});
+      setHoverRevealStates({});
     }
   };
 
@@ -51,12 +55,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     if (currentVerseId - versesPerPage >= 1) {
       setCurrentVerseId(currentVerseId - versesPerPage);
       setVerseRevealStates({});
+      setHoverRevealStates({});
     }
   };
 
   const handleVersesPerPageChange = (count: number) => {
     setVersesPerPage(count);
     setVerseRevealStates({});
+    setHoverRevealStates({});
   };
 
   const revealVerse = (verseId: number, revealType: 'partial' | 'more' | 'full') => {
@@ -66,12 +72,41 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     }));
   };
 
+  const handleMouseMove = (verseId: number, event: React.MouseEvent<HTMLDivElement>) => {
+    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const width = rect.width;
+    const percentage = Math.max(0, Math.min(1, x / width));
+    
+    setHoverRevealStates(prev => ({
+      ...prev,
+      [verseId]: percentage
+    }));
+  };
+
+  const handleMouseLeave = (verseId: number) => {
+    if (viewMode !== 'hidden' || verseRevealStates[verseId]) return;
+    
+    setHoverRevealStates(prev => ({
+      ...prev,
+      [verseId]: 0
+    }));
+  };
+
   const getVerseDisplay = (verse: QuranVerse) => {
+    const words = verse.text.split(' ');
+    const hoverPercentage = hoverRevealStates[verse.id] || 0;
+    
     if (viewMode === 'hidden') {
       const revealState = verseRevealStates[verse.id] || 'hidden';
-      const words = verse.text.split(' ');
       
       if (revealState === 'hidden') {
+        if (hoverPercentage > 0) {
+          const wordsToShow = Math.floor(words.length * hoverPercentage);
+          return words.slice(0, wordsToShow).join(' ');
+        }
         return '';
       } else if (revealState === 'partial') {
         return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
@@ -81,7 +116,6 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         return verse.text;
       }
     } else if (viewMode === 'partial') {
-      const words = verse.text.split(' ');
       return words.slice(0, Math.ceil(words.length / 3)).join(' ') + '...';
     } else {
       return verse.text;
@@ -161,7 +195,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
 
       {/* Verses Display */}
       <div className="space-y-4">
-        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 ? (
+        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverRevealStates).some(key => hoverRevealStates[Number(key)] > 0) ? (
           currentVerses.map((verse) => (
             <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
               <div className="space-y-4">
@@ -172,7 +206,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 </div>
                 
                 <div className="relative">
-                  <div className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem]">
+                  <div 
+                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out"
+                    onMouseMove={(e) => handleMouseMove(verse.id, e)}
+                    onMouseLeave={() => handleMouseLeave(verse.id)}
+                    style={{
+                      opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
+                        (hoverRevealStates[verse.id] ? 0.7 + (hoverRevealStates[verse.id] * 0.3) : 0.1) : 1
+                    }}
+                  >
                     {getVerseDisplay(verse)}
                   </div>
                   
@@ -183,7 +225,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'partial')}
-                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
                         >
                           <ArrowRight className="h-4 w-4 mr-1" />
                           Reveal Part
@@ -194,7 +236,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'more')}
-                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
                         >
                           <ArrowRight className="h-4 w-4 mr-1" />
                           Reveal More
@@ -205,7 +247,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                           variant="outline"
                           size="sm"
                           onClick={() => revealVerse(verse.id, 'full')}
-                          className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
                         >
                           <ArrowRight className="h-4 w-4 mr-1" />
                           Reveal Rest
@@ -215,7 +257,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         variant="outline"
                         size="sm"
                         onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-50"
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
                       >
                         <ChevronsRight className="h-4 w-4 mr-1" />
                         Reveal All
@@ -238,8 +280,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   </div>
                   
                   <div className="relative">
-                    <div className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem]">
-                      {/* Empty space for hidden verses */}
+                    <div 
+                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out"
+                      onMouseMove={(e) => handleMouseMove(verse.id, e)}
+                      onMouseLeave={() => handleMouseLeave(verse.id)}
+                      style={{
+                        opacity: hoverRevealStates[verse.id] ? 0.7 + (hoverRevealStates[verse.id] * 0.3) : 0.1
+                      }}
+                    >
+                      {getVerseDisplay(verse)}
                     </div>
                     
                     <div className="flex justify-end space-x-2 mt-4">
@@ -247,7 +296,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         variant="outline"
                         size="sm"
                         onClick={() => revealVerse(verse.id, 'partial')}
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-orange-50"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
                       >
                         <ArrowRight className="h-4 w-4 mr-1" />
                         Reveal Part
@@ -256,7 +305,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                         variant="outline"
                         size="sm"
                         onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-50"
+                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
                       >
                         <ChevronsRight className="h-4 w-4 mr-1" />
                         Reveal All
