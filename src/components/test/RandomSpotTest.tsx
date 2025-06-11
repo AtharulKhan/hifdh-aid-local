@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings, ArrowRight } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 
 interface RandomSpotTestProps {
@@ -25,6 +26,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [showSettings, setShowSettings] = useState(false);
   const [sliderValue, setSliderValue] = useState<number[]>([1]);
+  const [nextWordCount, setNextWordCount] = useState<number>(0);
 
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
@@ -95,6 +97,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
       
       setCurrentVerses(consecutiveVerses);
       setShowAnswer(false);
+      setNextWordCount(0);
     }
   };
 
@@ -112,16 +115,39 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
     return allWords.slice(0, wordCount).join(' ');
   };
 
+  const getVisibleTextWithNextWords = () => {
+    const allWords = getAllWords();
+    const sliderWords = Math.min(sliderValue[0], allWords.length);
+    const totalVisible = Math.min(sliderWords + nextWordCount, allWords.length);
+    return allWords.slice(0, totalVisible).join(' ');
+  };
+
+  const showNextWord = () => {
+    const allWords = getAllWords();
+    const currentVisible = Math.min(sliderValue[0], allWords.length);
+    const maxAdditional = allWords.length - currentVisible;
+    
+    if (nextWordCount < maxAdditional) {
+      setNextWordCount(prev => prev + 1);
+    }
+  };
+
+  const resetNextWords = () => {
+    setNextWordCount(0);
+  };
+
   useEffect(() => {
     generateRandomTest();
   }, [testScope, selectedSurah, selectedJuz, numberOfVerses]);
 
   useEffect(() => {
     setSliderValue([1]);
+    setNextWordCount(0);
   }, [currentVerses]);
 
   useEffect(() => {
     setSliderValue([1]);
+    setNextWordCount(0);
   }, [numberOfVerses]);
 
   const handleCorrect = () => {
@@ -165,6 +191,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
 
   const totalWords = getTotalWordCount();
   const visibleWordCount = Math.min(sliderValue[0], totalWords);
+  const totalVisibleWithNext = Math.min(visibleWordCount + nextWordCount, totalWords);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -291,13 +318,21 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                 <div className="space-y-3">
                   <div className="text-center">
                     <span className="text-sm text-gray-600">
-                      Showing {visibleWordCount} of {totalWords} words
+                      Showing {totalVisibleWithNext} of {totalWords} words
+                      {nextWordCount > 0 && (
+                        <span className="text-blue-600 ml-1">
+                          (+{nextWordCount} next {nextWordCount === 1 ? 'word' : 'words'})
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="px-4">
                     <Slider
                       value={sliderValue}
-                      onValueChange={setSliderValue}
+                      onValueChange={(value) => {
+                        setSliderValue(value);
+                        setNextWordCount(0); // Reset next word count when slider changes
+                      }}
                       max={totalWords}
                       min={1}
                       step={1}
@@ -317,14 +352,39 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                 <div className="space-y-3">
                   {numberOfVerses === 1 ? (
                     <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                      {totalWords === 1 ? getPartialText(currentVerses[0].text) : getVisibleText(visibleWordCount)}
+                      {totalWords === 1 ? getPartialText(currentVerses[0].text) : getVisibleTextWithNextWords()}
                     </div>
                   ) : (
                     <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
-                      {getVisibleText(visibleWordCount)}
+                      {getVisibleTextWithNextWords()}
                     </div>
                   )}
                 </div>
+
+                {/* Next Word Button */}
+                {totalWords > 1 && totalVisibleWithNext < totalWords && (
+                  <div className="flex justify-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={showNextWord}
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                    >
+                      <ArrowRight className="h-3 w-3 mr-1" />
+                      Show Next Word
+                    </Button>
+                    {nextWordCount > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={resetNextWords}
+                        className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
