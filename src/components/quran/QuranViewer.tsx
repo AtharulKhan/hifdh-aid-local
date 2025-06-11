@@ -199,12 +199,12 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
             
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full">
-              <Button variant="outline" size="sm" onClick={goToPreviousSurah} disabled={currentVerse.surah <= 1} className="border-green-200 text-green-600 hover:bg-green-50 w-full sm:w-auto text-xs sm:text-sm">
+              <Button variant="outline" size="sm" onClick={goToPreviousSurah} disabled={currentVerse.surah <= 1} className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 w-full sm:w-auto text-xs sm:text-sm">
                 <SkipBack className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Previous Surah
               </Button>
               
-              <Button variant="outline" size="sm" onClick={goToNextSurah} disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)} className="border-green-200 text-green-600 hover:bg-green-50 w-full sm:w-auto text-xs sm:text-sm">
+              <Button variant="outline" size="sm" onClick={goToNextSurah} disabled={!allVerses.find(v => v.surah === currentVerse.surah + 1)} className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 w-full sm:w-auto text-xs sm:text-sm">
                 Next Surah
                 <SkipForward className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
               </Button>
@@ -425,3 +425,4 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       </Card>
     </div>;
 };
+}
