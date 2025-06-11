@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -216,7 +217,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
               size="sm" 
               onClick={goToPreviousSurah} 
               disabled={currentSurah <= 1} 
-              className="border-green-200 text-green-600 hover:bg-green-50 w-full text-xs"
+              className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100 w-full text-xs"
             >
               <SkipBack className="h-3 w-3 mr-1" />
               Previous Surah
@@ -227,7 +228,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
               size="sm" 
               onClick={goToNextSurah} 
               disabled={currentSurah >= maxSurah} 
-              className="border-green-200 text-green-600 hover:bg-green-50 w-full text-xs"
+              className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100 w-full text-xs"
             >
               Next Surah
               <SkipForward className="h-3 w-3 ml-1" />
