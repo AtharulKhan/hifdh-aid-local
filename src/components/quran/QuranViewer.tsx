@@ -93,18 +93,20 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     }
     
     // For Arabic text (right-to-left), calculate from the right side
-    // Use a more precise calculation based on actual mouse position
+    // Adjust calculation so words reveal when mouse reaches their beginning
     const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
     
     const verse = getVerseById(verseId);
     if (verse) {
       const words = verse.text.split(' ');
-      // More precise word calculation - ensure we show at least 1 word when hovering
-      const wordsToShow = Math.max(1, Math.ceil(words.length * percentageFromRight));
+      // Calculate words to show - use floor instead of ceil to reveal at word beginning
+      const wordsToShow = Math.max(0, Math.floor(words.length * percentageFromRight));
+      // Add 1 to include the current word being hovered over
+      const finalWordsToShow = Math.min(words.length, wordsToShow + 1);
       
       setHoverWordCounts(prev => ({
         ...prev,
-        [verseId]: wordsToShow
+        [verseId]: finalWordsToShow
       }));
     }
   };
