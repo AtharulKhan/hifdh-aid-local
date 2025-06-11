@@ -24,6 +24,8 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const [hideVerses, setHideVerses] = useState(false);
   const [revelationRate, setRevelationRate] = useState([100]);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
+  const [currentPage, setCurrentPage] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
@@ -41,12 +43,14 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
       setCurrentSurah(verse.surah);
     }
     setRevelationRate([100]);
+    setCurrentPage(1);
   };
 
   const goToNextSurah = () => {
     if (currentSurah < maxSurah) {
       setCurrentSurah(currentSurah + 1);
       setRevelationRate([100]);
+      setCurrentPage(1);
     }
   };
 
@@ -54,6 +58,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
     if (currentSurah > 1) {
       setCurrentSurah(currentSurah - 1);
       setRevelationRate([100]);
+      setCurrentPage(1);
     }
   };
 
@@ -104,6 +109,49 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
     return words.slice(0, wordsToShow).join(' ');
   };
 
+  const getPaginatedText = (): { text: string; totalPages: number; hasNextPage: boolean } => {
+    const fullText = getVisibleText();
+    
+    if (maxLines[0] === 0) {
+      return { text: fullText, totalPages: 1, hasNextPage: false };
+    }
+
+    // Estimate characters per line (approximately 80-100 characters per line for Arabic text)
+    const avgCharsPerLine = 90;
+    const maxCharsPerPage = maxLines[0] * avgCharsPerLine;
+    
+    if (fullText.length <= maxCharsPerPage) {
+      return { text: fullText, totalPages: 1, hasNextPage: false };
+    }
+
+    const totalPages = Math.ceil(fullText.length / maxCharsPerPage);
+    const startIndex = (currentPage - 1) * maxCharsPerPage;
+    const endIndex = Math.min(startIndex + maxCharsPerPage, fullText.length);
+    
+    // Find word boundaries to avoid cutting words
+    let adjustedEndIndex = endIndex;
+    if (endIndex < fullText.length) {
+      while (adjustedEndIndex > startIndex && fullText[adjustedEndIndex] !== ' ') {
+        adjustedEndIndex--;
+      }
+    }
+    
+    const pageText = fullText.substring(startIndex, adjustedEndIndex);
+    const hasNextPage = currentPage < totalPages;
+    
+    return { text: pageText, totalPages, hasNextPage };
+  };
+
+  const { text: displayText, totalPages, hasNextPage } = getPaginatedText();
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => prev + 1);
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header with Surah Info */}
@@ -145,6 +193,11 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
           <Badge variant="outline" className="border-green-200 text-green-600">
             {currentSurahVerses.length} verses
           </Badge>
+          {maxLines[0] > 0 && totalPages > 1 && (
+            <Badge variant="outline" className="border-blue-200 text-blue-600">
+              Page {currentPage} of {totalPages}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -185,6 +238,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
                         } else {
                           setRevelationRate([0]);
                         }
+                        setCurrentPage(1);
                       }}
                     />
                   </div>
@@ -205,6 +259,31 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
                   maxVerseId={allVerses.length}
                 />
               </div>
+
+              {/* Max Lines Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Max lines per page:</span>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {maxLines[0] === 0 ? 'No limit' : `${maxLines[0]} lines`}
+                  </span>
+                </div>
+                <Slider
+                  value={maxLines}
+                  onValueChange={(value) => {
+                    setMaxLines(value);
+                    setCurrentPage(1);
+                  }}
+                  max={50}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-green-500">
+                  <span>No limit</span>
+                  <span>50 lines</span>
+                </div>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -220,7 +299,10 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
             </div>
             <Slider
               value={revelationRate}
-              onValueChange={setRevelationRate}
+              onValueChange={(value) => {
+                setRevelationRate(value);
+                setCurrentPage(1);
+              }}
               max={100}
               step={1}
               className="w-full"
@@ -246,9 +328,9 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
                 style={{ opacity: 1 }}
               >
                 {showTajweed ? (
-                  <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
+                  <span dangerouslySetInnerHTML={{ __html: displayText }} />
                 ) : (
-                  getVisibleText()
+                  displayText
                 )}
               </div>
             </div>
@@ -263,6 +345,35 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
                 <p className="text-sm font-medium">Use the slider above to reveal verses</p>
               </div>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {maxLines[0] > 0 && totalPages > 1 && (
+            <div className="absolute bottom-4 right-4 flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage <= 1}
+                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <span className="text-sm text-gray-600 px-2">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={!hasNextPage}
+                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>
