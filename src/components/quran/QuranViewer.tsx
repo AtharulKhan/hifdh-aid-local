@@ -21,28 +21,52 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
   const [verseSliderValues, setVerseSliderValues] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const [verseRange, setVerseRange] = useState<[number, number]>([1, 10]);
   const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
 
-  // Get current verses to display - now shows all verses in the current surah
+  // Get current verses to display - now shows verses in the selected range within the current surah
   const getCurrentVerses = (): QuranVerse[] => {
     const currentVerse = getVerseById(currentVerseId);
     if (!currentVerse) return [];
     
     // Get all verses for the current surah
-    return allVerses.filter(verse => verse.surah === currentVerse.surah);
+    const surahVerses = allVerses.filter(verse => verse.surah === currentVerse.surah);
+    
+    // Filter by verse range (ayah numbers within the surah)
+    return surahVerses.filter(verse => 
+      verse.ayah >= verseRange[0] && verse.ayah <= verseRange[1]
+    );
   };
 
   const currentVerses = getCurrentVerses();
-  const currentVerse = currentVerses[0];
+  const currentVerse = currentVerses[0] || getVerseById(currentVerseId);
+
+  // Get the max verse number for the current surah
+  const getCurrentSurahMaxVerse = (): number => {
+    if (!currentVerse) return 10;
+    const surahVerses = allVerses.filter(verse => verse.surah === currentVerse.surah);
+    return Math.max(...surahVerses.map(verse => verse.ayah));
+  };
 
   const handleNavigate = (verseId: number) => {
     setCurrentVerseId(verseId);
     setVerseRevealStates({});
     setHoverWordCounts({});
     setVerseSliderValues({});
+    
+    // Reset verse range when navigating to a new surah
+    const newVerse = getVerseById(verseId);
+    if (newVerse && currentVerse && newVerse.surah !== currentVerse.surah) {
+      const maxVerse = getCurrentSurahMaxVerse();
+      setVerseRange([1, Math.min(10, maxVerse)]);
+    }
+  };
+
+  const handleVerseRangeChange = (value: number[]) => {
+    setVerseRange([value[0], value[1]]);
   };
 
   const goToNextSurah = () => {
@@ -219,7 +243,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               Surah {currentVerse.surah}
             </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600">
-              {currentVerses.length} verses
+              Verses {verseRange[0]}-{verseRange[1]} ({currentVerses.length} showing)
             </Badge>
           </div>
         </div>
@@ -239,47 +263,71 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
             </Button>
           </CollapsibleTrigger>
           
-          <CollapsibleContent className="pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-600">Tajweed:</span>
-                  <Switch
-                    checked={showTajweed}
-                    onCheckedChange={setShowTajweed}
-                  />
+          <CollapsibleContent>
+            <div className="pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+                    <Switch
+                      checked={showTajweed}
+                      onCheckedChange={setShowTajweed}
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button
+                      variant={viewMode === 'hidden' ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode('hidden')}
+                      className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                    >
+                      Hide
+                    </Button>
+                    <Button
+                      variant={viewMode === 'partial' ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode('partial')}
+                      className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                    >
+                      Show Partial
+                    </Button>
+                    <Button
+                      variant={viewMode === 'full' ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode('full')}
+                      className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                    >
+                      Show Full
+                    </Button>
+                    <QuranNavigationModal
+                      onNavigate={handleNavigate}
+                      currentVerseId={currentVerseId}
+                      maxVerseId={maxVerseId}
+                    />
+                  </div>
                 </div>
-                
-                <div className="flex space-x-2">
-                  <Button
-                    variant={viewMode === 'hidden' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('hidden')}
-                    className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Hide
-                  </Button>
-                  <Button
-                    variant={viewMode === 'partial' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('partial')}
-                    className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Show Partial
-                  </Button>
-                  <Button
-                    variant={viewMode === 'full' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('full')}
-                    className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-                  >
-                    Show Full
-                  </Button>
-                  <QuranNavigationModal
-                    onNavigate={handleNavigate}
-                    currentVerseId={currentVerseId}
-                    maxVerseId={maxVerseId}
-                  />
+              </div>
+
+              {/* Verse Range Slider */}
+              <div className="space-y-2 bg-green-50 p-3 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Verse range to show:</span>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                    {verseRange[0]} - {verseRange[1]}
+                  </span>
+                </div>
+                <Slider
+                  value={verseRange}
+                  onValueChange={handleVerseRangeChange}
+                  max={getCurrentSurahMaxVerse()}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-green-500">
+                  <span>Verse 1</span>
+                  <span>Verse {getCurrentSurahMaxVerse()}</span>
                 </div>
               </div>
             </div>
