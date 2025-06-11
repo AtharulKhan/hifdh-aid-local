@@ -326,7 +326,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                     <div onMouseMove={e => handleMouseMove(verse.id, e)} onMouseLeave={() => handleMouseLeave(verse.id)} style={{
                 opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] && !verseSliderValues[verse.id] ? hoverWordCounts[verse.id] ? 0.7 + hoverWordCounts[verse.id] * 0.3 : 0.1 : 1
               }} ref={el => verseTextRefs.current[verse.id] = el} className="font-arabic text-right text-xl sm:text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer w-full break-words overflow-wrap-anywhere mx-0 py-0 my-0">
-                      <span className="inline-block text-right w-full break-words overflow-wrap-anywhere">
+                      <span className="inline-block text-right w-full break-words overflow-wrap-anywhere my-0 py-[26px]">
                         {showTajweed ? <span dangerouslySetInnerHTML={{
                     __html: getVerseDisplay(verse)
                   }} /> : getVerseDisplay(verse)}
