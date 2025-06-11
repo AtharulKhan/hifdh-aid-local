@@ -199,7 +199,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
             
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full">
-              <Button variant="outline" size="sm" onClick={goToPreviousSurah} disabled={currentVerse.surah <= 1} className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 w-full sm:w-auto text-xs sm:text-sm">
+              <Button variant="outline" size="sm" onClick={goToPreviousSurah} disabled={currentVerse.surah <= 1} className="border-green-200 text-green-600 hover:bg-green-50 w-full sm:w-auto text-xs sm:text-sm">
                 <SkipBack className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Previous Surah
               </Button>
