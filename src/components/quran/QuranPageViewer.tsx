@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
@@ -20,7 +21,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   });
   const [showTajweed, setShowTajweed] = useState(false);
   const [showVerseNumbers, setShowVerseNumbers] = useState(true);
-  const [hideVerses, setHideVerses] = useState(true); // New setting to control verse hiding
+  const [hideVerses, setHideVerses] = useState(true);
+  const [revelationRate, setRevelationRate] = useState([0]); // Slider value from 0-100
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [hoverProgress, setHoverProgress] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -43,6 +45,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     }
     setHoverProgress(0);
     setIsHovering(false);
+    setRevelationRate([0]); // Reset slider when navigating
   };
 
   const goToNextSurah = () => {
@@ -50,6 +53,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       setCurrentSurah(currentSurah + 1);
       setHoverProgress(0);
       setIsHovering(false);
+      setRevelationRate([0]); // Reset slider when navigating
     }
   };
 
@@ -58,6 +62,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       setCurrentSurah(currentSurah - 1);
       setHoverProgress(0);
       setIsHovering(false);
+      setRevelationRate([0]); // Reset slider when navigating
     }
   };
 
@@ -100,16 +105,16 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       return getCombinedText();
     }
     
-    if (!isHovering || hoverProgress === 0) {
-      // Show empty when not hovering and verses are hidden
-      return '';
-    }
-    
     const fullText = getCombinedText();
     const words = fullText.split(' ');
-    const wordsToShow = Math.ceil(words.length * hoverProgress);
     
-    if (wordsToShow === 0) return '';
+    // Use slider value primarily, hover as secondary
+    const sliderProgress = revelationRate[0] / 100;
+    const effectiveProgress = Math.max(sliderProgress, isHovering ? hoverProgress : 0);
+    
+    if (effectiveProgress === 0) return '';
+    
+    const wordsToShow = Math.ceil(words.length * effectiveProgress);
     return words.slice(0, wordsToShow).join(' ');
   };
 
@@ -195,39 +200,69 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           </CollapsibleTrigger>
           
           <CollapsibleContent className="pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-600">Show verse numbers:</span>
-                  <Switch
-                    checked={showVerseNumbers}
-                    onCheckedChange={setShowVerseNumbers}
-                  />
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-600">Show verse numbers:</span>
+                    <Switch
+                      checked={showVerseNumbers}
+                      onCheckedChange={setShowVerseNumbers}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-600">Hide verses:</span>
+                    <Switch
+                      checked={hideVerses}
+                      onCheckedChange={(checked) => {
+                        setHideVerses(checked);
+                        if (!checked) {
+                          setRevelationRate([100]); // Show all when not hiding
+                        } else {
+                          setRevelationRate([0]); // Reset when hiding
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+                    <Switch
+                      checked={showTajweed}
+                      onCheckedChange={setShowTajweed}
+                      className="data-[state=checked]:bg-green-300 data-[state=unchecked]:bg-green-100"
+                    />
+                  </div>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-600">Hide verses:</span>
-                  <Switch
-                    checked={hideVerses}
-                    onCheckedChange={setHideVerses}
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-600">Tajweed:</span>
-                  <Switch
-                    checked={showTajweed}
-                    onCheckedChange={setShowTajweed}
-                    className="data-[state=checked]:bg-green-300 data-[state=unchecked]:bg-green-100"
-                  />
-                </div>
+                <QuranNavigationModal
+                  onNavigate={handleNavigate}
+                  currentVerseId={currentSurahVerses[0]?.id || 1}
+                  maxVerseId={allVerses.length}
+                />
               </div>
               
-              <QuranNavigationModal
-                onNavigate={handleNavigate}
-                currentVerseId={currentSurahVerses[0]?.id || 1}
-                maxVerseId={allVerses.length}
-              />
+              {/* Revelation Rate Slider */}
+              {hideVerses && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Revelation Progress:</span>
+                    <span className="text-xs text-gray-500">{revelationRate[0]}%</span>
+                  </div>
+                  <Slider
+                    value={revelationRate}
+                    onValueChange={setRevelationRate}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>Hidden</span>
+                    <span>Fully Revealed</span>
+                  </div>
+                </div>
+              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -260,11 +295,11 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
             </div>
           )}
           
-          {/* Hover instruction - only show when verses are hidden and not hovering */}
-          {hideVerses && !isHovering && (
+          {/* Instructions - show when verses are hidden */}
+          {hideVerses && revelationRate[0] === 0 && !isHovering && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-center">
-                <p className="text-sm font-medium">Hover over the text to reveal verses progressively</p>
+                <p className="text-sm font-medium">Use the slider above or hover over the text to reveal verses</p>
               </div>
             </div>
           )}
