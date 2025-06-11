@@ -8,9 +8,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
+
 interface QuranViewerProps {
   startingVerseId?: number;
 }
+
 export const QuranViewer: React.FC<QuranViewerProps> = ({
   startingVerseId = 1
 }) => {
@@ -425,4 +427,3 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
       </Card>
     </div>;
 };
-}
