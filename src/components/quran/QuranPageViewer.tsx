@@ -20,6 +20,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   });
   const [showTajweed, setShowTajweed] = useState(false);
   const [showVerseNumbers, setShowVerseNumbers] = useState(true);
+  const [hideVerses, setHideVerses] = useState(true); // New setting to control verse hiding
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [hoverProgress, setHoverProgress] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -94,9 +95,14 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   };
 
   const getVisibleText = (): string => {
-    if (!isHovering || hoverProgress === 0) {
-      // Show full text when not hovering
+    if (!hideVerses) {
+      // If not hiding verses, always show full text
       return getCombinedText();
+    }
+    
+    if (!isHovering || hoverProgress === 0) {
+      // Show empty when not hovering and verses are hidden
+      return '';
     }
     
     const fullText = getCombinedText();
@@ -108,7 +114,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !hideVerses) return;
     
     setIsHovering(true);
     
@@ -116,14 +122,18 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     const x = event.clientX - rect.left;
     const width = rect.width;
     
-    // Calculate progress from right to left (for Arabic text)
-    const progress = Math.max(0, Math.min(1, (width - x) / width));
+    // Calculate progress from right to left (for Arabic text) with slower reveal
+    const rawProgress = Math.max(0, Math.min(1, (width - x) / width));
+    // Apply easing to make it slower - using quadratic easing
+    const progress = rawProgress * rawProgress;
     setHoverProgress(progress);
   };
 
   const handleMouseLeave = () => {
-    setIsHovering(false);
-    setHoverProgress(0);
+    if (hideVerses) {
+      setIsHovering(false);
+      setHoverProgress(0);
+    }
   };
 
   return (
@@ -196,6 +206,14 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                 </div>
                 
                 <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-600">Hide verses:</span>
+                  <Switch
+                    checked={hideVerses}
+                    onCheckedChange={setHideVerses}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-600">Tajweed:</span>
                   <Switch
                     checked={showTajweed}
@@ -242,8 +260,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
             </div>
           )}
           
-          {/* Hover instruction - only show when not hovering */}
-          {!isHovering && (
+          {/* Hover instruction - only show when verses are hidden and not hovering */}
+          {hideVerses && !isHovering && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-center">
                 <p className="text-sm font-medium">Hover over the text to reveal verses progressively</p>
