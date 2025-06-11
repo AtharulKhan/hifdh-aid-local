@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack, Settings } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz, getJuzInfo } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranPageViewerMobileProps {
@@ -40,15 +40,43 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
   const allVerses = getVersesArray();
   
   const getSurahVerses = (): QuranVerse[] => {
-    const surahVerses = allVerses.filter(verse => verse.surah === currentSurah);
-    
-    // Apply verse range filtering
-    if (verseRange[1] === 0) {
-      // No end limit, show from start verse to end of surah
-      return surahVerses.slice(verseRange[0] - 1);
+    if (navigationMode === 'juz') {
+      // Get all verses for the current juz
+      const juzInfo = getJuzInfo(currentJuz);
+      if (!juzInfo) return [];
+      
+      const juzVerses: QuranVerse[] = [];
+      
+      // Iterate through the verse mapping for this juz
+      Object.entries(juzInfo.verse_mapping).forEach(([surahNum, range]) => {
+        const surahNumber = parseInt(surahNum);
+        
+        if (range.includes('-')) {
+          const [start, end] = range.split('-').map(Number);
+          for (let ayah = start; ayah <= end; ayah++) {
+            const verse = allVerses.find(v => v.surah === surahNumber && v.ayah === ayah);
+            if (verse) juzVerses.push(verse);
+          }
+        } else {
+          const ayah = parseInt(range);
+          const verse = allVerses.find(v => v.surah === surahNumber && v.ayah === ayah);
+          if (verse) juzVerses.push(verse);
+        }
+      });
+      
+      return juzVerses.sort((a, b) => a.id - b.id);
     } else {
-      // Show verses in the specified range
-      return surahVerses.slice(verseRange[0] - 1, verseRange[1]);
+      // Original surah-based logic
+      const surahVerses = allVerses.filter(verse => verse.surah === currentSurah);
+      
+      // Apply verse range filtering
+      if (verseRange[1] === 0) {
+        // No end limit, show from start verse to end of surah
+        return surahVerses.slice(verseRange[0] - 1);
+      } else {
+        // Show verses in the specified range
+        return surahVerses.slice(verseRange[0] - 1, verseRange[1]);
+      }
     }
   };
 
@@ -230,7 +258,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
           {/* Surah Title */}
           <div className="w-full">
             <h2 className="text-lg font-bold text-gray-700 break-words px-2">
-              {getSurahName(currentSurah)}
+              {navigationMode === 'juz' ? `Juz ${currentJuz}` : getSurahName(currentSurah)}
             </h2>
           </div>
           
@@ -268,7 +296,10 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
             Juz {currentJuz}
           </Badge>
           <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
-            Verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} ({currentSurahVerses.length} showing)
+            {navigationMode === 'juz' 
+              ? `${currentSurahVerses.length} verses in Juz ${currentJuz}`
+              : `Verses ${verseRange[0]}-${verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} (${currentSurahVerses.length} showing)`
+            }
           </Badge>
           {maxLines[0] > 0 && totalPages > 1 && (
             <Badge variant="outline" className="border-blue-200 text-blue-600 text-xs">
@@ -376,30 +407,32 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
                 </div>
               </div>
 
-              {/* Verse Range Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-green-700">Verse range to show:</span>
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                    {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
-                  </span>
+              {/* Verse Range Slider - Only show for Surah mode */}
+              {navigationMode === 'surah' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-green-700">Verse range to show:</span>
+                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
+                    </span>
+                  </div>
+                  <Slider
+                    value={verseRange}
+                    onValueChange={(value) => {
+                      setVerseRange(value);
+                      setCurrentPage(1);
+                    }}
+                    max={totalSurahVerses}
+                    min={1}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-green-500">
+                    <span>1</span>
+                    <span>{totalSurahVerses}</span>
+                  </div>
                 </div>
-                <Slider
-                  value={verseRange}
-                  onValueChange={(value) => {
-                    setVerseRange(value);
-                    setCurrentPage(1);
-                  }}
-                  max={totalSurahVerses}
-                  min={1}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-green-500">
-                  <span>1</span>
-                  <span>{totalSurahVerses}</span>
-                </div>
-              </div>
+              )}
 
               {/* Max Lines Slider */}
               <div className="space-y-2">
