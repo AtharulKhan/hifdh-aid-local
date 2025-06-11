@@ -1,9 +1,9 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
@@ -19,6 +19,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [showTajweed, setShowTajweed] = useState(false);
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
+  const [verseSliderValues, setVerseSliderValues] = useState<Record<number, number>>({});
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const verseTextRefs = useRef<Record<number, HTMLDivElement | null>>({});
   
@@ -41,6 +42,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     setCurrentVerseId(verseId);
     setVerseRevealStates({});
     setHoverWordCounts({});
+    setVerseSliderValues({});
   };
 
   const goToNextSurah = () => {
@@ -140,6 +142,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     const verseText = showTajweed ? getTajweedText(verse) : verse.text;
     const words = verseText.split(' ');
     const hoverWordCount = hoverWordCounts[verse.id] || 0;
+    const sliderValue = verseSliderValues[verse.id] || 0;
+    
+    // If slider is being used, use slider value instead of other reveal methods
+    if (sliderValue > 0) {
+      const wordsToShow = Math.ceil(words.length * (sliderValue / 100));
+      return words.slice(0, wordsToShow).join(' ');
+    }
     
     if (viewMode === 'hidden') {
       const revealState = verseRevealStates[verse.id] || 'hidden';
@@ -161,6 +170,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     } else {
       return verseText;
     }
+  };
+
+  const handleVerseSliderChange = (verseId: number, value: number[]) => {
+    setVerseSliderValues(prev => ({
+      ...prev,
+      [verseId]: value[0]
+    }));
   };
 
   return (
@@ -273,14 +289,33 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
 
       {/* Verses Display */}
       <div className="space-y-4">
-        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) ? (
+        {viewMode !== 'hidden' || Object.keys(verseRevealStates).length > 0 || Object.keys(hoverWordCounts).some(key => hoverWordCounts[Number(key)] > 0) || Object.keys(verseSliderValues).some(key => verseSliderValues[Number(key)] > 0) ? (
           currentVerses.map((verse) => (
-            <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
-              <div className="space-y-4">
+            <Card key={verse.id} className="bg-white border border-green-100 shadow-sm">
+              <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className="border-green-200 text-green-600">
                     {verse.verse_key}
                   </Badge>
+                </div>
+                
+                {/* Individual Verse Revelation Slider */}
+                <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-700">Verse Revelation:</span>
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{verseSliderValues[verse.id] || 0}%</span>
+                  </div>
+                  <Slider
+                    value={[verseSliderValues[verse.id] || 0]}
+                    onValueChange={(value) => handleVerseSliderChange(verse.id, value)}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-blue-500">
+                    <span>Hidden</span>
+                    <span>Fully Revealed</span>
+                  </div>
                 </div>
                 
                 <div className="relative">
@@ -289,7 +324,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                     onMouseMove={(e) => handleMouseMove(verse.id, e)}
                     onMouseLeave={() => handleMouseLeave(verse.id)}
                     style={{
-                      opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] ? 
+                      opacity: viewMode === 'hidden' && !verseRevealStates[verse.id] && !verseSliderValues[verse.id] ? 
                         (hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1) : 1
                     }}
                     ref={el => verseTextRefs.current[verse.id] = el}
@@ -303,7 +338,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                     </span>
                   </div>
                   
-                  {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && (
+                  {viewMode === 'hidden' && verseRevealStates[verse.id] !== 'full' && !verseSliderValues[verse.id] && (
                     <div className="flex justify-end space-x-2 mt-4">
                       {!verseRevealStates[verse.id] && (
                         <Button
@@ -356,12 +391,31 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         ) : (
           <div className="space-y-4">
             {currentVerses.map((verse) => (
-              <Card key={verse.id} className="p-6 bg-white border border-green-100 shadow-sm">
-                <div className="space-y-4">
+              <Card key={verse.id} className="bg-white border border-green-100 shadow-sm">
+                <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="border-green-200 text-green-600">
                       {verse.verse_key}
                     </Badge>
+                  </div>
+                  
+                  {/* Individual Verse Revelation Slider */}
+                  <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-blue-700">Verse Revelation:</span>
+                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{verseSliderValues[verse.id] || 0}%</span>
+                    </div>
+                    <Slider
+                      value={[verseSliderValues[verse.id] || 0]}
+                      onValueChange={(value) => handleVerseSliderChange(verse.id, value)}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-blue-500">
+                      <span>Hidden</span>
+                      <span>Fully Revealed</span>
+                    </div>
                   </div>
                   
                   <div className="relative">
@@ -370,7 +424,8 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       onMouseMove={(e) => handleMouseMove(verse.id, e)}
                       onMouseLeave={() => handleMouseLeave(verse.id)}
                       style={{
-                        opacity: hoverWordCounts[verse.id] ? 0.7 + (hoverWordCounts[verse.id] * 0.3) : 0.1
+                        opacity: hoverWordCounts[verse.id] || verseSliderValues[verse.id] ? 
+                          (verseSliderValues[verse.id] ? 1 : 0.7 + (hoverWordCounts[verse.id] * 0.3)) : 0.1
                       }}
                       ref={el => verseTextRefs.current[verse.id] = el}
                     >
@@ -383,26 +438,28 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       </span>
                     </div>
                     
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => revealVerse(verse.id, 'partial')}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
-                      >
-                        <ArrowRight className="h-4 w-4 mr-1" />
-                        Reveal Part
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => revealVerse(verse.id, 'full')}
-                        className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
-                      >
-                        <ChevronsRight className="h-4 w-4 mr-1" />
-                        Reveal All
-                      </Button>
-                    </div>
+                    {!verseSliderValues[verse.id] && (
+                      <div className="flex justify-end space-x-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'partial')}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-blue-25 transition-all duration-300 animate-fade-in"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          Reveal Part
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealVerse(verse.id, 'full')}
+                          className="border-green-200 text-green-600 hover:bg-green-50 bg-green-25 transition-all duration-300 animate-fade-in"
+                        >
+                          <ChevronsRight className="h-4 w-4 mr-1" />
+                          Reveal All
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
