@@ -1,8 +1,8 @@
-
 import quranJson from './quran.json';
 import tajweedJson from './tajweed.json';
 import surahNamesJson from './surah-names.json';
 import juzNumbersJson from './juz-numbers.json';
+import tafsirJson from './tafsir.json';
 
 export interface QuranVerse {
   id: number;
@@ -40,6 +40,10 @@ export interface JuzInfo {
   verse_mapping: Record<string, string>;
 }
 
+export interface TafsirData {
+  text: string;
+}
+
 // Load Quran data from JSON
 export const quranData: Record<string, QuranVerse> = quranJson;
 
@@ -51,6 +55,9 @@ export const surahNamesData: Record<string, SurahInfo> = surahNamesJson;
 
 // Load Juz numbers data from JSON
 export const juzNumbersData: Record<string, JuzInfo> = juzNumbersJson;
+
+// Load Tafsir data from JSON
+export const tafsirData: Record<string, TafsirData> = tafsirJson;
 
 // Helper function to get verses as array
 export const getVersesArray = (): QuranVerse[] => {
@@ -106,4 +113,10 @@ export const getFirstVerseOfJuz = (juzNumber: number): QuranVerse | undefined =>
   
   const [surah, ayah] = juzInfo.first_verse_key.split(':').map(Number);
   return getVersesArray().find(verse => verse.surah === surah && verse.ayah === ayah);
+};
+
+// Helper function to get tafsir for a verse
+export const getTafsirForVerse = (surah: number, ayah: number): TafsirData | undefined => {
+  const verseKey = `${surah}:${ayah}`;
+  return tafsirData[verseKey];
 };

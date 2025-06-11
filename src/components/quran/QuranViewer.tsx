@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
+import { TafsirDialog } from "./TafsirDialog";
 
 interface QuranViewerProps {
   startingVerseId?: number;
@@ -371,7 +372,23 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                           <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Reveal All
                         </Button>
+                        <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
                       </div>}
+
+                      {/* Always show tafsir button when verse is fully revealed or in other view modes */}
+                      {(viewMode !== 'hidden' || verseRevealStates[verse.id] === 'full' || verseSliderValues[verse.id] > 0) && (
+                        <div className="flex justify-end mt-4">
+                          <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                        </div>
+                      )}
+
+                      {/* Show tafsir button when verse slider is being used */}
+                      {verseSliderValues[verse.id] > 0 && (
+                        <div className="flex justify-end mt-4">
+                          <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>) : <div className="space-y-6 w-full overflow-x-hidden">
@@ -416,6 +433,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                             <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             Reveal All
                           </Button>
+                          <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
                         </div>}
                     </div>
                   </div>
