@@ -77,15 +77,29 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
     
     const rect = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
     const width = rect.width;
+    const height = rect.height;
+    
+    // Allow hover area to extend slightly above the text (20px above)
+    const extendedHoverArea = y >= -20 && y <= height;
+    
+    if (!extendedHoverArea) {
+      setHoverWordCounts(prev => ({
+        ...prev,
+        [verseId]: 0
+      }));
+      return;
+    }
     
     // For Arabic text (right-to-left), calculate from the right side
-    // Add 1 to ensure we always show at least the first word when hovering
+    // Use a more precise calculation based on actual mouse position
     const percentageFromRight = Math.max(0, Math.min(1, (width - x) / width));
     
     const verse = getVerseById(verseId);
     if (verse) {
       const words = verse.text.split(' ');
+      // More precise word calculation - ensure we show at least 1 word when hovering
       const wordsToShow = Math.max(1, Math.ceil(words.length * percentageFromRight));
       
       setHoverWordCounts(prev => ({
@@ -215,7 +229,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                 
                 <div className="relative">
                   <div 
-                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out"
+                    className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
                     onMouseMove={(e) => handleMouseMove(verse.id, e)}
                     onMouseLeave={() => handleMouseLeave(verse.id)}
                     style={{
@@ -289,7 +303,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                   
                   <div className="relative">
                     <div 
-                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out"
+                      className="font-arabic text-right text-2xl leading-loose text-gray-800 min-h-[3rem] transition-all duration-300 ease-out cursor-pointer"
                       onMouseMove={(e) => handleMouseMove(verse.id, e)}
                       onMouseLeave={() => handleMouseLeave(verse.id)}
                       style={{
