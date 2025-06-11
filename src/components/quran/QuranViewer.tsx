@@ -263,11 +263,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       )}
 
       {/* Collapsible Control Panel */}
-      <Card className="p-4 bg-blue-50 border-blue-100 w-full overflow-x-hidden">
+      <Card className="p-3 sm:p-4 bg-blue-50 border-blue-100 w-full overflow-x-hidden">
         <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-blue-700 hover:bg-blue-100">
-              <span className="font-medium">Display Options</span>
+              <span className="font-medium text-sm sm:text-base">Display Options</span>
               {isControlsExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
@@ -277,23 +277,31 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
           </CollapsibleTrigger>
           
           <CollapsibleContent>
-            <div className="pt-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600">Tajweed:</span>
-                    <Switch
-                      checked={showTajweed}
-                      onCheckedChange={setShowTajweed}
-                    />
-                  </div>
-                  
-                  <div className="flex space-x-2">
+            <div className="pt-3 sm:pt-4 space-y-4">
+              {/* Tajweed Toggle and View Mode Buttons */}
+              <div className="space-y-3 sm:space-y-4">
+                {/* Tajweed Toggle */}
+                <div className="flex items-center justify-center sm:justify-start space-x-2 p-2 bg-white rounded-lg border border-blue-200">
+                  <span className="text-xs sm:text-sm font-medium text-gray-600">Tajweed:</span>
+                  <Switch
+                    checked={showTajweed}
+                    onCheckedChange={setShowTajweed}
+                  />
+                </div>
+                
+                {/* View Mode Buttons */}
+                <div className="space-y-2">
+                  <span className="text-xs sm:text-sm font-medium text-blue-700 block">View Mode:</span>
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                     <Button
                       variant={viewMode === 'hidden' ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode('hidden')}
-                      className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                      className={`text-xs sm:text-sm ${
+                        viewMode === 'hidden' 
+                          ? "bg-blue-300 text-white hover:bg-blue-400" 
+                          : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"
+                      }`}
                     >
                       Hide
                     </Button>
@@ -301,7 +309,11 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       variant={viewMode === 'partial' ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode('partial')}
-                      className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                      className={`text-xs sm:text-sm ${
+                        viewMode === 'partial' 
+                          ? "bg-blue-300 text-white hover:bg-blue-400" 
+                          : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"
+                      }`}
                     >
                       Show Partial
                     </Button>
@@ -309,15 +321,21 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
                       variant={viewMode === 'full' ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode('full')}
-                      className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                      className={`text-xs sm:text-sm ${
+                        viewMode === 'full' 
+                          ? "bg-blue-300 text-white hover:bg-blue-400" 
+                          : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"
+                      }`}
                     >
                       Show Full
                     </Button>
-                    <QuranNavigationModal
-                      onNavigate={handleNavigate}
-                      currentVerseId={currentVerseId}
-                      maxVerseId={maxVerseId}
-                    />
+                    <div className="col-span-2 sm:col-span-1 sm:ml-auto">
+                      <QuranNavigationModal
+                        onNavigate={handleNavigate}
+                        currentVerseId={currentVerseId}
+                        maxVerseId={maxVerseId}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -325,7 +343,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
               {/* Verse Range Slider */}
               <div className="space-y-2 bg-green-50 p-3 rounded-lg border border-green-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-700">Verse range to show:</span>
+                  <span className="text-xs sm:text-sm font-medium text-green-700">Verse range to show:</span>
                   <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
                     {verseRange[0]} - {verseRange[1]}
                   </span>
