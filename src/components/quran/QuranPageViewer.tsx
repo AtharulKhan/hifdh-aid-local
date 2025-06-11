@@ -19,10 +19,11 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     return startingVerse ? startingVerse.surah : 1;
   });
   const [showTajweed, setShowTajweed] = useState(false);
+  const [showVerseNumbers, setShowVerseNumbers] = useState(true);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
-  const [hoverProgress, setHoverProgress] = useState<Record<number, number>>({});
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [hoverProgress, setHoverProgress] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
   
@@ -38,8 +39,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     const verse = getVerseById(verseId);
     if (verse) {
       setCurrentSurah(verse.surah);
-      setActiveRowIndex(null);
-      setHoverProgress({});
+      setHoverProgress(0);
+      setIsHovering(false);
     }
   };
 
@@ -48,8 +49,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     const nextSurahFirstVerse = allVerses.find(v => v.surah === nextSurahNumber);
     if (nextSurahFirstVerse) {
       setCurrentSurah(nextSurahNumber);
-      setActiveRowIndex(null);
-      setHoverProgress({});
+      setHoverProgress(0);
+      setIsHovering(false);
     }
   };
 
@@ -57,8 +58,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     const prevSurahNumber = currentSurah - 1;
     if (prevSurahNumber >= 1) {
       setCurrentSurah(prevSurahNumber);
-      setActiveRowIndex(null);
-      setHoverProgress({});
+      setHoverProgress(0);
+      setIsHovering(false);
     }
   };
 
@@ -77,53 +78,54 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     return words.length > 0 ? words.join(' ') : verse.text;
   };
 
-  const handleRowMouseMove = (event: React.MouseEvent<HTMLDivElement>, rowIndex: number) => {
-    const rowElement = rowRefs.current[rowIndex];
-    if (!rowElement) return;
+  // Create continuous text from all verses
+  const getContinuousText = (): string => {
+    return currentSurahVerses.map(verse => {
+      const baseText = showTajweed ? getTajweedText(verse) : verse.text;
+      // Remove verse numbers from the text if they want to hide them
+      const textWithoutNumber = baseText.replace(/\s*[٠-٩۰-۹0-9]+\s*$/, '');
+      if (showVerseNumbers) {
+        return baseText; // Keep original text with numbers
+      } else {
+        return textWithoutNumber; // Remove numbers
+      }
+    }).join(' ');
+  };
+
+  const handleCanvasMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
     
-    setActiveRowIndex(rowIndex);
+    setIsHovering(true);
     
-    const rect = rowElement.getBoundingClientRect();
+    const rect = canvasElement.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const width = rect.width;
     
     // Calculate progress from right to left (for Arabic text)
     const progress = Math.max(0, Math.min(1, (width - x) / width));
     
-    setHoverProgress(prev => ({
-      ...prev,
-      [rowIndex]: progress
-    }));
+    setHoverProgress(progress);
   };
 
-  const handleRowMouseLeave = (rowIndex: number) => {
-    setActiveRowIndex(null);
-    setHoverProgress(prev => {
-      const newProgress = { ...prev };
-      delete newProgress[rowIndex];
-      return newProgress;
-    });
+  const handleCanvasMouseLeave = () => {
+    setIsHovering(false);
+    setHoverProgress(0);
   };
 
-  const getVisibleText = (verse: QuranVerse, rowIndex: number): string => {
-    // Show full text by default, or partial text based on hover progress
-    const verseText = showTajweed ? getTajweedText(verse) : verse.text;
+  const getVisibleText = (): string => {
+    const fullText = getContinuousText();
     
-    if (activeRowIndex !== rowIndex || !hoverProgress[rowIndex]) {
-      return verseText; // Show full text by default
+    if (!isHovering || hoverProgress === 0) {
+      return fullText; // Show full text by default
     }
     
-    const words = verseText.split(' ');
-    const wordsToShow = Math.ceil(words.length * hoverProgress[rowIndex]);
+    const words = fullText.split(' ');
+    const wordsToShow = Math.ceil(words.length * hoverProgress);
     
     if (wordsToShow === 0) return '';
     return words.slice(0, wordsToShow).join(' ');
   };
-
-  // Ensure we have enough refs for all rows
-  if (rowRefs.current.length !== currentSurahVerses.length) {
-    rowRefs.current = Array(currentSurahVerses.length).fill(null);
-  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -196,6 +198,14 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                   />
                 </div>
                 
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-600">Verse Numbers:</span>
+                  <Switch
+                    checked={showVerseNumbers}
+                    onCheckedChange={setShowVerseNumbers}
+                  />
+                </div>
+                
                 <QuranNavigationModal
                   onNavigate={handleNavigate}
                   currentVerseId={firstVerse?.id || 1}
@@ -211,29 +221,22 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
       <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
         <div className="relative min-h-[500px]">
           {currentSurahVerses.length > 0 ? (
-            <div className="space-y-8">
-              {currentSurahVerses.map((verse, rowIndex) => (
-                <div 
-                  key={verse.id} 
-                  ref={el => rowRefs.current[rowIndex] = el}
-                  className="w-full cursor-pointer relative py-4 border-b border-green-50 last:border-0"
-                  onMouseMove={(e) => handleRowMouseMove(e, rowIndex)}
-                  onMouseLeave={() => handleRowMouseLeave(rowIndex)}
-                >
-                  <Badge variant="outline" className="absolute top-1 right-0 border-green-200 text-green-600 text-xs">
-                    {verse.verse_key}
-                  </Badge>
-                  <div 
-                    className="font-arabic text-2xl leading-loose text-gray-800 text-right px-4"
-                  >
-                    {showTajweed ? (
-                      <span dangerouslySetInnerHTML={{ __html: getVisibleText(verse, rowIndex) }} />
-                    ) : (
-                      getVisibleText(verse, rowIndex)
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div 
+              ref={canvasRef}
+              className="w-full cursor-pointer relative py-4"
+              onMouseMove={handleCanvasMouseMove}
+              onMouseLeave={handleCanvasMouseLeave}
+            >
+              <div 
+                className="font-arabic text-2xl leading-loose text-gray-800 text-right px-4"
+                style={{ direction: 'rtl' }}
+              >
+                {showTajweed ? (
+                  <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
+                ) : (
+                  getVisibleText()
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -244,7 +247,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
           {/* Hover instruction */}
           <div className="absolute top-4 left-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-sm">
-              <p className="font-medium">Hover over verses to reveal them right-to-left</p>
+              <p className="font-medium">Hover over the text to reveal verses right-to-left</p>
             </div>
           </div>
         </div>
