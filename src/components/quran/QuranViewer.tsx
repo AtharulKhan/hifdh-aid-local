@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
@@ -19,6 +20,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   const [showTajweed, setShowTajweed] = useState(false);
   const [verseRevealStates, setVerseRevealStates] = useState<Record<number, 'hidden' | 'partial' | 'more' | 'full'>>({});
   const [hoverWordCounts, setHoverWordCounts] = useState<Record<number, number>>({});
+  const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
@@ -257,66 +259,81 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
         </div>
       )}
 
-      {/* Control Panel */}
+      {/* Collapsible Control Panel */}
       <Card className="p-4 bg-blue-50 border-blue-100">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-600">Verses per page:</span>
-            {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
-              <Button
-                key={count}
-                variant={versesPerPage === count ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
-                className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-              >
-                {count}
-              </Button>
-            ))}
-          </div>
+        <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-blue-700 hover:bg-blue-100">
+              <span className="font-medium">Display Options</span>
+              {isControlsExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
           
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-600">Tajweed:</span>
-              <Switch
-                checked={showTajweed}
-                onCheckedChange={setShowTajweed}
-              />
+          <CollapsibleContent className="pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-600">Verses per page:</span>
+                {[1, 3, 5, 10, 30, 40, 'Surah'].map((count) => (
+                  <Button
+                    key={count}
+                    variant={versesPerPage === count ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleVersesPerPageChange(count === 'Surah' ? 1000 : count as number)}
+                    className={versesPerPage === count ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    {count}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+                  <Switch
+                    checked={showTajweed}
+                    onCheckedChange={setShowTajweed}
+                  />
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button
+                    variant={viewMode === 'hidden' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('hidden')}
+                    className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Hide
+                  </Button>
+                  <Button
+                    variant={viewMode === 'partial' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('partial')}
+                    className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Show Partial
+                  </Button>
+                  <Button
+                    variant={viewMode === 'full' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('full')}
+                    className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
+                  >
+                    Show Full
+                  </Button>
+                  <QuranNavigationModal
+                    onNavigate={handleNavigate}
+                    currentVerseId={currentVerseId}
+                    maxVerseId={maxVerseId}
+                  />
+                </div>
+              </div>
             </div>
-            
-            <div className="flex space-x-2">
-              <Button
-                variant={viewMode === 'hidden' ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode('hidden')}
-                className={viewMode === 'hidden' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-              >
-                Hide
-              </Button>
-              <Button
-                variant={viewMode === 'partial' ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode('partial')}
-                className={viewMode === 'partial' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-              >
-                Show Partial
-              </Button>
-              <Button
-                variant={viewMode === 'full' ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode('full')}
-                className={viewMode === 'full' ? "bg-blue-300 text-white hover:bg-blue-400" : "border-blue-200 text-blue-700 hover:bg-blue-100 bg-blue-50"}
-              >
-                Show Full
-              </Button>
-              <QuranNavigationModal
-                onNavigate={handleNavigate}
-                currentVerseId={currentVerseId}
-                maxVerseId={maxVerseId}
-              />
-            </div>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Verses Display */}
