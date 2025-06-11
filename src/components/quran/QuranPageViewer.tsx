@@ -120,26 +120,13 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
     
     const rect = containerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
     const width = rect.width;
     
-    // Get the line height and calculate which row we're on
-    const computedStyle = getComputedStyle(containerRef.current);
-    const lineHeight = parseFloat(computedStyle.lineHeight);
-    const currentRow = Math.floor(y / lineHeight);
-    
-    // Calculate total number of rows (approximate)
-    const textElement = containerRef.current.querySelector('div');
-    const totalHeight = textElement ? textElement.scrollHeight : rect.height;
-    const totalRows = Math.ceil(totalHeight / lineHeight);
-    
-    // Calculate progress based on current row and position within that row
-    const rowProgress = Math.max(0, Math.min(1, (width - x) / width));
-    const overallProgress = (currentRow + rowProgress) / Math.max(totalRows, 1);
-    
+    // Calculate progress from right to left (for Arabic text) with slower reveal
+    const rawProgress = Math.max(0, Math.min(1, (width - x) / width));
     // Apply easing to make it slower - using quadratic easing
-    const finalProgress = Math.min(1, overallProgress * overallProgress * 2);
-    setHoverProgress(finalProgress);
+    const progress = rawProgress * rawProgress;
+    setHoverProgress(progress);
   };
 
   const handleMouseLeave = () => {
