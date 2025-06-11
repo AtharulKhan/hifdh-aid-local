@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import Mindfulness from "./pages/Mindfulness";
 import PageView from "./pages/PageView";
+import Test from "./pages/Test";
 
 function App() {
   const isMobile = useIsMobile();
@@ -24,6 +25,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/page-view" element={<PageView />} />
+              <Route path="/test" element={<Test />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/mindfulness" element={<Mindfulness />} />

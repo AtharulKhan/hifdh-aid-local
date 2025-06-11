@@ -7,7 +7,8 @@ import {
   PanelLeft,
   BookOpen,
   Menu,
-  X
+  X,
+  ClipboardCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -15,7 +16,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { path: "/", icon: Home, label: "Quran Review (by Verse)" },
-  { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" }
+  { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
+  { path: "/test", icon: ClipboardCheck, label: "Memorization Test" }
 ];
 
 export const Navigation = () => {
