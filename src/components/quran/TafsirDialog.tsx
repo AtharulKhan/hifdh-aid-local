@@ -27,7 +27,7 @@ export const TafsirDialog: React.FC<TafsirDialogProps> = ({ surah, ayah, verseKe
           Tafsir
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] w-full">
+      <DialogContent className="max-w-4xl max-h-[80vh] w-full bg-white">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-green-700">
             Tafsir for Verse {verseKey}
@@ -36,7 +36,7 @@ export const TafsirDialog: React.FC<TafsirDialogProps> = ({ surah, ayah, verseKe
             Commentary and explanation of this verse
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
+        <ScrollArea className="h-[60vh] w-full rounded-md border p-4 bg-white">
           <div 
             className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: tafsir.text }}
