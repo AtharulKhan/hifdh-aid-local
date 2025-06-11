@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +28,14 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
   const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
   const [currentPage, setCurrentPage] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [navigationMode, setNavigationMode] = useState<'surah' | 'juz'>('surah');
+  const [currentJuz, setCurrentJuz] = useState(() => {
+    const startingVerse = getVerseById(startingVerseId);
+    if (startingVerse) {
+      return getJuzForVerse(startingVerse.surah, startingVerse.ayah) || 1;
+    }
+    return 1;
+  });
   
   const allVerses = getVersesArray();
   
@@ -48,11 +55,16 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
   const currentSurahVerses = getSurahVerses();
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
   const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
+  const maxJuz = 30;
 
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
     if (verse) {
       setCurrentSurah(verse.surah);
+      const juzNumber = getJuzForVerse(verse.surah, verse.ayah);
+      if (juzNumber) {
+        setCurrentJuz(juzNumber);
+      }
     }
     setRevelationRate([100]);
     setCurrentPage(1);
@@ -81,6 +93,18 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
     setRevelationRate([100]);
     setCurrentPage(1);
     setVerseRange([1, 0]); // Reset verse range for new surah
+  };
+
+  const handleJuzSliderChange = (value: number[]) => {
+    const juzNumber = value[0];
+    setCurrentJuz(juzNumber);
+    const firstVerseOfJuz = getFirstVerseOfJuz(juzNumber);
+    if (firstVerseOfJuz) {
+      setCurrentSurah(firstVerseOfJuz.surah);
+      setRevelationRate([100]);
+      setCurrentPage(1);
+      setVerseRange([1, 0]);
+    }
   };
 
   const getTajweedText = (verse: QuranVerse): string => {
@@ -200,7 +224,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
 
   return (
     <div className="space-y-4 px-2 pb-20">
-      {/* Header with Surah Info - Updated to match main viewer */}
+      {/* Header with Surah Info - Updated */}
       <div className="bg-white p-3 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
         <div className="w-full space-y-3">
           {/* Surah Title */}
@@ -240,6 +264,9 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
           <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 text-xs">
             Surah {currentSurah}
           </Badge>
+          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+            Juz {currentJuz}
+          </Badge>
           <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
             Verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} ({currentSurahVerses.length} showing)
           </Badge>
@@ -250,19 +277,39 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
           )}
         </div>
 
-        {/* Surah Navigation Slider - Matching main viewer style */}
+        {/* Navigation Mode Toggle */}
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant={navigationMode === 'surah' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setNavigationMode('surah')}
+            className={`text-xs ${navigationMode === 'surah' ? 'bg-green-500 text-white' : 'border-green-200 text-green-600 hover:bg-green-50'}`}
+          >
+            Surah
+          </Button>
+          <Button
+            variant={navigationMode === 'juz' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setNavigationMode('juz')}
+            className={`text-xs ${navigationMode === 'juz' ? 'bg-blue-500 text-white' : 'border-blue-200 text-blue-600 hover:bg-blue-50'}`}
+          >
+            Juz
+          </Button>
+        </div>
+
+        {/* Navigation Slider */}
         <div className="space-y-1 bg-green-25 p-2 rounded border border-green-100">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-green-600">Navigate:</span>
             <span className="text-xs text-green-500 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
-              {currentSurah} of {maxSurah}
+              {navigationMode === 'surah' ? `${currentSurah} of ${maxSurah}` : `${currentJuz} of ${maxJuz}`}
             </span>
           </div>
           <div className="px-1">
             <Slider
-              value={[currentSurah]}
-              onValueChange={handleSurahSliderChange}
-              max={maxSurah}
+              value={navigationMode === 'surah' ? [currentSurah] : [currentJuz]}
+              onValueChange={navigationMode === 'surah' ? handleSurahSliderChange : handleJuzSliderChange}
+              max={navigationMode === 'surah' ? maxSurah : maxJuz}
               min={1}
               step={1}
               className="w-full h-1"
@@ -270,7 +317,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
           </div>
           <div className="flex justify-between text-[10px] text-green-400 px-1">
             <span>1</span>
-            <span>{maxSurah}</span>
+            <span>{navigationMode === 'surah' ? maxSurah : maxJuz}</span>
           </div>
         </div>
       </div>
@@ -510,3 +557,13 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
     </div>
   );
 };
+
+function getJuzForVerse(surah: number, ayah: number): number | null {
+  // Implementation of getJuzForVerse function
+  return null;
+}
+
+function getFirstVerseOfJuz(juzNumber: number): QuranVerse | null {
+  // Implementation of getFirstVerseOfJuz function
+  return null;
+}

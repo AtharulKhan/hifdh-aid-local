@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +26,14 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
   const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
   const [currentPage, setCurrentPage] = useState(1);
+  const [navigationMode, setNavigationMode] = useState<'surah' | 'juz'>('surah');
+  const [currentJuz, setCurrentJuz] = useState(() => {
+    const startingVerse = getVerseById(startingVerseId);
+    if (startingVerse) {
+      return getJuzForVerse(startingVerse.surah, startingVerse.ayah) || 1;
+    }
+    return 1;
+  });
   const containerRef = useRef<HTMLDivElement | null>(null);
   
   const allVerses = getVersesArray();
@@ -47,11 +54,16 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const currentSurahVerses = getSurahVerses();
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
   const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
+  const maxJuz = 30;
 
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
     if (verse) {
       setCurrentSurah(verse.surah);
+      const juzNumber = getJuzForVerse(verse.surah, verse.ayah);
+      if (juzNumber) {
+        setCurrentJuz(juzNumber);
+      }
     }
     setRevelationRate([100]);
     setCurrentPage(1);
@@ -60,6 +72,13 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const goToNextSurah = () => {
     if (currentSurah < maxSurah) {
       setCurrentSurah(currentSurah + 1);
+      const firstVerseOfNextSurah = allVerses.find(v => v.surah === currentSurah + 1);
+      if (firstVerseOfNextSurah) {
+        const juzNumber = getJuzForVerse(firstVerseOfNextSurah.surah, firstVerseOfNextSurah.ayah);
+        if (juzNumber) {
+          setCurrentJuz(juzNumber);
+        }
+      }
       setRevelationRate([100]);
       setCurrentPage(1);
       setVerseRange([1, 0]); // Reset verse range for new surah
@@ -69,6 +88,13 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
   const goToPreviousSurah = () => {
     if (currentSurah > 1) {
       setCurrentSurah(currentSurah - 1);
+      const firstVerseOfPrevSurah = allVerses.find(v => v.surah === currentSurah - 1);
+      if (firstVerseOfPrevSurah) {
+        const juzNumber = getJuzForVerse(firstVerseOfPrevSurah.surah, firstVerseOfPrevSurah.ayah);
+        if (juzNumber) {
+          setCurrentJuz(juzNumber);
+        }
+      }
       setRevelationRate([100]);
       setCurrentPage(1);
       setVerseRange([1, 0]); // Reset verse range for new surah
@@ -77,9 +103,28 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
 
   const handleSurahSliderChange = (value: number[]) => {
     setCurrentSurah(value[0]);
+    const firstVerseOfSurah = allVerses.find(v => v.surah === value[0]);
+    if (firstVerseOfSurah) {
+      const juzNumber = getJuzForVerse(firstVerseOfSurah.surah, firstVerseOfSurah.ayah);
+      if (juzNumber) {
+        setCurrentJuz(juzNumber);
+      }
+    }
     setRevelationRate([100]);
     setCurrentPage(1);
     setVerseRange([1, 0]); // Reset verse range for new surah
+  };
+
+  const handleJuzSliderChange = (value: number[]) => {
+    const juzNumber = value[0];
+    setCurrentJuz(juzNumber);
+    const firstVerseOfJuz = getFirstVerseOfJuz(juzNumber);
+    if (firstVerseOfJuz) {
+      setCurrentSurah(firstVerseOfJuz.surah);
+      setRevelationRate([100]);
+      setCurrentPage(1);
+      setVerseRange([1, 0]);
+    }
   };
 
   const getTajweedText = (verse: QuranVerse): string => {
@@ -241,6 +286,9 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
             <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
               Surah {currentSurah}
             </Badge>
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+              Juz {currentJuz}
+            </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600">
               Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
             </Badge>
@@ -252,25 +300,47 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
           </div>
         </div>
 
-        {/* Surah Navigation Slider - Merged into top header */}
+        {/* Navigation Mode Toggle */}
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant={navigationMode === 'surah' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setNavigationMode('surah')}
+            className={navigationMode === 'surah' ? 'bg-green-500 text-white' : 'border-green-200 text-green-600 hover:bg-green-50'}
+          >
+            Navigate by Surah
+          </Button>
+          <Button
+            variant={navigationMode === 'juz' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setNavigationMode('juz')}
+            className={navigationMode === 'juz' ? 'bg-blue-500 text-white' : 'border-blue-200 text-blue-600 hover:bg-blue-50'}
+          >
+            Navigate by Juz
+          </Button>
+        </div>
+
+        {/* Navigation Slider */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-green-700">Navigate to Surah:</span>
+            <span className="text-sm font-medium text-green-700">
+              Navigate to {navigationMode === 'surah' ? 'Surah' : 'Juz'}:
+            </span>
             <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-              Surah {currentSurah} of {maxSurah}
+              {navigationMode === 'surah' ? `Surah ${currentSurah} of ${maxSurah}` : `Juz ${currentJuz} of ${maxJuz}`}
             </span>
           </div>
           <Slider
-            value={[currentSurah]}
-            onValueChange={handleSurahSliderChange}
-            max={maxSurah}
+            value={navigationMode === 'surah' ? [currentSurah] : [currentJuz]}
+            onValueChange={navigationMode === 'surah' ? handleSurahSliderChange : handleJuzSliderChange}
+            max={navigationMode === 'surah' ? maxSurah : maxJuz}
             min={1}
             step={1}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-green-500">
             <span>1</span>
-            <span>{maxSurah}</span>
+            <span>{navigationMode === 'surah' ? maxSurah : maxJuz}</span>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, ChevronsRight, SkipForward, SkipBack } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranViewerProps {
@@ -28,6 +28,13 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
   const maxSurah = Math.max(...allVerses.map(verse => verse.surah));
+  const [currentJuz, setCurrentJuz] = useState(() => {
+    const startingVerse = getVerseById(startingVerseId);
+    if (startingVerse) {
+      return getJuzForVerse(startingVerse.surah, startingVerse.ayah) || 1;
+    }
+    return 1;
+  });
 
   // Get current verses to display - now shows verses in the selected range within the current surah
   const getCurrentVerses = (): QuranVerse[] => {
@@ -54,6 +61,15 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     setVerseRevealStates({});
     setHoverWordCounts({});
     setVerseSliderValues({});
+
+    // Update current juz
+    const verse = getVerseById(verseId);
+    if (verse) {
+      const juzNumber = getJuzForVerse(verse.surah, verse.ayah);
+      if (juzNumber) {
+        setCurrentJuz(juzNumber);
+      }
+    }
 
     // Reset verse range when navigating to a new surah
     const newVerse = getVerseById(verseId);
@@ -216,6 +232,9 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
           <div className="flex flex-col sm:flex-row justify-center items-center gap-2 w-full">
             <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 text-xs">
               Surah {currentVerse.surah}
+            </Badge>
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+              Juz {currentJuz}
             </Badge>
             <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
               Verses {verseRange[0]}-{verseRange[1]} ({currentVerses.length} showing)
