@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +23,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
   const [hideVerses, setHideVerses] = useState(false);
   const [revelationRate, setRevelationRate] = useState([100]);
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const [isSurahNavExpanded, setIsSurahNavExpanded] = useState(false);
   const [maxLines, setMaxLines] = useState([0]); // 0 means no limit
   const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,6 +73,13 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
       setCurrentPage(1);
       setVerseRange([1, 0]); // Reset verse range for new surah
     }
+  };
+
+  const handleSurahSliderChange = (value: number[]) => {
+    setCurrentSurah(value[0]);
+    setRevelationRate([100]);
+    setCurrentPage(1);
+    setVerseRange([1, 0]); // Reset verse range for new surah
   };
 
   const getTajweedText = (verse: QuranVerse): string => {
@@ -212,6 +219,47 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
             )}
           </div>
         </div>
+      </Card>
+
+      {/* Surah Navigation - Collapsible with down arrow */}
+      <Card className="p-3 bg-green-50 border-green-100">
+        <Collapsible open={isSurahNavExpanded} onOpenChange={setIsSurahNavExpanded}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
+              <div className="flex items-center space-x-2">
+                <span className="font-medium text-sm">Navigate to Surah</span>
+              </div>
+              {isSurahNavExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="pt-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-green-700">Navigate to Surah:</span>
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                  Surah {currentSurah} of {maxSurah}
+                </span>
+              </div>
+              <Slider
+                value={[currentSurah]}
+                onValueChange={handleSurahSliderChange}
+                max={maxSurah}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-green-500">
+                <span>1</span>
+                <span>{maxSurah}</span>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Compact Controls */}
