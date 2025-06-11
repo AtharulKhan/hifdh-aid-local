@@ -1,3 +1,4 @@
+
 import quranJson from './quran.json';
 import tajweedJson from './tajweed.json';
 import surahNamesJson from './surah-names.json';
@@ -56,8 +57,13 @@ export const surahNamesData: Record<string, SurahInfo> = surahNamesJson;
 // Load Juz numbers data from JSON
 export const juzNumbersData: Record<string, JuzInfo> = juzNumbersJson;
 
-// Load Tafsir data from JSON
-export const tafsirData: Record<string, TafsirData> = tafsirJson;
+// Load Tafsir data from JSON with proper type handling
+export const tafsirData: Record<string, TafsirData> = Object.fromEntries(
+  Object.entries(tafsirJson as Record<string, string | TafsirData>).map(([key, value]) => [
+    key,
+    typeof value === 'string' ? { text: value } : value
+  ])
+);
 
 // Helper function to get verses as array
 export const getVersesArray = (): QuranVerse[] => {
