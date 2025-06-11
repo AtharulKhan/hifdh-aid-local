@@ -199,68 +199,80 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
 
   return (
     <div className="space-y-4 px-2 pb-20">
-      {/* Compact Header */}
-      <Card className="p-3 bg-white border border-green-100">
-        <div className="text-center space-y-2">
-          <h2 className="text-lg font-bold text-gray-700">
-            {getSurahName(currentSurah)}
-          </h2>
-          <div className="flex justify-center space-x-2">
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 text-xs">
-              Surah {currentSurah}
-            </Badge>
-            <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
-              Showing verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} of {totalSurahVerses}
-            </Badge>
-            {maxLines[0] > 0 && totalPages > 1 && (
-              <Badge variant="outline" className="border-blue-200 text-blue-600 text-xs">
-                Page {currentPage} of {totalPages}
-              </Badge>
-            )}
+      {/* Header with Surah Info - Updated to match main viewer */}
+      <div className="bg-white p-3 rounded-lg border border-green-100 text-center space-y-3 w-full overflow-x-hidden">
+        <div className="w-full space-y-3">
+          {/* Surah Title */}
+          <div className="w-full">
+            <h2 className="text-lg font-bold text-gray-700 break-words px-2">
+              {getSurahName(currentSurah)}
+            </h2>
+          </div>
+          
+          {/* Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToPreviousSurah} 
+              disabled={currentSurah <= 1} 
+              className="border-green-200 text-green-600 hover:bg-green-50 w-full text-xs"
+            >
+              <SkipBack className="h-3 w-3 mr-1" />
+              Previous Surah
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToNextSurah} 
+              disabled={currentSurah >= maxSurah} 
+              className="border-green-200 text-green-600 hover:bg-green-50 w-full text-xs"
+            >
+              Next Surah
+              <SkipForward className="h-3 w-3 ml-1" />
+            </Button>
           </div>
         </div>
-      </Card>
+        
+        <div className="flex flex-col items-center gap-2 w-full">
+          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 text-xs">
+            Surah {currentSurah}
+          </Badge>
+          <Badge variant="outline" className="border-green-200 text-green-600 text-xs">
+            Verses {verseRange[0]}-{verseRange[1] === 0 ? totalSurahVerses : verseRange[1]} ({currentSurahVerses.length} showing)
+          </Badge>
+          {maxLines[0] > 0 && totalPages > 1 && (
+            <Badge variant="outline" className="border-blue-200 text-blue-600 text-xs">
+              Page {currentPage} of {totalPages}
+            </Badge>
+          )}
+        </div>
 
-      {/* Surah Navigation - Collapsible with down arrow */}
-      <Card className="p-3 bg-green-50 border-green-100">
-        <Collapsible open={isSurahNavExpanded} onOpenChange={setIsSurahNavExpanded}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-sm">Navigate to Surah</span>
-              </div>
-              {isSurahNavExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent className="pt-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-green-700">Navigate to Surah:</span>
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                  Surah {currentSurah} of {maxSurah}
-                </span>
-              </div>
-              <Slider
-                value={[currentSurah]}
-                onValueChange={handleSurahSliderChange}
-                max={maxSurah}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-green-500">
-                <span>1</span>
-                <span>{maxSurah}</span>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+        {/* Surah Navigation Slider - Matching main viewer style */}
+        <div className="space-y-1 bg-green-25 p-2 rounded border border-green-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-green-600">Navigate:</span>
+            <span className="text-xs text-green-500 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+              {currentSurah} of {maxSurah}
+            </span>
+          </div>
+          <div className="px-1">
+            <Slider
+              value={[currentSurah]}
+              onValueChange={handleSurahSliderChange}
+              max={maxSurah}
+              min={1}
+              step={1}
+              className="w-full h-1"
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-green-400 px-1">
+            <span>1</span>
+            <span>{maxSurah}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Compact Controls */}
       <Card className="p-3 bg-green-50 border-green-100">
@@ -269,7 +281,7 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
             <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
               <div className="flex items-center space-x-2">
                 <Settings className="h-4 w-4" />
-                <span className="font-medium text-sm">Options</span>
+                <span className="font-medium text-sm">Display Options</span>
               </div>
               {isControlsExpanded ? (
                 <ChevronUp className="h-4 w-4" />
