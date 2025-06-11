@@ -26,6 +26,7 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
   
   const allVerses = getVersesArray();
   const maxVerseId = allVerses.length;
+  const maxSurah = Math.max(...allVerses.map(verse => verse.surah));
 
   // Get current verses to display - now shows verses in the selected range within the current surah
   const getCurrentVerses = (): QuranVerse[] => {
@@ -86,6 +87,14 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
       if (prevSurahFirstVerse) {
         handleNavigate(prevSurahFirstVerse.id);
       }
+    }
+  };
+
+  const handleSurahSliderChange = (value: number[]) => {
+    const targetSurah = value[0];
+    const firstVerseOfSurah = allVerses.find(v => v.surah === targetSurah);
+    if (firstVerseOfSurah) {
+      handleNavigate(firstVerseOfSurah.id);
     }
   };
 
@@ -518,32 +527,56 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({ startingVerseId = 1 })
 
       {/* Navigation Controls */}
       <Card className="p-4 bg-blue-50 border-blue-100">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={goToPreviousSurah}
-            disabled={!currentVerse || currentVerse.surah <= 1}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
-          >
-            <ChevronRight className="h-4 w-4" />
-            <span>Previous Surah</span>
-          </Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={goToPreviousSurah}
+              disabled={!currentVerse || currentVerse.surah <= 1}
+              className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous Surah</span>
+            </Button>
 
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-blue-600">
-              Surah {currentVerse?.surah || 1}
-            </span>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-blue-600">
+                Surah {currentVerse?.surah || 1} of {maxSurah}
+              </span>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={goToNextSurah}
+              disabled={!currentVerse || !allVerses.find(v => v.surah === currentVerse.surah + 1)}
+              className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
+            >
+              <span>Next Surah</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={goToNextSurah}
-            disabled={!currentVerse || !allVerses.find(v => v.surah === currentVerse.surah + 1)}
-            className="flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-100 disabled:opacity-50 bg-blue-50"
-          >
-            <span>Next Surah</span>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          {/* Surah Navigation Slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-700">Navigate to Surah:</span>
+              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                Surah {currentVerse?.surah || 1}
+              </span>
+            </div>
+            <Slider
+              value={[currentVerse?.surah || 1]}
+              onValueChange={handleSurahSliderChange}
+              max={maxSurah}
+              min={1}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-blue-500">
+              <span>1</span>
+              <span>{maxSurah}</span>
+            </div>
+          </div>
         </div>
       </Card>
     </div>
