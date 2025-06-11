@@ -95,7 +95,8 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
 
   const getVisibleText = (): string => {
     if (!isHovering || hoverProgress === 0) {
-      return '';
+      // Show full text when not hovering
+      return getCombinedText();
     }
     
     const fullText = getCombinedText();
@@ -199,7 +200,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
                   <Switch
                     checked={showTajweed}
                     onCheckedChange={setShowTajweed}
-                    className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-green-100"
+                    className="data-[state=checked]:bg-green-300 data-[state=unchecked]:bg-green-100"
                   />
                 </div>
               </div>
@@ -226,7 +227,7 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
             >
               <div 
                 className="font-arabic text-2xl leading-loose text-gray-800 transition-opacity duration-300 text-right px-4"
-                style={{ opacity: isHovering && hoverProgress > 0 ? 1 : 0.1 }}
+                style={{ opacity: 1 }}
               >
                 {showTajweed ? (
                   <span dangerouslySetInnerHTML={{ __html: getVisibleText() }} />
@@ -241,11 +242,11 @@ export const QuranPageViewer: React.FC<QuranPageViewerProps> = ({ startingVerseI
             </div>
           )}
           
-          {/* Hover instruction */}
+          {/* Hover instruction - only show when not hovering */}
           {!isHovering && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700 text-center">
-                <p className="text-sm font-medium">Hover over the text area to reveal verses right-to-left</p>
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700 text-center">
+                <p className="text-sm font-medium">Hover over the text to reveal verses progressively</p>
               </div>
             </div>
           )}
