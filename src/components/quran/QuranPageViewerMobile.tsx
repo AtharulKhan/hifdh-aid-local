@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack, Settings } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranPageViewerMobileProps {
@@ -557,13 +557,3 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
     </div>
   );
 };
-
-function getJuzForVerse(surah: number, ayah: number): number | null {
-  // Implementation of getJuzForVerse function
-  return null;
-}
-
-function getFirstVerseOfJuz(juzNumber: number): QuranVerse | null {
-  // Implementation of getFirstVerseOfJuz function
-  return null;
-}

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 
 interface QuranPageViewerDesktopProps {
