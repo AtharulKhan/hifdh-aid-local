@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,27 +234,28 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
   const totalVisibleWithNext = Math.min(visibleWordCount + nextWordCount, totalWords);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto px-2 md:px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2 self-start">
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to Tests</span>
+          <span className="text-sm md:text-base">Back to Tests</span>
         </Button>
-        <div className="flex items-center space-x-4">
-          <Badge variant="outline" className="bg-purple-50 text-purple-700">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full sm:w-auto">
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs md:text-sm">
             Score: {score.correct}/{score.total}
           </Badge>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => setShowSettings(!showSettings)}
+            className="text-xs md:text-sm"
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-3 md:h-4 w-3 md:w-4 mr-1 md:mr-2" />
             Settings
           </Button>
-          <Button variant="outline" size="sm" onClick={generateRandomTest}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={generateRandomTest} className="text-xs md:text-sm">
+            <RefreshCw className="h-3 md:h-4 w-3 md:w-4 mr-1 md:mr-2" />
             New Question
           </Button>
         </div>
@@ -263,15 +263,15 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
 
       {/* Settings Panel */}
       {showSettings && (
-        <Card className="p-4 bg-gray-50 border-gray-200">
+        <Card className="p-3 md:p-4 bg-gray-50 border-gray-200">
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Test Configuration</h3>
+            <h3 className="font-semibold text-gray-800 text-sm md:text-base">Test Configuration</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Test Scope</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Test Scope</label>
                 <Select value={testScope} onValueChange={(value: TestScope) => setTestScope(value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs md:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -284,7 +284,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="number-of-verses" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="number-of-verses" className="text-xs md:text-sm font-medium text-gray-700">
                   Number of Verses
                 </Label>
                 <Input
@@ -294,15 +294,15 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                   max="10"
                   value={numberOfVerses}
                   onChange={handleNumberOfVersesChange}
-                  className="w-full"
+                  className="w-full text-xs md:text-sm"
                 />
               </div>
 
               {testScope === "surah" && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Surah</label>
+                <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+                  <label className="text-xs md:text-sm font-medium text-gray-700">Select Surah</label>
                   <Select value={selectedSurah.toString()} onValueChange={(value) => setSelectedSurah(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs md:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -317,10 +317,10 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
               )}
 
               {testScope === "juz" && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Juz</label>
+                <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+                  <label className="text-xs md:text-sm font-medium text-gray-700">Select Juz</label>
                   <Select value={selectedJuz.toString()} onValueChange={(value) => setSelectedJuz(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs md:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -339,18 +339,18 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
       )}
 
       {/* Test Card */}
-      <Card className="p-6 border-l-4 border-l-purple-500">
-        <div className="space-y-6">
+      <Card className="p-4 md:p-6 border-l-4 border-l-purple-500">
+        <div className="space-y-4 md:space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Random Spot Test</h2>
-            <p className="text-gray-600">{getScopeDescription()}</p>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 break-words">Random Spot Test</h2>
+            <p className="text-gray-600 text-xs md:text-sm break-words">{getScopeDescription()}</p>
           </div>
 
           {/* Question */}
-          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div className="space-y-4">
+          <div className="bg-purple-50 p-3 md:p-4 rounded-lg border border-purple-200">
+            <div className="space-y-3 md:space-y-4">
               <div className="text-center">
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs md:text-sm break-words">
                   Starting from: {currentVerses[0].verse_key} - {getSurahName(currentVerses[0].surah)}
                 </Badge>
               </div>
@@ -359,7 +359,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
               {totalWords > 1 && (
                 <div className="space-y-3">
                   <div className="text-center">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs md:text-sm text-gray-600 break-words">
                       Showing {totalVisibleWithNext} of {totalWords} words
                       {nextWordCount > 0 && (
                         <span className="text-blue-600 ml-1">
@@ -368,7 +368,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                       )}
                     </span>
                   </div>
-                  <div className="px-4">
+                  <div className="px-2 md:px-4">
                     <Slider
                       value={sliderValue}
                       onValueChange={(value) => {
@@ -386,18 +386,18 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
               
               {/* Continue instruction */}
               <div className="space-y-2">
-                <div className="text-blue-800 font-medium text-center">
+                <div className="text-blue-800 font-medium text-center text-xs md:text-sm break-words">
                   Continue from this point... (recite {numberOfVerses} {numberOfVerses === 1 ? 'verse' : 'verses'})
                 </div>
                 
                 {/* Show progressive text based on slider */}
                 <div className="space-y-3">
                   {numberOfVerses === 1 ? (
-                    <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                    <div className="font-arabic text-lg md:text-xl text-right leading-loose text-gray-800 bg-white p-2 md:p-3 rounded border break-words">
                       {totalWords === 1 ? getPartialText(currentVerses[0].text) : getVisibleTextWithNextWords()}
                     </div>
                   ) : (
-                    <div className="font-arabic text-xl text-right leading-loose text-gray-800 bg-white p-3 rounded border">
+                    <div className="font-arabic text-lg md:text-xl text-right leading-loose text-gray-800 bg-white p-2 md:p-3 rounded border break-words">
                       {getVisibleTextWithNextWords()}
                     </div>
                   )}
@@ -405,12 +405,12 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
 
                 {/* Next Word Button */}
                 {totalWords > 1 && totalVisibleWithNext < totalWords && (
-                  <div className="flex justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row justify-center gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={showNextWord}
-                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs md:text-sm"
                     >
                       <ArrowRight className="h-3 w-3 mr-1" />
                       Show Next Word
@@ -420,7 +420,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                         variant="outline" 
                         size="sm"
                         onClick={resetNextWords}
-                        className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                        className="border-gray-200 text-gray-600 hover:bg-gray-50 text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -432,11 +432,11 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center">
             <Button 
               variant="outline" 
               onClick={() => setShowAnswer(!showAnswer)}
-              className="border-gray-300"
+              className="border-gray-300 text-xs md:text-sm"
             >
               {showAnswer ? "Hide" : "Show"} Answer
             </Button>
@@ -445,17 +445,17 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                 <Button 
                   variant="default" 
                   onClick={handleCorrect}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 text-xs md:text-sm"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-3 md:h-4 w-3 md:w-4 mr-1 md:mr-2" />
                   I Got It Right
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleIncorrect}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  className="border-red-300 text-red-700 hover:bg-red-50 text-xs md:text-sm"
                 >
-                  <XCircle className="h-4 w-4 mr-2" />
+                  <XCircle className="h-3 md:h-4 w-3 md:w-4 mr-1 md:mr-2" />
                   I Got It Wrong
                 </Button>
               </>
@@ -464,14 +464,14 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
 
           {/* Answer Section */}
           {showAnswer && (
-            <div className="space-y-4 border-t pt-4">
+            <div className="space-y-3 md:space-y-4 border-t pt-3 md:pt-4">
               {currentVerses.map((verse, index) => (
-                <div key={verse.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div key={verse.id} className="bg-yellow-50 p-3 md:p-4 rounded-lg border border-yellow-200">
                   <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs md:text-sm break-words">
                       Verse {index + 1}: {verse.verse_key}
                     </Badge>
-                    <div className="font-arabic text-2xl text-right leading-loose text-gray-800">
+                    <div className="font-arabic text-lg md:text-2xl text-right leading-loose text-gray-800 break-words">
                       {verse.text}
                     </div>
                   </div>
