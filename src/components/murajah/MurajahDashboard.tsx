@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock } from "lucide-react";
-import { MemorizationEntry } from "./MemorizationTracker";
 import { ReviewSettings } from "./ReviewSettings";
+import juzData from "@/data/juz-numbers.json";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -14,7 +14,7 @@ interface ReviewCycle {
   completed: boolean;
   icon: React.ReactNode;
   color: string;
-  id: string; // Add unique identifier for tracking
+  id: string;
 }
 
 interface DailyCompletion {
@@ -22,9 +22,17 @@ interface DailyCompletion {
   completions: { [cycleId: string]: boolean };
 }
 
+interface JuzMemorization {
+  juzNumber: number;
+  isMemorized: boolean;
+  dateMemorized?: string;
+  startPage?: number;
+  endPage?: number;
+}
+
 export const MurajahDashboard = () => {
   const [cycles, setCycles] = useState<ReviewCycle[]>([]);
-  const [entries, setEntries] = useState<MemorizationEntry[]>([]);
+  const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
   const [settings, setSettings] = useState<ReviewSettings>({
     rmvPages: 7,
     omvJuz: 1,
@@ -36,11 +44,11 @@ export const MurajahDashboard = () => {
 
   // Load data from localStorage
   useEffect(() => {
-    const savedEntries = localStorage.getItem('murajah-memorization-entries');
+    const savedJuz = localStorage.getItem('murajah-juz-memorization');
     const savedSettings = localStorage.getItem('murajah-review-settings');
 
-    if (savedEntries) {
-      setEntries(JSON.parse(savedEntries));
+    if (savedJuz) {
+      setJuzMemorization(JSON.parse(savedJuz));
     }
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
@@ -49,10 +57,10 @@ export const MurajahDashboard = () => {
 
   // Generate daily cycles based on current data
   useEffect(() => {
-    if (entries.length === 0) return;
+    if (juzMemorization.length === 0) return;
 
     const today = new Date().toISOString().split('T')[0];
-    const newCycles = generateDailyCycles(entries, settings, today);
+    const newCycles = generateDailyCycles(juzMemorization, settings, today);
     
     // Load completion status for today
     const savedCompletions = loadTodaysCompletions();
@@ -62,7 +70,7 @@ export const MurajahDashboard = () => {
     }));
     
     setCycles(cyclesWithStatus);
-  }, [entries, settings]);
+  }, [juzMemorization, settings]);
 
   const loadTodaysCompletions = (): { [cycleId: string]: boolean } => {
     const today = new Date().toISOString().split('T')[0];
@@ -104,18 +112,21 @@ export const MurajahDashboard = () => {
     localStorage.setItem('murajah-daily-completions', JSON.stringify(allCompletions));
   };
 
-  const generateDailyCycles = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): ReviewCycle[] => {
+  const generateDailyCycles = (juzMem: JuzMemorization[], settings: ReviewSettings, date: string): ReviewCycle[] => {
     const cycles: ReviewCycle[] = [];
+    const memorizedJuz = juzMem.filter(j => j.isMemorized);
+
+    if (memorizedJuz.length === 0) return cycles;
 
     // Check for carry-overs from previous days
     const carryOvers = getCarryOverCycles(date);
 
-    // RMV - Recent Memorization (Last X pages) - check for carry-over or generate new
+    // RMV - Recent Memorization (Last X pages from current Juz)
     const rmvCarryOver = carryOvers.find(c => c.type === 'RMV');
     if (rmvCarryOver) {
       cycles.push(rmvCarryOver);
     } else {
-      const rmvContent = calculateRMV(entries, settings);
+      const rmvContent = calculateRMV(juzMem, settings);
       if (rmvContent) {
         cycles.push({
           type: 'RMV',
@@ -130,12 +141,12 @@ export const MurajahDashboard = () => {
       }
     }
 
-    // OMV - Old Memorization (Rotating through old Juz) - check for carry-over or generate new
+    // OMV - Old Memorization (Rotating through memorized Juz)
     const omvCarryOver = carryOvers.find(c => c.type === 'OMV');
     if (omvCarryOver) {
       cycles.push(omvCarryOver);
     } else {
-      const omvContent = calculateOMV(entries, settings, date);
+      const omvContent = calculateOMV(memorizedJuz, settings, date);
       if (omvContent) {
         cycles.push({
           type: 'OMV',
@@ -150,12 +161,12 @@ export const MurajahDashboard = () => {
       }
     }
 
-    // Listening Cycle - check for carry-over or generate new
+    // Listening Cycle
     const listeningCarryOver = carryOvers.find(c => c.type === 'Listening');
     if (listeningCarryOver) {
       cycles.push(listeningCarryOver);
     } else {
-      const listeningContent = calculateListeningCycle(entries, settings, date);
+      const listeningContent = calculateListeningCycle(memorizedJuz, settings, date);
       if (listeningContent) {
         cycles.push({
           type: 'Listening',
@@ -170,12 +181,12 @@ export const MurajahDashboard = () => {
       }
     }
 
-    // Reading Cycle - check for carry-over or generate new
+    // Reading Cycle
     const readingCarryOver = carryOvers.find(c => c.type === 'Reading');
     if (readingCarryOver) {
       cycles.push(readingCarryOver);
     } else {
-      const readingContent = calculateReadingCycle(entries, settings, date);
+      const readingContent = calculateReadingCycle(memorizedJuz, settings, date);
       if (readingContent) {
         cycles.push({
           type: 'Reading',
@@ -233,10 +244,11 @@ export const MurajahDashboard = () => {
 
   const createCarryOverCycle = (type: string, originalDate: string, currentDate: string): ReviewCycle | null => {
     const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    const memorizedJuz = juzMemorization.filter(j => j.isMemorized);
     
     switch (upperType) {
       case 'RMV':
-        const rmvContent = calculateRMV(entries, settings);
+        const rmvContent = calculateRMV(juzMemorization, settings);
         if (!rmvContent) return null;
         return {
           type: 'RMV',
@@ -249,7 +261,7 @@ export const MurajahDashboard = () => {
           id: `rmv-${originalDate}-carryover`
         };
       case 'OMV':
-        const omvContent = calculateOMV(entries, settings, originalDate);
+        const omvContent = calculateOMV(memorizedJuz, settings, originalDate);
         if (!omvContent) return null;
         return {
           type: 'OMV',
@@ -262,7 +274,7 @@ export const MurajahDashboard = () => {
           id: `omv-${originalDate}-carryover`
         };
       case 'LISTENING':
-        const listeningContent = calculateListeningCycle(entries, settings, originalDate);
+        const listeningContent = calculateListeningCycle(memorizedJuz, settings, originalDate);
         if (!listeningContent) return null;
         return {
           type: 'Listening',
@@ -275,7 +287,7 @@ export const MurajahDashboard = () => {
           id: `listening-${originalDate}-carryover`
         };
       case 'READING':
-        const readingContent = calculateReadingCycle(entries, settings, originalDate);
+        const readingContent = calculateReadingCycle(memorizedJuz, settings, originalDate);
         if (!readingContent) return null;
         return {
           type: 'Reading',
@@ -292,58 +304,57 @@ export const MurajahDashboard = () => {
     }
   };
 
-  const calculateRMV = (entries: MemorizationEntry[], settings: ReviewSettings): string => {
-    if (entries.length === 0) return '';
+  const calculateRMV = (juzMem: JuzMemorization[], settings: ReviewSettings): string => {
+    // Find the current Juz being worked on
+    const currentJuzMem = juzMem.find(j => j.juzNumber === settings.currentJuz);
+    if (!currentJuzMem || !currentJuzMem.startPage || !currentJuzMem.endPage) {
+      return '';
+    }
 
-    // Find all pages for the current Juz
-    const currentJuzEntries = entries.filter(entry => entry.juz === settings.currentJuz);
-    if (currentJuzEntries.length === 0) return '';
-
-    const allPages = currentJuzEntries.flatMap(entry => 
-      Array.from({ length: entry.endPage - entry.startPage + 1 }, (_, i) => entry.startPage + i)
-    );
-
-    const maxPage = Math.max(...allPages);
-    const minPage = Math.min(...allPages);
+    const maxPage = currentJuzMem.endPage;
+    const minPage = currentJuzMem.startPage;
     const startPage = Math.max(maxPage - settings.rmvPages + 1, minPage);
 
-    return `Pgs. (${startPage}-${maxPage})`;
+    return `Juz ${settings.currentJuz} - Pages (${startPage}-${maxPage})`;
   };
 
-  const calculateOMV = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): string => {
-    const completedJuz = [...new Set(entries.map(e => e.juz))].sort((a, b) => a - b);
-    if (completedJuz.length === 0) return '';
+  const calculateOMV = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    if (memorizedJuz.length === 0) return '';
 
     // Calculate days since start date for rotation
     const startDate = new Date(settings.startDate);
     const currentDate = new Date(date);
     const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Ensure we have a positive cycle index even if start date is in the future
-    const cycleIndex = Math.max(0, daysSinceStart) % completedJuz.length;
+    // Ensure we have a positive cycle index
+    const cycleIndex = Math.max(0, daysSinceStart) % memorizedJuz.length;
     
     const selectedJuz = [];
-    for (let i = 0; i < settings.omvJuz && i < completedJuz.length; i++) {
-      const juzIndex = (cycleIndex + i) % completedJuz.length;
-      selectedJuz.push(completedJuz[juzIndex]);
+    for (let i = 0; i < settings.omvJuz && i < memorizedJuz.length; i++) {
+      const juzIndex = (cycleIndex + i) % memorizedJuz.length;
+      selectedJuz.push(memorizedJuz[juzIndex]);
     }
 
-    return selectedJuz.map(juz => {
-      const juzEntries = entries.filter(e => e.juz === juz);
-      if (juzEntries.length === 0) return '';
+    return selectedJuz.map(juzMem => {
+      const juzNumber = juzMem.juzNumber;
+      const juz = juzData[juzNumber.toString() as keyof typeof juzData];
       
-      const minPage = Math.min(...juzEntries.map(e => e.startPage));
-      const maxPage = Math.max(...juzEntries.map(e => e.endPage));
-      return `Juz ${juz} (Pages ${minPage}-${maxPage})`;
+      if (juzMem.startPage && juzMem.endPage) {
+        return `Juz ${juzNumber} (Pages ${juzMem.startPage}-${juzMem.endPage})`;
+      } else if (juz) {
+        return `Juz ${juzNumber} (${juz.first_verse_key} - ${juz.last_verse_key})`;
+      } else {
+        return `Juz ${juzNumber}`;
+      }
     }).filter(content => content).join(', ');
   };
 
-  const calculateListeningCycle = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): string => {
-    return calculateOMV(entries, { ...settings, omvJuz: settings.listeningJuz }, date);
+  const calculateListeningCycle = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    return calculateOMV(memorizedJuz, { ...settings, omvJuz: settings.listeningJuz }, date);
   };
 
-  const calculateReadingCycle = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): string => {
-    return calculateOMV(entries, { ...settings, omvJuz: settings.readingJuz }, date);
+  const calculateReadingCycle = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    return calculateOMV(memorizedJuz, { ...settings, omvJuz: settings.readingJuz }, date);
   };
 
   const toggleCycleCompletion = (index: number) => {
@@ -360,14 +371,14 @@ export const MurajahDashboard = () => {
     saveTodaysCompletions(completions);
   };
 
-  if (entries.length === 0) {
+  if (juzMemorization.filter(j => j.isMemorized).length === 0) {
     return (
       <Card className="text-center py-12">
         <CardContent>
           <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorization Data</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorized Juz</h3>
           <p className="text-gray-500 mb-4">
-            Add your memorization entries in the Memorization Tracker tab to generate your daily review cycles.
+            Mark your memorized Juz in the Juz tab to generate your daily review cycles.
           </p>
         </CardContent>
       </Card>
@@ -444,7 +455,7 @@ export const MurajahDashboard = () => {
         <Card className="text-center py-8">
           <CardContent>
             <p className="text-gray-500">
-              Configure your settings and add memorization entries to generate review cycles.
+              Configure your settings and mark memorized Juz to generate review cycles.
             </p>
           </CardContent>
         </Card>
