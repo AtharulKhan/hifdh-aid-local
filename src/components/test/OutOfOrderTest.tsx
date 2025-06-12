@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,11 +43,15 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
     if (memorizedEntries.length === 0) return;
 
     const allVerses = getVersesArray();
+    
+    // Get all verses that are within memorized Juz ranges
     const availableVerses = allVerses.filter(verse => {
       return memorizedEntries.some(entry => {
         if (entry.type === 'juz') {
-          return verse.id >= ((entry.juz - 1) * 20 * 15) + 1 && 
-                 verse.id <= (entry.juz * 20 * 15);
+          // Calculate approximate verse range for each Juz (each Juz has roughly 600+ verses)
+          const juzStartVerse = ((entry.juz - 1) * 600) + 1;
+          const juzEndVerse = entry.juz * 600;
+          return verse.id >= juzStartVerse && verse.id <= juzEndVerse;
         }
         return false;
       });
@@ -59,26 +62,81 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
       return;
     }
 
-    // Find a consecutive sequence of verses
-    let startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
-    let selectedVerses = [];
-    
-    // Try to find consecutive verses from the same surah
-    for (let i = 0; i < availableVerses.length - numVerses + 1; i++) {
-      const potentialVerses = availableVerses.slice(i, i + numVerses);
+    // Find consecutive verses from the same surah
+    let selectedVerses: any[] = [];
+    let attempts = 0;
+    const maxAttempts = 50;
+
+    while (selectedVerses.length === 0 && attempts < maxAttempts) {
+      attempts++;
+      
+      // Pick a random starting point
+      const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
+      const potentialVerses = availableVerses.slice(startIndex, startIndex + numVerses);
+      
+      // Check if they're from the same surah and consecutive
       const firstVerse = potentialVerses[0];
       const lastVerse = potentialVerses[numVerses - 1];
       
-      // Check if they're from the same surah and consecutive
-      if (firstVerse.surah === lastVerse.surah && 
-          lastVerse.ayah - firstVerse.ayah === numVerses - 1) {
-        selectedVerses = potentialVerses;
-        break;
+      if (firstVerse.surah === lastVerse.surah) {
+        // Check if verses are consecutive
+        let consecutive = true;
+        for (let i = 1; i < potentialVerses.length; i++) {
+          if (potentialVerses[i].ayah !== potentialVerses[i-1].ayah + 1 ||
+              potentialVerses[i].surah !== potentialVerses[i-1].surah) {
+            consecutive = false;
+            break;
+          }
+        }
+        
+        if (consecutive) {
+          selectedVerses = potentialVerses;
+        }
       }
     }
 
-    // Fallback to any consecutive verses if same-surah sequence not found
+    // Fallback: if no consecutive verses found, pick any consecutive sequence
     if (selectedVerses.length === 0) {
+      // Group verses by surah and find consecutive sequences
+      const surahGroups: Record<number, any[]> = {};
+      availableVerses.forEach(verse => {
+        if (!surahGroups[verse.surah]) {
+          surahGroups[verse.surah] = [];
+        }
+        surahGroups[verse.surah].push(verse);
+      });
+
+      // Sort each surah group by ayah number
+      Object.keys(surahGroups).forEach(surah => {
+        surahGroups[parseInt(surah)].sort((a, b) => a.ayah - b.ayah);
+      });
+
+      // Find a surah with enough consecutive verses
+      for (const surah of Object.keys(surahGroups)) {
+        const verses = surahGroups[parseInt(surah)];
+        for (let i = 0; i <= verses.length - numVerses; i++) {
+          const sequence = verses.slice(i, i + numVerses);
+          let isConsecutive = true;
+          
+          for (let j = 1; j < sequence.length; j++) {
+            if (sequence[j].ayah !== sequence[j-1].ayah + 1) {
+              isConsecutive = false;
+              break;
+            }
+          }
+          
+          if (isConsecutive) {
+            selectedVerses = sequence;
+            break;
+          }
+        }
+        if (selectedVerses.length > 0) break;
+      }
+    }
+
+    // Final fallback: just take any numVerses from available verses
+    if (selectedVerses.length === 0) {
+      const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
       selectedVerses = availableVerses.slice(startIndex, startIndex + numVerses);
     }
 
