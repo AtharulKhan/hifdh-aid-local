@@ -141,7 +141,8 @@ export const MurajahDashboard = () => {
     const currentDate = new Date(date);
     const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    const cycleIndex = daysSinceStart % completedJuz.length;
+    // Ensure we have a positive cycle index even if start date is in the future
+    const cycleIndex = Math.max(0, daysSinceStart) % completedJuz.length;
     
     const selectedJuz = [];
     for (let i = 0; i < settings.omvJuz && i < completedJuz.length; i++) {
@@ -151,10 +152,12 @@ export const MurajahDashboard = () => {
 
     return selectedJuz.map(juz => {
       const juzEntries = entries.filter(e => e.juz === juz);
+      if (juzEntries.length === 0) return '';
+      
       const minPage = Math.min(...juzEntries.map(e => e.startPage));
       const maxPage = Math.max(...juzEntries.map(e => e.endPage));
       return `Juz ${juz} (Pages ${minPage}-${maxPage})`;
-    }).join(', ');
+    }).filter(content => content).join(', ');
   };
 
   const calculateListeningCycle = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): string => {
