@@ -9,6 +9,7 @@ import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
+import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
   juzNumber: number;
@@ -18,7 +19,7 @@ interface JuzMemorization {
   endPage?: number;
 }
 
-// Convert juz memorization to legacy format for compatibility with test components
+// Updated interface to match the one expected by test components
 interface MemorizationEntry {
   id: string;
   type: 'surah' | 'juz' | 'page';
@@ -26,13 +27,16 @@ interface MemorizationEntry {
   reference: string;
   dateMemorized: string;
   isMemorized: boolean;
+  juz: number;
+  startPage?: number;
+  endPage?: number;
 }
 
 export const TestDashboard = () => {
   const [activeTest, setActiveTest] = useState<string | null>(null);
   const [memorizedEntries, setMemorizedEntries] = useState<MemorizationEntry[]>([]);
 
-  // Load memorized juz from localStorage and convert to legacy format
+  // Load memorized juz from localStorage and convert to test format
   useEffect(() => {
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
     if (savedJuz) {
@@ -40,19 +44,28 @@ export const TestDashboard = () => {
         const juzMemorization: JuzMemorization[] = JSON.parse(savedJuz);
         const memorizedJuz = juzMemorization.filter(juz => juz.isMemorized);
         
-        // Convert to legacy format for test components
-        const legacyEntries: MemorizationEntry[] = memorizedJuz.map(juz => ({
-          id: `juz-${juz.juzNumber}`,
-          type: 'juz' as const,
-          name: `Juz ${juz.juzNumber}`,
-          reference: juz.startPage && juz.endPage 
-            ? `Pages ${juz.startPage}-${juz.endPage}`
-            : `Juz ${juz.juzNumber}`,
-          dateMemorized: juz.dateMemorized || new Date().toISOString().split('T')[0],
-          isMemorized: true
-        }));
+        // Convert to format expected by test components
+        const testEntries: MemorizationEntry[] = memorizedJuz.map(juz => {
+          const juzInfo = juzData[juz.juzNumber.toString() as keyof typeof juzData];
+          
+          return {
+            id: `juz-${juz.juzNumber}`,
+            type: 'juz' as const,
+            name: `Juz ${juz.juzNumber}`,
+            reference: juz.startPage && juz.endPage 
+              ? `Pages ${juz.startPage}-${juz.endPage}`
+              : juzInfo 
+                ? `${juzInfo.first_verse_key} - ${juzInfo.last_verse_key}`
+                : `Juz ${juz.juzNumber}`,
+            dateMemorized: juz.dateMemorized || new Date().toISOString().split('T')[0],
+            isMemorized: true,
+            juz: juz.juzNumber,
+            startPage: juz.startPage,
+            endPage: juz.endPage
+          };
+        });
         
-        setMemorizedEntries(legacyEntries);
+        setMemorizedEntries(testEntries);
       } catch (error) {
         console.error('Error loading juz memorization data:', error);
       }
