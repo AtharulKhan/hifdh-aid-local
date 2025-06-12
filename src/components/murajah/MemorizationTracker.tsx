@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Save } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface MemorizationEntry {
   id: string;
@@ -75,7 +75,6 @@ export const MemorizationTracker = () => {
       }
       juzData[entry.juz].pages += (entry.endPage - entry.startPage + 1);
       
-      // Each Juz has approximately 20 pages
       if (juzData[entry.juz].pages >= 20) {
         juzData[entry.juz].completed = true;
       }
@@ -90,23 +89,23 @@ export const MemorizationTracker = () => {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-green-600">{getTotalPages()}</div>
-            <div className="text-sm text-gray-600">Total Pages Memorized</div>
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{getTotalPages()}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Total Pages Memorized</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-blue-600">{completedJuz}</div>
-            <div className="text-sm text-gray-600">Complete Juz</div>
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{completedJuz}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Complete Juz</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-purple-600">{entries.length}</div>
-            <div className="text-sm text-gray-600">Memorization Sessions</div>
+        <Card className="sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">{entries.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Memorization Sessions</div>
           </CardContent>
         </Card>
       </div>
@@ -114,15 +113,15 @@ export const MemorizationTracker = () => {
       {/* Add New Entry */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             Add New Memorization Entry
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="juz">Juz Number</Label>
+              <Label htmlFor="juz" className="text-sm">Juz Number</Label>
               <Input
                 id="juz"
                 type="number"
@@ -130,10 +129,11 @@ export const MemorizationTracker = () => {
                 max="30"
                 value={newEntry.juz}
                 onChange={(e) => setNewEntry({...newEntry, juz: parseInt(e.target.value) || 1})}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="startPage">Start Page</Label>
+              <Label htmlFor="startPage" className="text-sm">Start Page</Label>
               <Input
                 id="startPage"
                 type="number"
@@ -141,10 +141,11 @@ export const MemorizationTracker = () => {
                 max="604"
                 value={newEntry.startPage}
                 onChange={(e) => setNewEntry({...newEntry, startPage: parseInt(e.target.value) || 1})}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="endPage">End Page</Label>
+              <Label htmlFor="endPage" className="text-sm">End Page</Label>
               <Input
                 id="endPage"
                 type="number"
@@ -152,19 +153,21 @@ export const MemorizationTracker = () => {
                 max="604"
                 value={newEntry.endPage}
                 onChange={(e) => setNewEntry({...newEntry, endPage: parseInt(e.target.value) || 1})}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="dateMemorized">Date Memorized</Label>
+              <Label htmlFor="dateMemorized" className="text-sm">Date Memorized</Label>
               <Input
                 id="dateMemorized"
                 type="date"
                 value={newEntry.dateMemorized}
                 onChange={(e) => setNewEntry({...newEntry, dateMemorized: e.target.value})}
+                className="mt-1"
               />
             </div>
           </div>
-          <Button onClick={addEntry} className="w-full md:w-auto">
+          <Button onClick={addEntry} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Entry
           </Button>
@@ -174,46 +177,51 @@ export const MemorizationTracker = () => {
       {/* Entries Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Memorization History</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Memorization History</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {entries.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 px-4 text-gray-500 text-sm sm:text-base">
               No memorization entries yet. Add your first entry above to get started!
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Juz</TableHead>
-                  <TableHead>Pages</TableHead>
-                  <TableHead>Page Count</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>
-                      <Badge variant="outline">Juz {entry.juz}</Badge>
-                    </TableCell>
-                    <TableCell>{entry.startPage}-{entry.endPage}</TableCell>
-                    <TableCell>{entry.endPage - entry.startPage + 1} pages</TableCell>
-                    <TableCell>{new Date(entry.dateMemorized).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeEntry(entry.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ScrollArea className="w-full">
+              <div className="min-w-[500px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Juz</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Pages</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Count</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm w-[70px]">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="py-2">
+                          <Badge variant="outline" className="text-xs">Juz {entry.juz}</Badge>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs sm:text-sm">{entry.startPage}-{entry.endPage}</TableCell>
+                        <TableCell className="py-2 text-xs sm:text-sm">{entry.endPage - entry.startPage + 1} pages</TableCell>
+                        <TableCell className="py-2 text-xs sm:text-sm">{new Date(entry.dateMemorized).toLocaleDateString()}</TableCell>
+                        <TableCell className="py-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeEntry(entry.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
