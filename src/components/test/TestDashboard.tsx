@@ -1,15 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3, Brain, ArrowUpDown } from "lucide-react";
+import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3, Brain } from "lucide-react";
 import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
 import { WordRecallTest } from "./WordRecallTest";
-import { OutOfOrderTest } from "./OutOfOrderTest";
 import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
@@ -85,8 +85,6 @@ export const TestDashboard = () => {
         return <FillInBlankTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "word-recall":
         return <WordRecallTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
-      case "out-of-order":
-        return <OutOfOrderTest onBack={() => setActiveTest(null)} />;
       default:
         return null;
     }
@@ -240,29 +238,6 @@ export const TestDashboard = () => {
               Read passages with missing words and hover to reveal. Test your memory recall with customizable gap rates.
             </p>
             <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 text-xs md:text-sm">
-              Start Test
-              <ArrowRight className="h-3 md:h-4 w-3 md:w-4 ml-2" />
-            </Button>
-          </div>
-        </Card>
-
-        {/* Out-of-Order Line Shuffle Test */}
-        <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-indigo-500"
-              onClick={() => setActiveTest("out-of-order")}>
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 bg-indigo-100 rounded-lg flex-shrink-0">
-                <ArrowUpDown className="h-5 md:h-6 w-5 md:w-6 text-indigo-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base md:text-lg font-semibold text-gray-800 break-words">Out-of-Order Line Shuffle</h3>
-                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 text-xs mt-1">Sequence Memory</Badge>
-              </div>
-            </div>
-            <p className="text-gray-600 text-xs md:text-sm">
-              Verses are presented in wrong order. Drag and rearrange them correctly to test sequence memorization.
-            </p>
-            <Button variant="outline" className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs md:text-sm">
               Start Test
               <ArrowRight className="h-3 md:h-4 w-3 md:w-4 ml-2" />
             </Button>
