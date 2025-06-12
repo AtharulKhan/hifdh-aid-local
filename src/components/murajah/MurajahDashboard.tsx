@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
+import surahNames from "@/data/surah-names.json";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -354,7 +355,6 @@ export const MurajahDashboard = () => {
         }
       } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
         // Partial juz with individual surahs
-        const surahNames = require('@/data/surah-names.json');
         const surahTexts = juzMem.memorizedSurahs.map(surahId => {
           const surah = surahNames[surahId.toString() as keyof typeof surahNames];
           return surah ? surah.name_simple : `Surah ${surahId}`;
