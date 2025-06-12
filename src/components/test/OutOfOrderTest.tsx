@@ -5,22 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Shuffle, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { getVersesArray, getSurahName } from "@/data/quranData";
 
-interface JuzMemorization {
-  juzNumber: number;
-  isMemorized: boolean;
-  dateMemorized?: string;
-  startPage?: number;
-  endPage?: number;
-  memorizedSurahs?: number[];
-}
-
 interface OutOfOrderTestProps {
   onBack: () => void;
-  memorizedEntries?: any[];
 }
 
 interface VerseItem {
@@ -32,28 +21,12 @@ interface VerseItem {
 
 export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
   const [numVerses, setNumVerses] = useState(4);
-  const [testType, setTestType] = useState<'memorized' | 'juz' | 'surah'>('memorized');
-  const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [verses, setVerses] = useState<VerseItem[]>([]);
   const [isTestActive, setIsTestActive] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [testResult, setTestResult] = useState<'correct' | 'incorrect' | null>(null);
   const [currentPassage, setCurrentPassage] = useState<string>("");
-  const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
-
-  // Load memorization data from localStorage
-  useEffect(() => {
-    const savedJuz = localStorage.getItem('murajah-juz-memorization');
-    if (savedJuz) {
-      try {
-        setJuzMemorization(JSON.parse(savedJuz));
-      } catch (error) {
-        console.error('Error loading memorization data:', error);
-        setJuzMemorization([]);
-      }
-    }
-  }, []);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedItem(index);
@@ -106,50 +79,16 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
 
   const generateTest = () => {
     const allVerses = getVersesArray();
-    let availableVerses: any[] = [];
-
-    if (testType === 'memorized') {
-      // Get verses from memorized Juz and individual Surahs from localStorage
-      if (juzMemorization.length === 0) {
-        alert('No memorized content available. Please mark your progress in Muraja\'ah section.');
-        return;
-      }
-      
-      juzMemorization.forEach(juzMem => {
-        if (juzMem.isMemorized) {
-          // Full Juz is memorized
-          const juzStartVerse = ((juzMem.juzNumber - 1) * 600) + 1;
-          const juzEndVerse = juzMem.juzNumber * 600;
-          const juzVerses = allVerses.filter(verse => 
-            verse.id >= juzStartVerse && verse.id <= juzEndVerse
-          );
-          availableVerses.push(...juzVerses);
-        } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
-          // Individual Surahs are memorized
-          juzMem.memorizedSurahs.forEach(surahId => {
-            const surahVerses = allVerses.filter(verse => verse.surah === surahId);
-            availableVerses.push(...surahVerses);
-          });
-        }
-      });
-    } else if (testType === 'juz') {
-      // Filter verses for selected Juz only
-      const juzStartVerse = ((selectedJuz - 1) * 600) + 1;
-      const juzEndVerse = selectedJuz * 600;
-      availableVerses = allVerses.filter(verse => 
-        verse.id >= juzStartVerse && verse.id <= juzEndVerse
-      );
-    } else if (testType === 'surah') {
-      // Filter verses for selected Surah only
-      availableVerses = allVerses.filter(verse => verse.surah === selectedSurah);
-    }
+    
+    // Filter verses for selected Surah only
+    const availableVerses = allVerses.filter(verse => verse.surah === selectedSurah);
 
     if (availableVerses.length < numVerses) {
-      alert(`Not enough verses available in the selected ${testType}. Available: ${availableVerses.length}, Requested: ${numVerses}`);
+      alert(`Not enough verses available in the selected Surah. Available: ${availableVerses.length}, Requested: ${numVerses}`);
       return;
     }
 
-    // Find consecutive verses from the same surah within the filtered available verses
+    // Find consecutive verses from the same surah
     let selectedVerses: any[] = [];
     let attempts = 0;
     const maxAttempts = 100;
@@ -189,52 +128,37 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
       }
     }
 
-    // Fallback: if no consecutive verses found within the filtered content, try a different approach
+    // Fallback: if no consecutive verses found, try a different approach
     if (selectedVerses.length === 0) {
-      // Group available verses by surah
-      const surahGroups: Record<number, any[]> = {};
-      availableVerses.forEach(verse => {
-        if (!surahGroups[verse.surah]) {
-          surahGroups[verse.surah] = [];
-        }
-        surahGroups[verse.surah].push(verse);
-      });
-
-      // Sort each surah group by ayah number
-      Object.keys(surahGroups).forEach(surah => {
-        surahGroups[parseInt(surah)].sort((a, b) => a.ayah - b.ayah);
-      });
-
-      // Find a surah with enough consecutive verses within our filtered content
-      for (const surah of Object.keys(surahGroups)) {
-        const verses = surahGroups[parseInt(surah)];
-        for (let i = 0; i <= verses.length - numVerses; i++) {
-          const sequence = verses.slice(i, i + numVerses);
-          let isConsecutive = true;
-          
-          for (let j = 1; j < sequence.length; j++) {
-            if (sequence[j].ayah !== sequence[j-1].ayah + 1) {
-              isConsecutive = false;
-              break;
-            }
-          }
-          
-          if (isConsecutive) {
-            selectedVerses = sequence;
+      // Sort available verses by ayah number
+      const sortedVerses = availableVerses.sort((a, b) => a.ayah - b.ayah);
+      
+      // Find consecutive verses
+      for (let i = 0; i <= sortedVerses.length - numVerses; i++) {
+        const sequence = sortedVerses.slice(i, i + numVerses);
+        let isConsecutive = true;
+        
+        for (let j = 1; j < sequence.length; j++) {
+          if (sequence[j].ayah !== sequence[j-1].ayah + 1) {
+            isConsecutive = false;
             break;
           }
         }
-        if (selectedVerses.length > 0) break;
+        
+        if (isConsecutive) {
+          selectedVerses = sequence;
+          break;
+        }
       }
     }
 
-    // Final fallback: if still no consecutive verses, take any numVerses from filtered content
+    // Final fallback: if still no consecutive verses, take any numVerses from the surah
     if (selectedVerses.length === 0) {
       if (availableVerses.length >= numVerses) {
         const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
         selectedVerses = availableVerses.slice(startIndex, startIndex + numVerses);
       } else {
-        alert(`Unable to find ${numVerses} verses in the selected ${testType}.`);
+        alert(`Unable to find ${numVerses} verses in the selected Surah.`);
         return;
       }
     }
@@ -256,51 +180,13 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
       shuffledVerses[j].currentOrder = j;
     }
 
-    // Set passage info
-    const firstVerse = selectedVerses[0];
-    const lastVerse = selectedVerses[selectedVerses.length - 1];
-    setCurrentPassage(`${getSurahName(firstVerse.surah)} ${firstVerse.ayah}-${lastVerse.ayah}`);
+    // Set passage info (without verse numbers to avoid giving away the answer)
+    setCurrentPassage(`${getSurahName(selectedSurah)}`);
 
     setVerses(shuffledVerses);
     setIsTestActive(true);
     setTestResult(null);
   };
-
-  const getMemorizedContentSummary = () => {
-    const memorizedJuzCount = juzMemorization.filter(j => j.isMemorized).length;
-    const memorizedSurahCount = juzMemorization.reduce((total, juz) => {
-      return total + (juz.memorizedSurahs?.length || 0);
-    }, 0);
-    
-    return {
-      juzCount: memorizedJuzCount,
-      surahCount: memorizedSurahCount,
-      hasMemorization: memorizedJuzCount > 0 || memorizedSurahCount > 0
-    };
-  };
-
-  const memorizedSummary = getMemorizedContentSummary();
-
-  if (!memorizedSummary.hasMemorization) {
-    return (
-      <div className="space-y-4 max-w-2xl mx-auto px-4">
-        <Button onClick={onBack} variant="outline" className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Tests
-        </Button>
-        
-        <Card className="text-center py-12">
-          <CardContent>
-            <Shuffle className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorization Data</h3>
-            <p className="text-gray-500">
-              Mark your memorized Juz or individual Surahs in the Muraja'ah section to enable this test.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto px-4">
@@ -347,69 +233,20 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
               </p>
             </div>
 
-            <div className="space-y-4">
-              <Label>Test Content</Label>
-              <Select value={testType} onValueChange={(value: 'memorized' | 'juz' | 'surah') => setTestType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select test type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="memorized">Your Memorized Portions</SelectItem>
-                  <SelectItem value="juz">Specific Juz</SelectItem>
-                  <SelectItem value="surah">Specific Surah</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {testType === 'juz' && (
-                <div className="space-y-2">
-                  <Label htmlFor="juzSelect">Select Juz (1-30)</Label>
-                  <Input
-                    id="juzSelect"
-                    type="number"
-                    min="1"
-                    max="30"
-                    value={selectedJuz}
-                    onChange={(e) => setSelectedJuz(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
-                    className="w-32"
-                  />
-                </div>
-              )}
-
-              {testType === 'surah' && (
-                <div className="space-y-2">
-                  <Label htmlFor="surahSelect">Select Surah (1-114)</Label>
-                  <Input
-                    id="surahSelect"
-                    type="number"
-                    min="1"
-                    max="114"
-                    value={selectedSurah}
-                    onChange={(e) => setSelectedSurah(Math.max(1, Math.min(114, parseInt(e.target.value) || 1)))}
-                    className="w-32"
-                  />
-                </div>
-              )}
-
-              {testType === 'memorized' && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Available Content:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {memorizedSummary.juzCount > 0 && (
-                      <Badge variant="secondary">
-                        {memorizedSummary.juzCount} Full Juz
-                      </Badge>
-                    )}
-                    {memorizedSummary.surahCount > 0 && (
-                      <Badge variant="secondary">
-                        {memorizedSummary.surahCount} Individual Surahs
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Content is loaded from your Muraja'ah memorization tracking.
-                  </p>
-                </div>
-              )}
+            <div className="space-y-2">
+              <Label htmlFor="surahSelect">Select Surah (1-114)</Label>
+              <Input
+                id="surahSelect"
+                type="number"
+                min="1"
+                max="114"
+                value={selectedSurah}
+                onChange={(e) => setSelectedSurah(Math.max(1, Math.min(114, parseInt(e.target.value) || 1)))}
+                className="w-32"
+              />
+              <p className="text-sm text-gray-500">
+                Choose which Surah to test from: {getSurahName(selectedSurah)}
+              </p>
             </div>
 
             <Button onClick={generateTest} size="lg" className="w-full">
