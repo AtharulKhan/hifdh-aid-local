@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,25 +8,13 @@ import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
+import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
   juzNumber: number;
   isMemorized: boolean;
   dateMemorized?: string;
-  startPage?: number;
-  endPage?: number;
-}
-
-// Updated interface to match the one expected by test components
-interface MemorizationEntry {
-  id: string;
-  type: 'surah' | 'juz' | 'page';
-  name: string;
-  reference: string;
-  dateMemorized: string;
-  isMemorized: boolean;
-  juz: number;
   startPage?: number;
   endPage?: number;
 }
@@ -60,8 +47,8 @@ export const TestDashboard = () => {
             dateMemorized: juz.dateMemorized || new Date().toISOString().split('T')[0],
             isMemorized: true,
             juz: juz.juzNumber,
-            startPage: juz.startPage,
-            endPage: juz.endPage
+            startPage: juz.startPage || (juzInfo ? ((juz.juzNumber - 1) * 20) + 1 : 1),
+            endPage: juz.endPage || (juzInfo ? (juz.juzNumber * 20) : 20)
           };
         });
         
