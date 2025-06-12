@@ -165,14 +165,14 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto px-2 md:px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2 self-start">
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Tests</span>
         </Button>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <Badge variant="outline" className="bg-orange-50 text-orange-700">
             Score: {score.correct}/{score.total}
           </Badge>
@@ -180,28 +180,30 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
             variant="outline" 
             size="sm" 
             onClick={() => setShowSettings(!showSettings)}
+            className="text-xs sm:text-sm"
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-4 w-4 mr-1 sm:mr-2" />
             Settings
           </Button>
-          <Button variant="outline" size="sm" onClick={generateRandomTest}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            New Question
+          <Button variant="outline" size="sm" onClick={generateRandomTest} className="text-xs sm:text-sm">
+            <RefreshCw className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">New Question</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
       </div>
 
       {/* Settings Panel */}
       {showSettings && (
-        <Card className="p-4 bg-gray-50 border-gray-200">
+        <Card className="p-3 md:p-4 bg-gray-50 border-gray-200">
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Test Configuration</h3>
+            <h3 className="font-semibold text-gray-800 text-sm md:text-base">Test Configuration</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Test Scope</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Test Scope</label>
                 <Select value={testScope} onValueChange={(value: TestScope) => setTestScope(value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs md:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -215,9 +217,9 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
 
               {testScope === "surah" && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Surah</label>
+                  <label className="text-xs md:text-sm font-medium text-gray-700">Select Surah</label>
                   <Select value={selectedSurah.toString()} onValueChange={(value) => setSelectedSurah(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs md:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,9 +235,9 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
 
               {testScope === "juz" && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Juz</label>
+                  <label className="text-xs md:text-sm font-medium text-gray-700">Select Juz</label>
                   <Select value={selectedJuz.toString()} onValueChange={(value) => setSelectedJuz(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs md:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -254,22 +256,22 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
       )}
 
       {/* Test Card */}
-      <Card className="p-6 border-l-4 border-l-orange-500">
-        <div className="space-y-6">
+      <Card className="p-4 md:p-6 border-l-4 border-l-orange-500">
+        <div className="space-y-4 md:space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Fill in the Blank</h2>
-            <p className="text-gray-600">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Fill in the Blank</h2>
+            <p className="text-sm md:text-base text-gray-600 px-2">
               Complete the missing word {getScopeDescription()}
             </p>
           </div>
 
           {/* Verse with Blank */}
-          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <div className="bg-orange-50 p-3 md:p-4 rounded-lg border border-orange-200">
             <div className="text-center space-y-3">
-              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+              <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-xs md:text-sm">
                 {currentVerse.verse_key} - {getSurahName(currentVerse.surah)}
               </Badge>
-              <div className="font-arabic text-2xl text-right leading-loose text-gray-800">
+              <div className="font-arabic text-lg md:text-2xl text-right leading-loose text-gray-800 break-words">
                 {getVerseWithBlank()}
               </div>
             </div>
@@ -278,33 +280,33 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
           {/* Answer Input */}
           <div className="space-y-3">
             <div className="text-center">
-              <label className="text-blue-800 font-medium">Fill in the missing word:</label>
+              <label className="text-blue-800 font-medium text-sm md:text-base">Fill in the missing word:</label>
             </div>
             <Input
               type="text"
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
               placeholder="Type the missing word here..."
-              className="text-center font-arabic text-lg"
+              className="text-center font-arabic text-base md:text-lg"
               dir="rtl"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col gap-3 justify-center">
             <Button 
               variant="outline" 
               onClick={() => setShowAnswer(!showAnswer)}
-              className="border-gray-300"
+              className="border-gray-300 w-full sm:w-auto sm:mx-auto"
             >
               {showAnswer ? "Hide" : "Show"} Answer
             </Button>
             {showAnswer && (
-              <>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button 
                   variant="default" 
                   onClick={handleCorrect}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   I Got It Right
@@ -312,35 +314,35 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memori
                 <Button 
                   variant="outline" 
                   onClick={handleIncorrect}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  className="border-red-300 text-red-700 hover:bg-red-50 w-full sm:w-auto"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   I Got It Wrong
                 </Button>
-              </>
+              </div>
             )}
           </div>
 
           {/* Answer Section */}
           {showAnswer && (
             <div className="space-y-4 border-t pt-4">
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="bg-yellow-50 p-3 md:p-4 rounded-lg border border-yellow-200">
                 <div className="space-y-2">
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs md:text-sm">
                     Missing Word
                   </Badge>
-                  <div className="font-arabic text-2xl text-center text-gray-800">
+                  <div className="font-arabic text-lg md:text-2xl text-center text-gray-800 break-words">
                     {getHiddenWord()}
                   </div>
                 </div>
               </div>
               
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="bg-green-50 p-3 md:p-4 rounded-lg border border-green-200">
                 <div className="space-y-2">
-                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs md:text-sm">
                     Complete Verse
                   </Badge>
-                  <div className="font-arabic text-xl text-right leading-loose text-gray-800">
+                  <div className="font-arabic text-base md:text-xl text-right leading-loose text-gray-800 break-words">
                     {currentVerse.text}
                   </div>
                 </div>
