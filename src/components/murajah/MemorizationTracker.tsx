@@ -88,41 +88,41 @@ export const MemorizationTracker = () => {
   const completedJuz = Object.values(juzProgress).filter(j => j.completed).length;
 
   return (
-    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+    <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-4 md:p-6 text-center">
-            <div className="text-xl md:text-2xl font-bold text-green-600">{getTotalPages()}</div>
-            <div className="text-xs md:text-sm text-gray-600">Total Pages Memorized</div>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-green-600">{getTotalPages()}</div>
+            <div className="text-sm text-gray-600">Total Pages Memorized</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 md:p-6 text-center">
-            <div className="text-xl md:text-2xl font-bold text-blue-600">{completedJuz}</div>
-            <div className="text-xs md:text-sm text-gray-600">Complete Juz</div>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-blue-600">{completedJuz}</div>
+            <div className="text-sm text-gray-600">Complete Juz</div>
           </CardContent>
         </Card>
-        <Card className="sm:col-span-2 lg:col-span-1">
-          <CardContent className="p-4 md:p-6 text-center">
-            <div className="text-xl md:text-2xl font-bold text-purple-600">{entries.length}</div>
-            <div className="text-xs md:text-sm text-gray-600">Memorization Sessions</div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-purple-600">{entries.length}</div>
+            <div className="text-sm text-gray-600">Memorization Sessions</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Add New Entry */}
       <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
             Add New Memorization Entry
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 md:p-6 pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="juz" className="text-sm">Juz Number</Label>
+              <Label htmlFor="juz">Juz Number</Label>
               <Input
                 id="juz"
                 type="number"
@@ -130,11 +130,10 @@ export const MemorizationTracker = () => {
                 max="30"
                 value={newEntry.juz}
                 onChange={(e) => setNewEntry({...newEntry, juz: parseInt(e.target.value) || 1})}
-                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="startPage" className="text-sm">Start Page</Label>
+              <Label htmlFor="startPage">Start Page</Label>
               <Input
                 id="startPage"
                 type="number"
@@ -142,11 +141,10 @@ export const MemorizationTracker = () => {
                 max="604"
                 value={newEntry.startPage}
                 onChange={(e) => setNewEntry({...newEntry, startPage: parseInt(e.target.value) || 1})}
-                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="endPage" className="text-sm">End Page</Label>
+              <Label htmlFor="endPage">End Page</Label>
               <Input
                 id="endPage"
                 type="number"
@@ -154,21 +152,19 @@ export const MemorizationTracker = () => {
                 max="604"
                 value={newEntry.endPage}
                 onChange={(e) => setNewEntry({...newEntry, endPage: parseInt(e.target.value) || 1})}
-                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="dateMemorized" className="text-sm">Date Memorized</Label>
+              <Label htmlFor="dateMemorized">Date Memorized</Label>
               <Input
                 id="dateMemorized"
                 type="date"
                 value={newEntry.dateMemorized}
                 onChange={(e) => setNewEntry({...newEntry, dateMemorized: e.target.value})}
-                className="mt-1"
               />
             </div>
           </div>
-          <Button onClick={addEntry} className="w-full sm:w-auto">
+          <Button onClick={addEntry} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Entry
           </Button>
@@ -177,52 +173,47 @@ export const MemorizationTracker = () => {
 
       {/* Entries Table */}
       <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-lg md:text-xl">Memorization History</CardTitle>
+        <CardHeader>
+          <CardTitle>Memorization History</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0">
+        <CardContent>
           {entries.length === 0 ? (
-            <div className="text-center py-6 md:py-8 text-gray-500">
-              <div className="text-sm md:text-base">No memorization entries yet. Add your first entry above to get started!</div>
+            <div className="text-center py-8 text-gray-500">
+              No memorization entries yet. Add your first entry above to get started!
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-4 md:mx-0">
-              <div className="min-w-full inline-block align-middle">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs md:text-sm whitespace-nowrap">Juz</TableHead>
-                      <TableHead className="text-xs md:text-sm whitespace-nowrap">Pages</TableHead>
-                      <TableHead className="text-xs md:text-sm whitespace-nowrap">Count</TableHead>
-                      <TableHead className="text-xs md:text-sm whitespace-nowrap">Date</TableHead>
-                      <TableHead className="text-xs md:text-sm whitespace-nowrap">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell className="whitespace-nowrap">
-                          <Badge variant="outline" className="text-xs">Juz {entry.juz}</Badge>
-                        </TableCell>
-                        <TableCell className="text-xs md:text-sm whitespace-nowrap">{entry.startPage}-{entry.endPage}</TableCell>
-                        <TableCell className="text-xs md:text-sm whitespace-nowrap">{entry.endPage - entry.startPage + 1} pages</TableCell>
-                        <TableCell className="text-xs md:text-sm whitespace-nowrap">{new Date(entry.dateMemorized).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeEntry(entry.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Juz</TableHead>
+                  <TableHead>Pages</TableHead>
+                  <TableHead>Page Count</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>
+                      <Badge variant="outline">Juz {entry.juz}</Badge>
+                    </TableCell>
+                    <TableCell>{entry.startPage}-{entry.endPage}</TableCell>
+                    <TableCell>{entry.endPage - entry.startPage + 1} pages</TableCell>
+                    <TableCell>{new Date(entry.dateMemorized).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeEntry(entry.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

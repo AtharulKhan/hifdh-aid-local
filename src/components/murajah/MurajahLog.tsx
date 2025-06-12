@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -240,11 +239,11 @@ export const MurajahLog = () => {
 
   if (logEntries.length === 0) {
     return (
-      <Card className="text-center py-8 md:py-12 mx-2 md:mx-0">
-        <CardContent className="p-4 md:p-6">
-          <Calendar className="h-12 w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">No Log Data</h3>
-          <p className="text-sm md:text-base text-gray-500 mb-4">
+      <Card className="text-center py-12">
+        <CardContent>
+          <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Log Data</h3>
+          <p className="text-gray-500 mb-4">
             Complete some review cycles to start tracking your progress and carry-overs.
           </p>
         </CardContent>
@@ -253,20 +252,20 @@ export const MurajahLog = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+    <div className="space-y-6">
       {/* Header */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-l-blue-400">
-        <CardContent className="p-4 md:p-6">
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Review Cycle Log</h2>
-              <p className="text-sm md:text-base text-gray-600">Track completed cycles and carry-overs by date</p>
+              <h2 className="text-2xl font-bold text-gray-800">Review Cycle Log</h2>
+              <p className="text-gray-600">Track completed cycles and carry-overs by date</p>
             </div>
             <div className="text-right">
-              <div className="text-xl md:text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-600">
                 {logEntries.filter(e => e.carryOver).length}
               </div>
-              <div className="text-xs md:text-sm text-gray-600">Carry-overs</div>
+              <div className="text-sm text-gray-600">Carry-overs</div>
             </div>
           </div>
         </CardContent>
@@ -274,197 +273,185 @@ export const MurajahLog = () => {
 
       {/* Log Table */}
       <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-lg md:text-xl">Daily Review Progress</CardTitle>
+        <CardHeader>
+          <CardTitle>Daily Review Progress</CardTitle>
         </CardHeader>
-        <CardContent className="p-2 md:p-6 pt-0">
-          <div className="overflow-x-auto -mx-2 md:mx-0">
-            <div className="min-w-full inline-block align-middle">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs md:text-sm whitespace-nowrap min-w-[80px]">Date</TableHead>
-                    <TableHead className="text-center text-xs md:text-sm whitespace-nowrap min-w-[100px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <Clock className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
-                        <span className="hidden sm:inline">RMV</span>
-                        <span className="sm:hidden">R</span>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center text-xs md:text-sm whitespace-nowrap min-w-[100px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <RotateCcw className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
-                        <span className="hidden sm:inline">OMV</span>
-                        <span className="sm:hidden">O</span>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center text-xs md:text-sm whitespace-nowrap min-w-[100px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <PlayCircle className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
-                        <span className="hidden sm:inline">Listening</span>
-                        <span className="sm:hidden">L</span>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center text-xs md:text-sm whitespace-nowrap min-w-[100px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <BookOpen className="h-3 w-3 md:h-4 md:w-4 text-orange-600" />
-                        <span className="hidden sm:inline">Reading</span>
-                        <span className="sm:hidden">R</span>
-                      </div>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {groupedEntries.map((dayEntry) => (
-                    <TableRow key={dayEntry.date}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-xs md:text-sm">
-                            {new Date(dayEntry.date).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
-                          </span>
-                          <span className="text-xs text-gray-500 hidden md:block">
-                            {new Date(dayEntry.date).toLocaleDateString('en-US', { 
-                              year: 'numeric' 
-                            })}
-                          </span>
-                          {dayEntry.date === new Date().toISOString().split('T')[0] && (
-                            <Badge variant="default" className="text-xs mt-1 w-fit">Today</Badge>
-                          )}
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    RMV
+                  </div>
+                </TableHead>
+                <TableHead className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <RotateCcw className="h-4 w-4 text-purple-600" />
+                    OMV
+                  </div>
+                </TableHead>
+                <TableHead className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <PlayCircle className="h-4 w-4 text-blue-600" />
+                    Listening
+                  </div>
+                </TableHead>
+                <TableHead className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <BookOpen className="h-4 w-4 text-orange-600" />
+                    Reading
+                  </div>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {groupedEntries.map((dayEntry) => (
+                <TableRow key={dayEntry.date}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {new Date(dayEntry.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(dayEntry.date).toLocaleDateString('en-US', { 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                      {dayEntry.date === new Date().toISOString().split('T')[0] && (
+                        <Badge variant="default" className="text-xs mt-1 w-fit">Today</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  
+                  {/* RMV Column */}
+                  <TableCell className="text-center">
+                    {dayEntry.cycles.RMV ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-xs text-gray-600 max-w-24 truncate" title={dayEntry.cycles.RMV.cycle.content}>
+                          {dayEntry.cycles.RMV.cycle.content}
                         </div>
-                      </TableCell>
-                      
-                      {/* RMV Column */}
-                      <TableCell className="text-center">
-                        {dayEntry.cycles.RMV ? (
-                          <div className="flex flex-col items-center gap-1 md:gap-2">
-                            <div className="text-xs text-gray-600 max-w-16 md:max-w-24 truncate" title={dayEntry.cycles.RMV.cycle.content}>
-                              {dayEntry.cycles.RMV.cycle.content}
+                        <div className="flex items-center gap-2">
+                          {dayEntry.cycles.RMV.carryOver && (
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
                             </div>
-                            <div className="flex items-center gap-1 md:gap-2">
-                              {dayEntry.cycles.RMV.carryOver && (
-                                <div title="Carry-over">
-                                  <ArrowRight className="h-2 w-2 md:h-3 md:w-3 text-yellow-600" />
-                                </div>
-                              )}
-                              <Checkbox
-                                checked={dayEntry.cycles.RMV.cycle.completed}
-                                onCheckedChange={(checked) => 
-                                  updateCompletionStatus(dayEntry.date, 'RMV', checked as boolean)
-                                }
-                                className="h-3 w-3 md:h-4 md:w-4"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
+                          )}
+                          <Checkbox
+                            checked={dayEntry.cycles.RMV.cycle.completed}
+                            onCheckedChange={(checked) => 
+                              updateCompletionStatus(dayEntry.date, 'RMV', checked as boolean)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
 
-                      {/* OMV Column */}
-                      <TableCell className="text-center">
-                        {dayEntry.cycles.OMV ? (
-                          <div className="flex flex-col items-center gap-1 md:gap-2">
-                            <div className="text-xs text-gray-600 max-w-16 md:max-w-24 truncate" title={dayEntry.cycles.OMV.cycle.content}>
-                              {dayEntry.cycles.OMV.cycle.content}
+                  {/* OMV Column */}
+                  <TableCell className="text-center">
+                    {dayEntry.cycles.OMV ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-xs text-gray-600 max-w-24 truncate" title={dayEntry.cycles.OMV.cycle.content}>
+                          {dayEntry.cycles.OMV.cycle.content}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dayEntry.cycles.OMV.carryOver && (
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
                             </div>
-                            <div className="flex items-center gap-1 md:gap-2">
-                              {dayEntry.cycles.OMV.carryOver && (
-                                <div title="Carry-over">
-                                  <ArrowRight className="h-2 w-2 md:h-3 md:w-3 text-yellow-600" />
-                                </div>
-                              )}
-                              <Checkbox
-                                checked={dayEntry.cycles.OMV.cycle.completed}
-                                onCheckedChange={(checked) => 
-                                  updateCompletionStatus(dayEntry.date, 'OMV', checked as boolean)
-                                }
-                                className="h-3 w-3 md:h-4 md:w-4"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
+                          )}
+                          <Checkbox
+                            checked={dayEntry.cycles.OMV.cycle.completed}
+                            onCheckedChange={(checked) => 
+                              updateCompletionStatus(dayEntry.date, 'OMV', checked as boolean)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
 
-                      {/* Listening Column */}
-                      <TableCell className="text-center">
-                        {dayEntry.cycles.Listening ? (
-                          <div className="flex flex-col items-center gap-1 md:gap-2">
-                            <div className="text-xs text-gray-600 max-w-16 md:max-w-24 truncate" title={dayEntry.cycles.Listening.cycle.content}>
-                              {dayEntry.cycles.Listening.cycle.content}
+                  {/* Listening Column */}
+                  <TableCell className="text-center">
+                    {dayEntry.cycles.Listening ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-xs text-gray-600 max-w-24 truncate" title={dayEntry.cycles.Listening.cycle.content}>
+                          {dayEntry.cycles.Listening.cycle.content}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dayEntry.cycles.Listening.carryOver && (
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
                             </div>
-                            <div className="flex items-center gap-1 md:gap-2">
-                              {dayEntry.cycles.Listening.carryOver && (
-                                <div title="Carry-over">
-                                  <ArrowRight className="h-2 w-2 md:h-3 md:w-3 text-yellow-600" />
-                                </div>
-                              )}
-                              <Checkbox
-                                checked={dayEntry.cycles.Listening.cycle.completed}
-                                onCheckedChange={(checked) => 
-                                  updateCompletionStatus(dayEntry.date, 'Listening', checked as boolean)
-                                }
-                                className="h-3 w-3 md:h-4 md:w-4"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
+                          )}
+                          <Checkbox
+                            checked={dayEntry.cycles.Listening.cycle.completed}
+                            onCheckedChange={(checked) => 
+                              updateCompletionStatus(dayEntry.date, 'Listening', checked as boolean)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
 
-                      {/* Reading Column */}
-                      <TableCell className="text-center">
-                        {dayEntry.cycles.Reading ? (
-                          <div className="flex flex-col items-center gap-1 md:gap-2">
-                            <div className="text-xs text-gray-600 max-w-16 md:max-w-24 truncate" title={dayEntry.cycles.Reading.cycle.content}>
-                              {dayEntry.cycles.Reading.cycle.content}
+                  {/* Reading Column */}
+                  <TableCell className="text-center">
+                    {dayEntry.cycles.Reading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-xs text-gray-600 max-w-24 truncate" title={dayEntry.cycles.Reading.cycle.content}>
+                          {dayEntry.cycles.Reading.cycle.content}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dayEntry.cycles.Reading.carryOver && (
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
                             </div>
-                            <div className="flex items-center gap-1 md:gap-2">
-                              {dayEntry.cycles.Reading.carryOver && (
-                                <div title="Carry-over">
-                                  <ArrowRight className="h-2 w-2 md:h-3 md:w-3 text-yellow-600" />
-                                </div>
-                              )}
-                              <Checkbox
-                                checked={dayEntry.cycles.Reading.cycle.completed}
-                                onCheckedChange={(checked) => 
-                                  updateCompletionStatus(dayEntry.date, 'Reading', checked as boolean)
-                                }
-                                className="h-3 w-3 md:h-4 md:w-4"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+                          )}
+                          <Checkbox
+                            checked={dayEntry.cycles.Reading.cycle.completed}
+                            onCheckedChange={(checked) => 
+                              updateCompletionStatus(dayEntry.date, 'Reading', checked as boolean)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
       {/* Legend */}
       <Card className="bg-gray-50">
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-lg md:text-xl">Legend</CardTitle>
+        <CardHeader>
+          <CardTitle>Legend</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <ArrowRight className="h-3 w-3 text-yellow-600" />
               <span>Carry-over from previous day</span>
             </div>
             <div className="flex items-center gap-2">
-              <Checkbox checked={false} className="h-3 w-3 md:h-4 md:w-4" />
+              <Checkbox checked={false} />
               <span>Click checkbox to mark complete</span>
             </div>
             <div className="flex items-center gap-2">
