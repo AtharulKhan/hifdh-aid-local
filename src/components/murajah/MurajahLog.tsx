@@ -338,7 +338,9 @@ export const MurajahLog = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           {dayEntry.cycles.RMV.carryOver && (
-                            <ArrowRight className="h-3 w-3 text-yellow-600" title="Carry-over" />
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
+                            </div>
                           )}
                           <Checkbox
                             checked={dayEntry.cycles.RMV.cycle.completed}
@@ -362,7 +364,9 @@ export const MurajahLog = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           {dayEntry.cycles.OMV.carryOver && (
-                            <ArrowRight className="h-3 w-3 text-yellow-600" title="Carry-over" />
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
+                            </div>
                           )}
                           <Checkbox
                             checked={dayEntry.cycles.OMV.cycle.completed}
@@ -386,7 +390,9 @@ export const MurajahLog = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           {dayEntry.cycles.Listening.carryOver && (
-                            <ArrowRight className="h-3 w-3 text-yellow-600" title="Carry-over" />
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
+                            </div>
                           )}
                           <Checkbox
                             checked={dayEntry.cycles.Listening.cycle.completed}
@@ -410,7 +416,9 @@ export const MurajahLog = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           {dayEntry.cycles.Reading.carryOver && (
-                            <ArrowRight className="h-3 w-3 text-yellow-600" title="Carry-over" />
+                            <div title="Carry-over">
+                              <ArrowRight className="h-3 w-3 text-yellow-600" />
+                            </div>
                           )}
                           <Checkbox
                             checked={dayEntry.cycles.Reading.cycle.completed}
