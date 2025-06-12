@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, ArrowRight } from "lucide-react";
 
@@ -12,8 +11,14 @@ interface LogEntry {
     title: string;
     content: string;
     completed: boolean;
+    id: string;
   };
   carryOver: boolean;
+}
+
+interface DailyCompletion {
+  date: string;
+  completions: { [cycleId: string]: boolean };
 }
 
 export const MurajahLog = () => {
@@ -24,19 +29,19 @@ export const MurajahLog = () => {
   }, []);
 
   const loadLogData = () => {
-    // Load completion data and generate log entries
+    // Load completion data from localStorage
     const savedCompletions = localStorage.getItem('murajah-daily-completions');
     const entries = localStorage.getItem('murajah-memorization-entries');
     const settings = localStorage.getItem('murajah-review-settings');
 
-    if (!savedCompletions || !entries || !settings) {
+    if (!savedCompletions) {
       return;
     }
 
     try {
-      const completionData = JSON.parse(savedCompletions);
-      const memorizationEntries = JSON.parse(entries);
-      const reviewSettings = JSON.parse(settings);
+      const completionData: DailyCompletion[] = JSON.parse(savedCompletions);
+      const memorizationEntries = entries ? JSON.parse(entries) : [];
+      const reviewSettings = settings ? JSON.parse(settings) : {};
 
       // Generate log entries based on completion history
       const logs = generateLogEntries(completionData, memorizationEntries, reviewSettings);
@@ -46,67 +51,126 @@ export const MurajahLog = () => {
     }
   };
 
-  const generateLogEntries = (completionData: any, entries: any[], settings: any): LogEntry[] => {
+  const generateLogEntries = (completionData: DailyCompletion[], entries: any[], settings: any): LogEntry[] => {
     const logs: LogEntry[] = [];
-    const today = new Date().toISOString().split('T')[0];
     
-    // For demo purposes, let's create some sample log entries
-    // In a real implementation, this would track actual completion history
+    // Sort completion data by date (most recent first)
+    const sortedData = completionData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    // Yesterday's incomplete cycles
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    // Sample incomplete cycles from yesterday
-    logs.push(
-      {
-        date: yesterdayStr,
-        cycle: {
-          type: 'RMV',
-          title: 'RMV (Last 7 Pages)',
-          content: 'Pgs. (15-21)',
-          completed: false
-        },
-        carryOver: true
-      },
-      {
-        date: yesterdayStr,
-        cycle: {
-          type: 'OMV',
-          title: 'OMV (1 Juz)',
-          content: 'Juz 1 (Pages 1-21)',
-          completed: true
-        },
-        carryOver: false
-      }
-    );
-
-    // Today's cycles
-    logs.push(
-      {
-        date: today,
-        cycle: {
-          type: 'RMV',
-          title: 'RMV (Last 7 Pages)',
-          content: 'Pgs. (15-21)', // Carried over
-          completed: false
-        },
-        carryOver: true
-      },
-      {
-        date: today,
-        cycle: {
-          type: 'OMV',
-          title: 'OMV (1 Juz)',
-          content: 'Juz 2 (Pages 22-41)', // New cycle
-          completed: false
-        },
-        carryOver: false
-      }
-    );
+    sortedData.forEach(dayData => {
+      Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
+        const [cycleType, dateStr, carryOverFlag] = cycleId.split('-');
+        const isCarryOver = carryOverFlag === 'carryover';
+        
+        // Determine cycle details based on type
+        let cycleInfo = getCycleInfo(cycleType, dateStr, entries, settings, completed, cycleId);
+        if (cycleInfo) {
+          logs.push({
+            date: dayData.date,
+            cycle: cycleInfo,
+            carryOver: isCarryOver
+          });
+        }
+      });
+    });
 
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  const getCycleInfo = (type: string, dateStr: string, entries: any[], settings: any, completed: boolean, id: string) => {
+    const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    
+    switch (upperType) {
+      case 'RMV':
+        return {
+          type: 'RMV' as const,
+          title: `RMV (Last ${settings.rmvPages || 7} Pages)`,
+          content: calculateRMVContent(entries, settings),
+          completed,
+          id
+        };
+      case 'OMV':
+        return {
+          type: 'OMV' as const,
+          title: `OMV (${settings.omvJuz || 1} Juz)`,
+          content: calculateOMVContent(entries, settings, dateStr),
+          completed,
+          id
+        };
+      case 'LISTENING':
+        return {
+          type: 'Listening' as const,
+          title: `Listening Cycle (${settings.listeningJuz || 2} Juz)`,
+          content: calculateListeningContent(entries, settings, dateStr),
+          completed,
+          id
+        };
+      case 'READING':
+        return {
+          type: 'Reading' as const,
+          title: `Reading Cycle (${settings.readingJuz || 1} Juz)`,
+          content: calculateReadingContent(entries, settings, dateStr),
+          completed,
+          id
+        };
+      default:
+        return null;
+    }
+  };
+
+  const calculateRMVContent = (entries: any[], settings: any): string => {
+    if (!entries || entries.length === 0) return 'No data available';
+    
+    const currentJuzEntries = entries.filter(entry => entry.juz === (settings.currentJuz || 1));
+    if (currentJuzEntries.length === 0) return 'No pages available';
+
+    const allPages = currentJuzEntries.flatMap(entry => 
+      Array.from({ length: entry.endPage - entry.startPage + 1 }, (_, i) => entry.startPage + i)
+    );
+
+    const maxPage = Math.max(...allPages);
+    const minPage = Math.min(...allPages);
+    const rmvPages = settings.rmvPages || 7;
+    const startPage = Math.max(maxPage - rmvPages + 1, minPage);
+
+    return `Pgs. (${startPage}-${maxPage})`;
+  };
+
+  const calculateOMVContent = (entries: any[], settings: any, date: string): string => {
+    if (!entries || entries.length === 0) return 'No data available';
+    
+    const completedJuz = [...new Set(entries.map((e: any) => e.juz))].sort((a: number, b: number) => a - b);
+    if (completedJuz.length === 0) return 'No Juz available';
+
+    // Calculate rotation based on date
+    const startDate = new Date(settings.startDate || new Date().toISOString().split('T')[0]);
+    const currentDate = new Date(date);
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const cycleIndex = Math.max(0, daysSinceStart) % completedJuz.length;
+    
+    const omvJuz = settings.omvJuz || 1;
+    const selectedJuz = [];
+    for (let i = 0; i < omvJuz && i < completedJuz.length; i++) {
+      const juzIndex = (cycleIndex + i) % completedJuz.length;
+      selectedJuz.push(completedJuz[juzIndex]);
+    }
+
+    return selectedJuz.map(juz => {
+      const juzEntries = entries.filter((e: any) => e.juz === juz);
+      if (juzEntries.length === 0) return '';
+      
+      const minPage = Math.min(...juzEntries.map((e: any) => e.startPage));
+      const maxPage = Math.max(...juzEntries.map((e: any) => e.endPage));
+      return `Juz ${juz} (Pages ${minPage}-${maxPage})`;
+    }).filter(content => content).join(', ');
+  };
+
+  const calculateListeningContent = (entries: any[], settings: any, date: string): string => {
+    return calculateOMVContent(entries, { ...settings, omvJuz: settings.listeningJuz || 2 }, date);
+  };
+
+  const calculateReadingContent = (entries: any[], settings: any, date: string): string => {
+    return calculateOMVContent(entries, { ...settings, omvJuz: settings.readingJuz || 1 }, date);
   };
 
   const getCycleIcon = (type: string) => {
@@ -193,7 +257,7 @@ export const MurajahLog = () => {
             <CardContent className="space-y-3">
               {entries.map((entry, index) => (
                 <div 
-                  key={index} 
+                  key={entry.cycle.id} 
                   className={`p-4 rounded-lg border ${getCycleColor(entry.cycle.type)} transition-all duration-200`}
                 >
                   <div className="flex items-center justify-between">

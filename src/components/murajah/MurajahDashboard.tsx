@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,12 @@ interface ReviewCycle {
   completed: boolean;
   icon: React.ReactNode;
   color: string;
+  id: string; // Add unique identifier for tracking
+}
+
+interface DailyCompletion {
+  date: string;
+  completions: { [cycleId: string]: boolean };
 }
 
 export const MurajahDashboard = () => {
@@ -33,7 +38,6 @@ export const MurajahDashboard = () => {
   useEffect(() => {
     const savedEntries = localStorage.getItem('murajah-memorization-entries');
     const savedSettings = localStorage.getItem('murajah-review-settings');
-    const savedCompletions = localStorage.getItem('murajah-daily-completions');
 
     if (savedEntries) {
       setEntries(JSON.parse(savedEntries));
@@ -49,69 +53,243 @@ export const MurajahDashboard = () => {
 
     const today = new Date().toISOString().split('T')[0];
     const newCycles = generateDailyCycles(entries, settings, today);
-    setCycles(newCycles);
+    
+    // Load completion status for today
+    const savedCompletions = loadTodaysCompletions();
+    const cyclesWithStatus = newCycles.map(cycle => ({
+      ...cycle,
+      completed: savedCompletions[cycle.id] || false
+    }));
+    
+    setCycles(cyclesWithStatus);
   }, [entries, settings]);
+
+  const loadTodaysCompletions = (): { [cycleId: string]: boolean } => {
+    const today = new Date().toISOString().split('T')[0];
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    
+    if (!savedData) return {};
+    
+    try {
+      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const todaysData = allCompletions.find(d => d.date === today);
+      return todaysData?.completions || {};
+    } catch (error) {
+      console.error('Error loading completions:', error);
+      return {};
+    }
+  };
+
+  const saveTodaysCompletions = (completions: { [cycleId: string]: boolean }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    
+    let allCompletions: DailyCompletion[] = [];
+    if (savedData) {
+      try {
+        allCompletions = JSON.parse(savedData);
+      } catch (error) {
+        console.error('Error parsing saved completions:', error);
+      }
+    }
+
+    // Update or add today's completions
+    const todayIndex = allCompletions.findIndex(d => d.date === today);
+    if (todayIndex >= 0) {
+      allCompletions[todayIndex].completions = completions;
+    } else {
+      allCompletions.push({ date: today, completions });
+    }
+
+    localStorage.setItem('murajah-daily-completions', JSON.stringify(allCompletions));
+  };
 
   const generateDailyCycles = (entries: MemorizationEntry[], settings: ReviewSettings, date: string): ReviewCycle[] => {
     const cycles: ReviewCycle[] = [];
 
-    // RMV - Recent Memorization (Last X pages)
-    const rmvContent = calculateRMV(entries, settings);
-    if (rmvContent) {
-      cycles.push({
-        type: 'RMV',
-        title: `RMV (Last ${settings.rmvPages} Pages)`,
-        content: rmvContent,
-        startDate: date,
-        completed: false,
-        icon: <Clock className="h-4 w-4" />,
-        color: 'bg-green-50 border-green-200'
-      });
+    // Check for carry-overs from previous days
+    const carryOvers = getCarryOverCycles(date);
+
+    // RMV - Recent Memorization (Last X pages) - check for carry-over or generate new
+    const rmvCarryOver = carryOvers.find(c => c.type === 'RMV');
+    if (rmvCarryOver) {
+      cycles.push(rmvCarryOver);
+    } else {
+      const rmvContent = calculateRMV(entries, settings);
+      if (rmvContent) {
+        cycles.push({
+          type: 'RMV',
+          title: `RMV (Last ${settings.rmvPages} Pages)`,
+          content: rmvContent,
+          startDate: date,
+          completed: false,
+          icon: <Clock className="h-4 w-4" />,
+          color: 'bg-green-50 border-green-200',
+          id: `rmv-${date}`
+        });
+      }
     }
 
-    // OMV - Old Memorization (Rotating through old Juz)
-    const omvContent = calculateOMV(entries, settings, date);
-    if (omvContent) {
-      cycles.push({
-        type: 'OMV',
-        title: `OMV (${settings.omvJuz} Juz)`,
-        content: omvContent,
-        startDate: date,
-        completed: false,
-        icon: <RotateCcw className="h-4 w-4" />,
-        color: 'bg-purple-50 border-purple-200'
-      });
+    // OMV - Old Memorization (Rotating through old Juz) - check for carry-over or generate new
+    const omvCarryOver = carryOvers.find(c => c.type === 'OMV');
+    if (omvCarryOver) {
+      cycles.push(omvCarryOver);
+    } else {
+      const omvContent = calculateOMV(entries, settings, date);
+      if (omvContent) {
+        cycles.push({
+          type: 'OMV',
+          title: `OMV (${settings.omvJuz} Juz)`,
+          content: omvContent,
+          startDate: date,
+          completed: false,
+          icon: <RotateCcw className="h-4 w-4" />,
+          color: 'bg-purple-50 border-purple-200',
+          id: `omv-${date}`
+        });
+      }
     }
 
-    // Listening Cycle
-    const listeningContent = calculateListeningCycle(entries, settings, date);
-    if (listeningContent) {
-      cycles.push({
-        type: 'Listening',
-        title: `Listening Cycle (${settings.listeningJuz} Juz)`,
-        content: listeningContent,
-        startDate: date,
-        completed: false,
-        icon: <PlayCircle className="h-4 w-4" />,
-        color: 'bg-blue-50 border-blue-200'
-      });
+    // Listening Cycle - check for carry-over or generate new
+    const listeningCarryOver = carryOvers.find(c => c.type === 'Listening');
+    if (listeningCarryOver) {
+      cycles.push(listeningCarryOver);
+    } else {
+      const listeningContent = calculateListeningCycle(entries, settings, date);
+      if (listeningContent) {
+        cycles.push({
+          type: 'Listening',
+          title: `Listening Cycle (${settings.listeningJuz} Juz)`,
+          content: listeningContent,
+          startDate: date,
+          completed: false,
+          icon: <PlayCircle className="h-4 w-4" />,
+          color: 'bg-blue-50 border-blue-200',
+          id: `listening-${date}`
+        });
+      }
     }
 
-    // Reading Cycle
-    const readingContent = calculateReadingCycle(entries, settings, date);
-    if (readingContent) {
-      cycles.push({
-        type: 'Reading',
-        title: `Reading Cycle (${settings.readingJuz} Juz)`,
-        content: readingContent,
-        startDate: date,
-        completed: false,
-        icon: <BookOpen className="h-4 w-4" />,
-        color: 'bg-orange-50 border-orange-200'
-      });
+    // Reading Cycle - check for carry-over or generate new
+    const readingCarryOver = carryOvers.find(c => c.type === 'Reading');
+    if (readingCarryOver) {
+      cycles.push(readingCarryOver);
+    } else {
+      const readingContent = calculateReadingCycle(entries, settings, date);
+      if (readingContent) {
+        cycles.push({
+          type: 'Reading',
+          title: `Reading Cycle (${settings.readingJuz} Juz)`,
+          content: readingContent,
+          startDate: date,
+          completed: false,
+          icon: <BookOpen className="h-4 w-4" />,
+          color: 'bg-orange-50 border-orange-200',
+          id: `reading-${date}`
+        });
+      }
     }
 
     return cycles;
+  };
+
+  const getCarryOverCycles = (currentDate: string): ReviewCycle[] => {
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    if (!savedData) return [];
+
+    try {
+      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const carryOvers: ReviewCycle[] = [];
+
+      // Look for incomplete cycles from previous days
+      const currentDateObj = new Date(currentDate);
+      
+      for (let i = 1; i <= 7; i++) { // Check last 7 days for incomplete cycles
+        const checkDate = new Date(currentDateObj);
+        checkDate.setDate(checkDate.getDate() - i);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+        
+        const dayData = allCompletions.find(d => d.date === checkDateStr);
+        if (dayData) {
+          Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
+            if (!completed && !carryOvers.some(c => c.type === cycleId.split('-')[0].toUpperCase())) {
+              // Create carry-over cycle based on the incomplete cycle
+              const cycleType = cycleId.split('-')[0] as 'rmv' | 'omv' | 'listening' | 'reading';
+              const carryOverCycle = createCarryOverCycle(cycleType, checkDateStr, currentDate);
+              if (carryOverCycle) {
+                carryOvers.push(carryOverCycle);
+              }
+            }
+          });
+        }
+      }
+
+      return carryOvers;
+    } catch (error) {
+      console.error('Error getting carry-over cycles:', error);
+      return [];
+    }
+  };
+
+  const createCarryOverCycle = (type: string, originalDate: string, currentDate: string): ReviewCycle | null => {
+    const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    
+    switch (upperType) {
+      case 'RMV':
+        const rmvContent = calculateRMV(entries, settings);
+        if (!rmvContent) return null;
+        return {
+          type: 'RMV',
+          title: `RMV (Last ${settings.rmvPages} Pages) - Carry-over`,
+          content: rmvContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <Clock className="h-4 w-4" />,
+          color: 'bg-green-50 border-green-200',
+          id: `rmv-${originalDate}-carryover`
+        };
+      case 'OMV':
+        const omvContent = calculateOMV(entries, settings, originalDate);
+        if (!omvContent) return null;
+        return {
+          type: 'OMV',
+          title: `OMV (${settings.omvJuz} Juz) - Carry-over`,
+          content: omvContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <RotateCcw className="h-4 w-4" />,
+          color: 'bg-purple-50 border-purple-200',
+          id: `omv-${originalDate}-carryover`
+        };
+      case 'LISTENING':
+        const listeningContent = calculateListeningCycle(entries, settings, originalDate);
+        if (!listeningContent) return null;
+        return {
+          type: 'Listening',
+          title: `Listening Cycle (${settings.listeningJuz} Juz) - Carry-over`,
+          content: listeningContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <PlayCircle className="h-4 w-4" />,
+          color: 'bg-blue-50 border-blue-200',
+          id: `listening-${originalDate}-carryover`
+        };
+      case 'READING':
+        const readingContent = calculateReadingCycle(entries, settings, originalDate);
+        if (!readingContent) return null;
+        return {
+          type: 'Reading',
+          title: `Reading Cycle (${settings.readingJuz} Juz) - Carry-over`,
+          content: readingContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <BookOpen className="h-4 w-4" />,
+          color: 'bg-orange-50 border-orange-200',
+          id: `reading-${originalDate}-carryover`
+        };
+      default:
+        return null;
+    }
   };
 
   const calculateRMV = (entries: MemorizationEntry[], settings: ReviewSettings): string => {
@@ -174,11 +352,12 @@ export const MurajahDashboard = () => {
     setCycles(newCycles);
 
     // Save completion status to localStorage
-    const completions = cycles.map(c => c.completed);
-    localStorage.setItem('murajah-daily-completions', JSON.stringify({
-      date: new Date().toISOString().split('T')[0],
-      completions
-    }));
+    const completions = newCycles.reduce((acc, cycle) => {
+      acc[cycle.id] = cycle.completed;
+      return acc;
+    }, {} as { [cycleId: string]: boolean });
+    
+    saveTodaysCompletions(completions);
   };
 
   if (entries.length === 0) {
@@ -226,7 +405,7 @@ export const MurajahDashboard = () => {
       {/* Review Cycles */}
       <div className="grid gap-4">
         {cycles.map((cycle, index) => (
-          <Card key={index} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''}`}>
+          <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -236,6 +415,11 @@ export const MurajahDashboard = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800">{cycle.title}</h3>
                     <p className="text-gray-600">{cycle.content}</p>
+                    {cycle.startDate !== new Date().toISOString().split('T')[0] && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Carried over from {new Date(cycle.startDate).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
