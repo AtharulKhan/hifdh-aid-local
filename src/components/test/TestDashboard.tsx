@@ -4,11 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3 } from "lucide-react";
+import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3, Brain } from "lucide-react";
 import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
+import { WordRecallTest } from "./WordRecallTest";
 import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
@@ -82,6 +83,8 @@ export const TestDashboard = () => {
         return <RandomSpotTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "fill-blank":
         return <FillInBlankTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
+      case "word-recall":
+        return <WordRecallTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       default:
         return null;
     }
@@ -212,6 +215,29 @@ export const TestDashboard = () => {
               Complete verses with missing words. Perfect for ensuring you know every word precisely.
             </p>
             <Button variant="outline" className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 text-xs md:text-sm">
+              Start Test
+              <ArrowRight className="h-3 md:h-4 w-3 md:w-4 ml-2" />
+            </Button>
+          </div>
+        </Card>
+
+        {/* Word Recall Gap Fill Test */}
+        <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-300"
+              onClick={() => setActiveTest("word-recall")}>
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
+                <Brain className="h-5 md:h-6 w-5 md:w-6 text-blue-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base md:text-lg font-semibold text-gray-800 break-words">Word Recall Gap Fill</h3>
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-xs mt-1">Memory Recall</Badge>
+              </div>
+            </div>
+            <p className="text-gray-600 text-xs md:text-sm">
+              Read passages with missing words and hover to reveal. Test your memory recall with customizable gap rates.
+            </p>
+            <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 text-xs md:text-sm">
               Start Test
               <ArrowRight className="h-3 md:h-4 w-3 md:w-4 ml-2" />
             </Button>
