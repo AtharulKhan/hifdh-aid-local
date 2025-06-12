@@ -22,8 +22,8 @@ const navItems = [
   { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
-  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" },
-  { path: "/quran-system", icon: Book, label: "Qur'an System" }
+  { path: "/quran-system", icon: Book, label: "Qur'an System" },
+  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" }
 ];
 
 export const Navigation = () => {
