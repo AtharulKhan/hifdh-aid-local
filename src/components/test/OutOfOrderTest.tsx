@@ -166,7 +166,12 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
     // Create verse items with original and shuffled order
     const verseItems: VerseItem[] = selectedVerses.map((verse, index) => ({
       id: verse.id,
-      text: verse.text.replace(/\s*\(\d+\)\s*$/, ''), // Remove verse numbers from the end
+      text: verse.text
+        .replace(/\s*\(\d+\)\s*$/, '') // Remove parenthetical numbers
+        .replace(/\s*\d+\s*$/, '') // Remove standalone numbers at the end
+        .replace(/\s*[٠-٩]+\s*$/, '') // Remove Arabic-Indic digits at the end
+        .replace(/\s*[۰-۹]+\s*$/, '') // Remove Extended Arabic-Indic digits at the end
+        .trim(), // Remove any trailing whitespace
       originalOrder: index,
       currentOrder: index
     }));
