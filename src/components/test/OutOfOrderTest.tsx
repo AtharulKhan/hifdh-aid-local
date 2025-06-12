@@ -194,64 +194,66 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto px-4">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-4xl mx-auto px-2 sm:px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button onClick={onBack} variant="outline">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <Button onClick={onBack} variant="outline" size="sm" className="w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Tests
         </Button>
         
-        <div className="text-center">
-          <div className="flex items-center space-x-2">
-            <Shuffle className="h-6 w-6 text-purple-600" />
-            <h1 className="text-2xl font-bold text-gray-800">Out-of-Order Line Shuffle</h1>
+        <div className="text-center flex-1">
+          <div className="flex items-center justify-center space-x-2">
+            <Shuffle className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-800">Out-of-Order Line Shuffle</h1>
           </div>
-          <p className="text-gray-600 mt-1">Drag and rearrange verses in the correct order</p>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Drag and rearrange verses in the correct order</p>
         </div>
         
-        <div className="w-24"></div>
+        <div className="w-full sm:w-24 hidden sm:block"></div>
       </div>
 
       {!isTestActive ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shuffle className="h-5 w-5 text-purple-600" />
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <Shuffle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
               <span>Test Configuration</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="numVerses">Number of verses to shuffle (3-8)</Label>
-              <Input
-                id="numVerses"
-                type="number"
-                min="3"
-                max="8"
-                value={numVerses}
-                onChange={(e) => setNumVerses(Math.max(3, Math.min(8, parseInt(e.target.value) || 3)))}
-                className="w-32"
-              />
-              <p className="text-sm text-gray-500">
-                The test will present {numVerses} consecutive verses in random order for you to rearrange.
-              </p>
-            </div>
+          <CardContent className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="numVerses" className="text-sm">Number of verses to shuffle (3-8)</Label>
+                <Input
+                  id="numVerses"
+                  type="number"
+                  min="3"
+                  max="8"
+                  value={numVerses}
+                  onChange={(e) => setNumVerses(Math.max(3, Math.min(8, parseInt(e.target.value) || 3)))}
+                  className="w-full sm:w-32"
+                />
+                <p className="text-xs sm:text-sm text-gray-500">
+                  The test will present {numVerses} consecutive verses in random order for you to rearrange.
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="surahSelect">Select Surah (1-114)</Label>
-              <Input
-                id="surahSelect"
-                type="number"
-                min="1"
-                max="114"
-                value={selectedSurah}
-                onChange={(e) => setSelectedSurah(Math.max(1, Math.min(114, parseInt(e.target.value) || 1)))}
-                className="w-32"
-              />
-              <p className="text-sm text-gray-500">
-                Choose which Surah to test from: {getSurahName(selectedSurah)}
-              </p>
+              <div className="space-y-2">
+                <Label htmlFor="surahSelect" className="text-sm">Select Surah (1-114)</Label>
+                <Input
+                  id="surahSelect"
+                  type="number"
+                  min="1"
+                  max="114"
+                  value={selectedSurah}
+                  onChange={(e) => setSelectedSurah(Math.max(1, Math.min(114, parseInt(e.target.value) || 1)))}
+                  className="w-full sm:w-32"
+                />
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Choose which Surah to test from: {getSurahName(selectedSurah)}
+                </p>
+              </div>
             </div>
 
             <Button onClick={generateTest} size="lg" className="w-full">
@@ -261,21 +263,21 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Test Info */}
           <Card className="bg-purple-50 border-purple-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-purple-800">Current Passage</h3>
-                  <p className="text-purple-700">{currentPassage}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-purple-800 text-sm sm:text-base">Current Passage</h3>
+                  <p className="text-purple-700 text-sm sm:text-base break-words">{currentPassage}</p>
                 </div>
-                <div className="flex space-x-2">
-                  <Button onClick={checkAnswer} disabled={testResult !== null}>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Button onClick={checkAnswer} disabled={testResult !== null} size="sm" className="w-full sm:w-auto">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Check Order
                   </Button>
-                  <Button onClick={resetTest} variant="outline">
+                  <Button onClick={resetTest} variant="outline" size="sm" className="w-full sm:w-auto">
                     <RotateCcw className="h-4 w-4 mr-2" />
                     New Test
                   </Button>
@@ -287,14 +289,14 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
           {/* Result */}
           {testResult && (
             <Card className={testResult === 'correct' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
                   {testResult === 'correct' ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-600" />
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                   )}
-                  <span className={`font-medium ${testResult === 'correct' ? 'text-green-800' : 'text-red-800'}`}>
+                  <span className={`font-medium text-sm sm:text-base ${testResult === 'correct' ? 'text-green-800' : 'text-red-800'}`}>
                     {testResult === 'correct' ? 'Correct! Well done!' : 'Incorrect order. Try again!'}
                   </span>
                 </div>
@@ -304,7 +306,7 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
 
           {/* Draggable Verses */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800">
               Drag to rearrange in correct order:
             </h3>
             {verses.map((verse, index) => (
@@ -324,15 +326,15 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, index)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-purple-700">{index + 1}</span>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start sm:items-center space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-xs sm:text-sm font-medium text-purple-700">{index + 1}</span>
                     </div>
-                    <p className="text-gray-800 flex-1" dir="rtl">
+                    <p className="text-gray-800 flex-1 text-sm sm:text-base leading-relaxed break-words" dir="rtl">
                       {verse.text}
                     </p>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 hidden sm:block">
                       Drag to reorder
                     </div>
                   </div>
@@ -342,7 +344,7 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
           </div>
 
           <div className="text-center pt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Drag the verses to arrange them in the correct sequential order
             </p>
           </div>
