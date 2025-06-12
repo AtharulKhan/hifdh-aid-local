@@ -25,7 +25,8 @@ export const MurajahDashboard = () => {
     omvJuz: 1,
     listeningJuz: 2,
     readingJuz: 1,
-    currentJuz: 1
+    currentJuz: 1,
+    startDate: new Date().toISOString().split('T')[0]
   });
 
   // Load data from localStorage
@@ -135,9 +136,12 @@ export const MurajahDashboard = () => {
     const completedJuz = [...new Set(entries.map(e => e.juz))].sort((a, b) => a - b);
     if (completedJuz.length === 0) return '';
 
-    // Rotate through old Juz based on date
-    const dayOfYear = Math.floor((new Date(date).getTime() - new Date(date.split('-')[0] + '-01-01').getTime()) / (1000 * 60 * 60 * 24));
-    const cycleIndex = dayOfYear % completedJuz.length;
+    // Calculate days since start date for rotation
+    const startDate = new Date(settings.startDate);
+    const currentDate = new Date(date);
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const cycleIndex = daysSinceStart % completedJuz.length;
     
     const selectedJuz = [];
     for (let i = 0; i < settings.omvJuz && i < completedJuz.length; i++) {
@@ -202,6 +206,9 @@ export const MurajahDashboard = () => {
                 month: 'long', 
                 day: 'numeric' 
               })}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Based on start date: {new Date(settings.startDate).toLocaleDateString()}
+              </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-green-600">

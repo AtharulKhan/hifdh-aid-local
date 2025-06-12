@@ -13,6 +13,7 @@ export interface ReviewSettings {
   listeningJuz: number; // Listening cycle Juz count (default 2)
   readingJuz: number; // Reading cycle Juz count (default 1)
   currentJuz: number; // Current Juz being worked on
+  startDate: string; // Start date for cycle calculations
 }
 
 export const ReviewSettings = () => {
@@ -21,7 +22,8 @@ export const ReviewSettings = () => {
     omvJuz: 1,
     listeningJuz: 2,
     readingJuz: 1,
-    currentJuz: 1
+    currentJuz: 1,
+    startDate: new Date().toISOString().split('T')[0]
   });
 
   // Load settings from localStorage on component mount
@@ -37,7 +39,7 @@ export const ReviewSettings = () => {
     alert('Settings saved successfully!');
   };
 
-  const updateSetting = (key: keyof ReviewSettings, value: number) => {
+  const updateSetting = (key: keyof ReviewSettings, value: number | string) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -64,6 +66,24 @@ export const ReviewSettings = () => {
           <CardTitle>Cycle Configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Start Date Settings */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-indigo-50 text-indigo-700">Start Date</Badge>
+              <Label className="text-base font-semibold">Cycle Start Date</Label>
+            </div>
+            <div>
+              <Label htmlFor="startDate">Start Date for Cycle Calculations</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={settings.startDate}
+                onChange={(e) => updateSetting('startDate', e.target.value)}
+              />
+              <p className="text-sm text-gray-500 mt-1">All cycle rotations will be calculated from this date</p>
+            </div>
+          </div>
+
           {/* RMV Settings */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -172,6 +192,9 @@ export const ReviewSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <strong>Start Date:</strong> {new Date(settings.startDate).toLocaleDateString()}
+            </div>
             <div>
               <strong>RMV:</strong> Last {settings.rmvPages} pages from Juz {settings.currentJuz}
             </div>
