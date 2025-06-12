@@ -23,11 +23,11 @@ const Murajah = () => {
           <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Today's Review
           </TabsTrigger>
-          <TabsTrigger value="tracker" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
-            Memorization
-          </TabsTrigger>
           <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Log
+          </TabsTrigger>
+          <TabsTrigger value="tracker" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Memorization
           </TabsTrigger>
           <TabsTrigger value="settings" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Settings
