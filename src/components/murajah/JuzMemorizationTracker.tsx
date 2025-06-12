@@ -84,6 +84,25 @@ export const JuzMemorizationTracker = () => {
     return memorizedJuz.filter(j => j.isMemorized).length;
   };
 
+  const getMemorizedSurahCount = () => {
+    const memorizedJuzNumbers = memorizedJuz
+      .filter(j => j.isMemorized)
+      .map(j => j.juzNumber);
+    
+    const memorizedSurahs = new Set<string>();
+    
+    memorizedJuzNumbers.forEach(juzNumber => {
+      const juz = juzData[juzNumber.toString() as keyof typeof juzData];
+      if (juz) {
+        Object.keys(juz.verse_mapping).forEach(surahId => {
+          memorizedSurahs.add(surahId);
+        });
+      }
+    });
+    
+    return memorizedSurahs.size;
+  };
+
   const isJuzMemorized = (juzNumber: number) => {
     const juz = memorizedJuz.find(j => j.juzNumber === juzNumber);
     return juz?.isMemorized || false;
@@ -114,7 +133,7 @@ export const JuzMemorizationTracker = () => {
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-4 md:p-6 text-center">
             <div className="text-xl md:text-2xl font-bold text-green-600">{getMemorizedCount()}</div>
@@ -123,11 +142,17 @@ export const JuzMemorizationTracker = () => {
         </Card>
         <Card>
           <CardContent className="p-4 md:p-6 text-center">
+            <div className="text-xl md:text-2xl font-bold text-blue-600">{getMemorizedSurahCount()}</div>
+            <div className="text-xs md:text-sm text-gray-600 break-words">Surahs Memorized</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 md:p-6 text-center">
             <div className="text-xl md:text-2xl font-bold text-blue-600">30</div>
             <div className="text-xs md:text-sm text-gray-600 break-words">Total Juz</div>
           </CardContent>
         </Card>
-        <Card className="sm:col-span-2 lg:col-span-1">
+        <Card>
           <CardContent className="p-4 md:p-6 text-center">
             <div className="text-xl md:text-2xl font-bold text-purple-600">
               {Math.round((getMemorizedCount() / 30) * 100)}%
