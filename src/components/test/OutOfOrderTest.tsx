@@ -53,7 +53,7 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
         return;
       }
       
-      // Get all verses that are within memorized Juz ranges
+      // Get verses from memorized Juz entries only
       availableVerses = allVerses.filter(verse => {
         return memorizedEntries.some(entry => {
           if (entry.type === 'juz') {
@@ -66,58 +66,65 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
         });
       });
     } else if (testType === 'juz') {
-      // Filter verses for selected Juz
+      // Filter verses for selected Juz only
       const juzStartVerse = ((selectedJuz - 1) * 600) + 1;
       const juzEndVerse = selectedJuz * 600;
       availableVerses = allVerses.filter(verse => 
         verse.id >= juzStartVerse && verse.id <= juzEndVerse
       );
     } else if (testType === 'surah') {
-      // Filter verses for selected Surah
+      // Filter verses for selected Surah only
       availableVerses = allVerses.filter(verse => verse.surah === selectedSurah);
     }
 
     if (availableVerses.length < numVerses) {
-      alert(`Not enough verses available. Maximum: ${availableVerses.length}`);
+      alert(`Not enough verses available in the selected ${testType}. Available: ${availableVerses.length}, Requested: ${numVerses}`);
       return;
     }
 
-    // Find consecutive verses from the same surah
+    // Find consecutive verses from the same surah within the filtered available verses
     let selectedVerses: any[] = [];
     let attempts = 0;
-    const maxAttempts = 50;
+    const maxAttempts = 100;
 
     while (selectedVerses.length === 0 && attempts < maxAttempts) {
       attempts++;
       
-      // Pick a random starting point
-      const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
-      const potentialVerses = availableVerses.slice(startIndex, startIndex + numVerses);
+      // Pick a random starting point from available verses
+      const maxStartIndex = Math.max(0, availableVerses.length - numVerses);
+      const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
       
-      // Check if they're from the same surah and consecutive
-      const firstVerse = potentialVerses[0];
-      const lastVerse = potentialVerses[numVerses - 1];
+      // Try to find consecutive verses starting from this point
+      let consecutiveVerses: any[] = [];
+      let currentVerse = availableVerses[startIndex];
       
-      if (firstVerse.surah === lastVerse.surah) {
-        // Check if verses are consecutive
-        let consecutive = true;
-        for (let i = 1; i < potentialVerses.length; i++) {
-          if (potentialVerses[i].ayah !== potentialVerses[i-1].ayah + 1 ||
-              potentialVerses[i].surah !== potentialVerses[i-1].surah) {
-            consecutive = false;
-            break;
-          }
-        }
+      if (!currentVerse) continue;
+      
+      consecutiveVerses.push(currentVerse);
+      
+      // Look for consecutive verses after this one
+      for (let i = 1; i < numVerses; i++) {
+        const nextVerseInSequence = availableVerses.find(v => 
+          v.surah === currentVerse.surah && 
+          v.ayah === currentVerse.ayah + i
+        );
         
-        if (consecutive) {
-          selectedVerses = potentialVerses;
+        if (nextVerseInSequence) {
+          consecutiveVerses.push(nextVerseInSequence);
+        } else {
+          break;
         }
+      }
+      
+      // If we found enough consecutive verses, use them
+      if (consecutiveVerses.length === numVerses) {
+        selectedVerses = consecutiveVerses;
       }
     }
 
-    // Fallback: if no consecutive verses found, pick any consecutive sequence
+    // Fallback: if no consecutive verses found within the filtered content, try a different approach
     if (selectedVerses.length === 0) {
-      // Group verses by surah and find consecutive sequences
+      // Group available verses by surah
       const surahGroups: Record<number, any[]> = {};
       availableVerses.forEach(verse => {
         if (!surahGroups[verse.surah]) {
@@ -131,7 +138,7 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
         surahGroups[parseInt(surah)].sort((a, b) => a.ayah - b.ayah);
       });
 
-      // Find a surah with enough consecutive verses
+      // Find a surah with enough consecutive verses within our filtered content
       for (const surah of Object.keys(surahGroups)) {
         const verses = surahGroups[parseInt(surah)];
         for (let i = 0; i <= verses.length - numVerses; i++) {
@@ -154,10 +161,15 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
       }
     }
 
-    // Final fallback: just take any numVerses from available verses
+    // Final fallback: if still no consecutive verses, take any numVerses from filtered content
     if (selectedVerses.length === 0) {
-      const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
-      selectedVerses = availableVerses.slice(startIndex, startIndex + numVerses);
+      if (availableVerses.length >= numVerses) {
+        const startIndex = Math.floor(Math.random() * (availableVerses.length - numVerses + 1));
+        selectedVerses = availableVerses.slice(startIndex, startIndex + numVerses);
+      } else {
+        alert(`Unable to find ${numVerses} verses in the selected ${testType}.`);
+        return;
+      }
     }
 
     // Create verse items with original and shuffled order
