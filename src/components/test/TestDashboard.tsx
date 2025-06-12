@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
-import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
@@ -19,9 +19,22 @@ interface JuzMemorization {
   endPage?: number;
 }
 
+// Interface for test components that includes all required properties
+interface TestMemorizationEntry {
+  id: string;
+  type: 'surah' | 'juz' | 'page';
+  name: string;
+  reference: string;
+  dateMemorized: string;
+  isMemorized: boolean;
+  juz: number;
+  startPage: number;
+  endPage: number;
+}
+
 export const TestDashboard = () => {
   const [activeTest, setActiveTest] = useState<string | null>(null);
-  const [memorizedEntries, setMemorizedEntries] = useState<MemorizationEntry[]>([]);
+  const [memorizedEntries, setMemorizedEntries] = useState<TestMemorizationEntry[]>([]);
 
   // Load memorized juz from localStorage and convert to test format
   useEffect(() => {
@@ -32,7 +45,7 @@ export const TestDashboard = () => {
         const memorizedJuz = juzMemorization.filter(juz => juz.isMemorized);
         
         // Convert to format expected by test components
-        const testEntries: MemorizationEntry[] = memorizedJuz.map(juz => {
+        const testEntries: TestMemorizationEntry[] = memorizedJuz.map(juz => {
           const juzInfo = juzData[juz.juzNumber.toString() as keyof typeof juzData];
           
           return {
