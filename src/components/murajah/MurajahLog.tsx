@@ -1,7 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, ArrowRight } from "lucide-react";
 
 interface LogEntry {
@@ -43,7 +44,6 @@ export const MurajahLog = () => {
       const memorizationEntries = entries ? JSON.parse(entries) : [];
       const reviewSettings = settings ? JSON.parse(settings) : {};
 
-      // Generate log entries based on completion history
       const logs = generateLogEntries(completionData, memorizationEntries, reviewSettings);
       setLogEntries(logs);
     } catch (error) {
@@ -185,22 +185,37 @@ export const MurajahLog = () => {
 
   const getCycleColor = (type: string) => {
     switch (type) {
-      case 'RMV': return 'bg-green-50 border-green-200 text-green-800';
-      case 'OMV': return 'bg-purple-50 border-purple-200 text-purple-800';
-      case 'Listening': return 'bg-blue-50 border-blue-200 text-blue-800';
-      case 'Reading': return 'bg-orange-50 border-orange-200 text-orange-800';
-      default: return 'bg-gray-50 border-gray-200 text-gray-800';
+      case 'RMV': return 'text-green-600';
+      case 'OMV': return 'text-purple-600';
+      case 'Listening': return 'text-blue-600';
+      case 'Reading': return 'text-orange-600';
+      default: return 'text-gray-600';
     }
   };
 
-  const groupedEntries = logEntries.reduce((groups, entry) => {
-    const date = entry.date;
-    if (!groups[date]) {
-      groups[date] = [];
+  const updateCompletionStatus = (entryIndex: number, completed: boolean) => {
+    const updatedEntries = [...logEntries];
+    updatedEntries[entryIndex].cycle.completed = completed;
+    setLogEntries(updatedEntries);
+
+    // Update localStorage
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    if (savedData) {
+      try {
+        const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+        const entry = updatedEntries[entryIndex];
+        
+        // Find the correct day's data and update the specific cycle
+        const dayDataIndex = allCompletions.findIndex(d => d.date === entry.date);
+        if (dayDataIndex >= 0) {
+          allCompletions[dayDataIndex].completions[entry.cycle.id] = completed;
+          localStorage.setItem('murajah-daily-completions', JSON.stringify(allCompletions));
+        }
+      } catch (error) {
+        console.error('Error updating completion status:', error);
+      }
     }
-    groups[date].push(entry);
-    return groups;
-  }, {} as Record<string, LogEntry[]>);
+  };
 
   if (logEntries.length === 0) {
     return (
@@ -236,61 +251,82 @@ export const MurajahLog = () => {
         </CardContent>
       </Card>
 
-      {/* Log Entries by Date */}
-      <div className="space-y-6">
-        {Object.entries(groupedEntries).map(([date, entries]) => (
-          <Card key={date}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {new Date(date).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-                {date === new Date().toISOString().split('T')[0] && (
-                  <Badge variant="default" className="ml-2">Today</Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {entries.map((entry, index) => (
-                <div 
-                  key={entry.cycle.id} 
-                  className={`p-4 rounded-lg border ${getCycleColor(entry.cycle.type)} transition-all duration-200`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white">
-                        {entry.cycle.completed ? 
-                          <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                          getCycleIcon(entry.cycle.type)
-                        }
-                      </div>
+      {/* Log Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Review Cycle History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Cycle Type</TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Completed</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logEntries.map((entry, index) => (
+                <TableRow key={entry.cycle.id}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {new Date(entry.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(entry.date).toLocaleDateString('en-US', { 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                      {entry.date === new Date().toISOString().split('T')[0] && (
+                        <Badge variant="default" className="text-xs mt-1 w-fit">Today</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className={getCycleColor(entry.cycle.type)}>
+                        {getCycleIcon(entry.cycle.type)}
+                      </span>
                       <div>
-                        <h3 className="font-semibold">{entry.cycle.title}</h3>
-                        <p className="text-sm opacity-80">{entry.cycle.content}</p>
+                        <div className="font-medium">{entry.cycle.type}</div>
+                        <div className="text-xs text-gray-500">{entry.cycle.title}</div>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{entry.cycle.content}</span>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       {entry.carryOver && (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
                           <ArrowRight className="h-3 w-3 mr-1" />
                           Carry-over
                         </Badge>
                       )}
-                      <Badge variant={entry.cycle.completed ? "default" : "outline"}>
+                      <Badge variant={entry.cycle.completed ? "default" : "outline"} className="text-xs">
                         {entry.cycle.completed ? "Completed" : "Incomplete"}
                       </Badge>
                     </div>
-                  </div>
-                </div>
+                  </TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={entry.cycle.completed}
+                      onCheckedChange={(checked) => updateCompletionStatus(index, checked as boolean)}
+                    />
+                  </TableCell>
+                </TableRow>
               ))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Legend */}
       <Card className="bg-gray-50">
@@ -315,7 +351,7 @@ export const MurajahLog = () => {
               <span>Successfully completed</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gray-600">Cycles continue to next day if incomplete</span>
+              <span className="text-gray-600">Click checkbox to update status</span>
             </div>
           </div>
         </CardContent>
