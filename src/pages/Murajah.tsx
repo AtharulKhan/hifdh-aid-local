@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MurajahDashboard } from "@/components/murajah/MurajahDashboard";
 import { MemorizationTracker } from "@/components/murajah/MemorizationTracker";
 import { ReviewSettings } from "@/components/murajah/ReviewSettings";
+import { MurajahLog } from "@/components/murajah/MurajahLog";
 
 const Murajah = () => {
   return (
@@ -18,15 +19,18 @@ const Murajah = () => {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto md:h-10">
-          <TabsTrigger value="dashboard" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto md:h-10">
+          <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Today's Review
           </TabsTrigger>
-          <TabsTrigger value="tracker" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
-            Memorization Tracker
+          <TabsTrigger value="tracker" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Memorization
           </TabsTrigger>
-          <TabsTrigger value="settings" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
-            Review Settings
+          <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Log
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Settings
           </TabsTrigger>
         </TabsList>
 
@@ -36,6 +40,10 @@ const Murajah = () => {
 
         <TabsContent value="tracker" className="space-y-6">
           <MemorizationTracker />
+        </TabsContent>
+
+        <TabsContent value="log" className="space-y-6">
+          <MurajahLog />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
