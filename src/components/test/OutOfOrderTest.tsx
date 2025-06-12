@@ -166,7 +166,7 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
     // Create verse items with original and shuffled order
     const verseItems: VerseItem[] = selectedVerses.map((verse, index) => ({
       id: verse.id,
-      text: verse.text,
+      text: verse.text.replace(/\s*\(\d+\)\s*$/, ''), // Remove verse numbers from the end
       originalOrder: index,
       currentOrder: index
     }));
