@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Shuffle, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { getVersesArray, getSurahName } from "@/data/quranData";
 
@@ -33,6 +34,9 @@ interface VerseItem {
 
 export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps) => {
   const [numVerses, setNumVerses] = useState(4);
+  const [testType, setTestType] = useState<'memorized' | 'juz' | 'surah'>('memorized');
+  const [selectedJuz, setSelectedJuz] = useState<number>(1);
+  const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [verses, setVerses] = useState<VerseItem[]>([]);
   const [isTestActive, setIsTestActive] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
@@ -40,22 +44,38 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
   const [currentPassage, setCurrentPassage] = useState<string>("");
 
   const generateTest = () => {
-    if (memorizedEntries.length === 0) return;
-
     const allVerses = getVersesArray();
-    
-    // Get all verses that are within memorized Juz ranges
-    const availableVerses = allVerses.filter(verse => {
-      return memorizedEntries.some(entry => {
-        if (entry.type === 'juz') {
-          // Calculate approximate verse range for each Juz (each Juz has roughly 600+ verses)
-          const juzStartVerse = ((entry.juz - 1) * 600) + 1;
-          const juzEndVerse = entry.juz * 600;
-          return verse.id >= juzStartVerse && verse.id <= juzEndVerse;
-        }
-        return false;
+    let availableVerses: any[] = [];
+
+    if (testType === 'memorized') {
+      if (memorizedEntries.length === 0) {
+        alert('No memorized content available. Please mark your progress in Muraja\'ah section.');
+        return;
+      }
+      
+      // Get all verses that are within memorized Juz ranges
+      availableVerses = allVerses.filter(verse => {
+        return memorizedEntries.some(entry => {
+          if (entry.type === 'juz') {
+            // Calculate approximate verse range for each Juz (each Juz has roughly 600+ verses)
+            const juzStartVerse = ((entry.juz - 1) * 600) + 1;
+            const juzEndVerse = entry.juz * 600;
+            return verse.id >= juzStartVerse && verse.id <= juzEndVerse;
+          }
+          return false;
+        });
       });
-    });
+    } else if (testType === 'juz') {
+      // Filter verses for selected Juz
+      const juzStartVerse = ((selectedJuz - 1) * 600) + 1;
+      const juzEndVerse = selectedJuz * 600;
+      availableVerses = allVerses.filter(verse => 
+        verse.id >= juzStartVerse && verse.id <= juzEndVerse
+      );
+    } else if (testType === 'surah') {
+      // Filter verses for selected Surah
+      availableVerses = allVerses.filter(verse => verse.surah === selectedSurah);
+    }
 
     if (availableVerses.length < numVerses) {
       alert(`Not enough verses available. Maximum: ${availableVerses.length}`);
@@ -282,18 +302,70 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
               </p>
             </div>
 
-            <div className="space-y-2">
-              <h4 className="font-medium">Available Content:</h4>
-              <div className="flex flex-wrap gap-2">
-                {memorizedEntries.slice(0, 5).map((entry) => (
-                  <Badge key={entry.id} variant="secondary">
-                    {entry.name}
-                  </Badge>
-                ))}
-                {memorizedEntries.length > 5 && (
-                  <Badge variant="outline">+{memorizedEntries.length - 5} more</Badge>
-                )}
-              </div>
+            <div className="space-y-4">
+              <Label>Test Content</Label>
+              <Select value={testType} onValueChange={(value: 'memorized' | 'juz' | 'surah') => setTestType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select test type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="memorized">Your Memorized Portions</SelectItem>
+                  <SelectItem value="juz">Specific Juz</SelectItem>
+                  <SelectItem value="surah">Specific Surah</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {testType === 'juz' && (
+                <div className="space-y-2">
+                  <Label htmlFor="juzSelect">Select Juz (1-30)</Label>
+                  <Input
+                    id="juzSelect"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={selectedJuz}
+                    onChange={(e) => setSelectedJuz(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
+                    className="w-32"
+                  />
+                </div>
+              )}
+
+              {testType === 'surah' && (
+                <div className="space-y-2">
+                  <Label htmlFor="surahSelect">Select Surah (1-114)</Label>
+                  <Input
+                    id="surahSelect"
+                    type="number"
+                    min="1"
+                    max="114"
+                    value={selectedSurah}
+                    onChange={(e) => setSelectedSurah(Math.max(1, Math.min(114, parseInt(e.target.value) || 1)))}
+                    className="w-32"
+                  />
+                </div>
+              )}
+
+              {testType === 'memorized' && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Available Content:</h4>
+                  {memorizedEntries.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {memorizedEntries.slice(0, 5).map((entry) => (
+                        <Badge key={entry.id} variant="secondary">
+                          {entry.name}
+                        </Badge>
+                      ))}
+                      {memorizedEntries.length > 5 && (
+                        <Badge variant="outline">+{memorizedEntries.length - 5} more</Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      No memorized content available. Please mark your progress in the Muraja'ah section.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <Button onClick={generateTest} size="lg" className="w-full">
