@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -339,11 +340,16 @@ export const MurajahDashboard = () => {
       const juzNumber = juzMem.juzNumber;
       const juz = juzData[juzNumber.toString() as keyof typeof juzData];
       
+      // Prioritize page range if both start and end pages are set
       if (juzMem.startPage && juzMem.endPage) {
         return `Juz ${juzNumber} (Pages ${juzMem.startPage}-${juzMem.endPage})`;
-      } else if (juz) {
+      } 
+      // Fallback to verse range if juz data exists
+      else if (juz) {
         return `Juz ${juzNumber} (${juz.first_verse_key} - ${juz.last_verse_key})`;
-      } else {
+      } 
+      // Final fallback to just juz number
+      else {
         return `Juz ${juzNumber}`;
       }
     }).filter(content => content).join(', ');
