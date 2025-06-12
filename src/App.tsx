@@ -13,6 +13,7 @@ import Mindfulness from "./pages/Mindfulness";
 import PageView from "./pages/PageView";
 import Test from "./pages/Test";
 import Tajweed from "./pages/Tajweed";
+import Murajah from "./pages/Murajah";
 
 function App() {
   const isMobile = useIsMobile();
@@ -28,6 +29,7 @@ function App() {
               <Route path="/page-view" element={<PageView />} />
               <Route path="/test" element={<Test />} />
               <Route path="/tajweed" element={<Tajweed />} />
+              <Route path="/murajah" element={<Murajah />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/mindfulness" element={<Mindfulness />} />

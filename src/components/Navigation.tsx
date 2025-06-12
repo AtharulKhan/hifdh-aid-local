@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   ClipboardCheck,
-  BookText
+  BookText,
+  RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -19,7 +20,8 @@ const navItems = [
   { path: "/", icon: Home, label: "Quran Review (by Verse)" },
   { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
-  { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" }
+  { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
+  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" }
 ];
 
 export const Navigation = () => {
