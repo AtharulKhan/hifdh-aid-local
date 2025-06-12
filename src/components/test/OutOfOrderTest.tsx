@@ -8,21 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Shuffle, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { getVersesArray, getSurahName } from "@/data/quranData";
 
-interface TestMemorizationEntry {
-  id: string;
-  type: 'surah' | 'juz' | 'page';
-  name: string;
-  reference: string;
-  dateMemorized: string;
+interface JuzMemorization {
+  juzNumber: number;
   isMemorized: boolean;
-  juz: number;
-  startPage: number;
-  endPage: number;
+  dateMemorized?: string;
+  startPage?: number;
+  endPage?: number;
+  memorizedSurahs?: number[];
 }
 
 interface OutOfOrderTestProps {
   onBack: () => void;
-  memorizedEntries: TestMemorizationEntry[];
 }
 
 interface VerseItem {
@@ -32,7 +28,7 @@ interface VerseItem {
   currentOrder: number;
 }
 
-export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps) => {
+export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
   const [numVerses, setNumVerses] = useState(4);
   const [testType, setTestType] = useState<'memorized' | 'juz' | 'surah'>('memorized');
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
@@ -42,28 +38,48 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [testResult, setTestResult] = useState<'correct' | 'incorrect' | null>(null);
   const [currentPassage, setCurrentPassage] = useState<string>("");
+  const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
+
+  // Load memorization data from localStorage
+  useEffect(() => {
+    const savedJuz = localStorage.getItem('murajah-juz-memorization');
+    if (savedJuz) {
+      try {
+        setJuzMemorization(JSON.parse(savedJuz));
+      } catch (error) {
+        console.error('Error loading memorization data:', error);
+        setJuzMemorization([]);
+      }
+    }
+  }, []);
 
   const generateTest = () => {
     const allVerses = getVersesArray();
     let availableVerses: any[] = [];
 
     if (testType === 'memorized') {
-      if (memorizedEntries.length === 0) {
+      // Get verses from memorized Juz and individual Surahs from localStorage
+      if (juzMemorization.length === 0) {
         alert('No memorized content available. Please mark your progress in Muraja\'ah section.');
         return;
       }
       
-      // Get verses from memorized Juz entries only
-      availableVerses = allVerses.filter(verse => {
-        return memorizedEntries.some(entry => {
-          if (entry.type === 'juz') {
-            // Calculate approximate verse range for each Juz (each Juz has roughly 600+ verses)
-            const juzStartVerse = ((entry.juz - 1) * 600) + 1;
-            const juzEndVerse = entry.juz * 600;
-            return verse.id >= juzStartVerse && verse.id <= juzEndVerse;
-          }
-          return false;
-        });
+      juzMemorization.forEach(juzMem => {
+        if (juzMem.isMemorized) {
+          // Full Juz is memorized
+          const juzStartVerse = ((juzMem.juzNumber - 1) * 600) + 1;
+          const juzEndVerse = juzMem.juzNumber * 600;
+          const juzVerses = allVerses.filter(verse => 
+            verse.id >= juzStartVerse && verse.id <= juzEndVerse
+          );
+          availableVerses.push(...juzVerses);
+        } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
+          // Individual Surahs are memorized
+          juzMem.memorizedSurahs.forEach(surahId => {
+            const surahVerses = allVerses.filter(verse => verse.surah === surahId);
+            availableVerses.push(...surahVerses);
+          });
+        }
       });
     } else if (testType === 'juz') {
       // Filter verses for selected Juz only
@@ -199,56 +215,22 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
     setTestResult(null);
   };
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedItem(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
+  const getMemorizedContentSummary = () => {
+    const memorizedJuzCount = juzMemorization.filter(j => j.isMemorized).length;
+    const memorizedSurahCount = juzMemorization.reduce((total, juz) => {
+      return total + (juz.memorizedSurahs?.length || 0);
+    }, 0);
     
-    if (draggedItem === null || draggedItem === dropIndex) {
-      setDraggedItem(null);
-      return;
-    }
-
-    const newVerses = [...verses];
-    const draggedVerse = newVerses[draggedItem];
-    
-    // Remove the dragged item
-    newVerses.splice(draggedItem, 1);
-    
-    // Insert it at the new position
-    const actualDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
-    newVerses.splice(actualDropIndex, 0, draggedVerse);
-    
-    // Update current orders
-    newVerses.forEach((verse, index) => {
-      verse.currentOrder = index;
-    });
-
-    setVerses(newVerses);
-    setDraggedItem(null);
+    return {
+      juzCount: memorizedJuzCount,
+      surahCount: memorizedSurahCount,
+      hasMemorization: memorizedJuzCount > 0 || memorizedSurahCount > 0
+    };
   };
 
-  const checkAnswer = () => {
-    const isCorrect = verses.every((verse, index) => verse.originalOrder === index);
-    setTestResult(isCorrect ? 'correct' : 'incorrect');
-  };
+  const memorizedSummary = getMemorizedContentSummary();
 
-  const resetTest = () => {
-    setIsTestActive(false);
-    setTestResult(null);
-    setVerses([]);
-    setCurrentPassage("");
-  };
-
-  if (memorizedEntries.length === 0) {
+  if (!memorizedSummary.hasMemorization) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto px-4">
         <Button onClick={onBack} variant="outline" className="mb-4">
@@ -261,7 +243,7 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
             <Shuffle className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorization Data</h3>
             <p className="text-gray-500">
-              Mark your memorized Juz in the Muraja'ah section to enable this test.
+              Mark your memorized Juz or individual Surahs in the Muraja'ah section to enable this test.
             </p>
           </CardContent>
         </Card>
@@ -360,22 +342,21 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
               {testType === 'memorized' && (
                 <div className="space-y-2">
                   <h4 className="font-medium">Available Content:</h4>
-                  {memorizedEntries.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {memorizedEntries.slice(0, 5).map((entry) => (
-                        <Badge key={entry.id} variant="secondary">
-                          {entry.name}
-                        </Badge>
-                      ))}
-                      {memorizedEntries.length > 5 && (
-                        <Badge variant="outline">+{memorizedEntries.length - 5} more</Badge>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      No memorized content available. Please mark your progress in the Muraja'ah section.
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {memorizedSummary.juzCount > 0 && (
+                      <Badge variant="secondary">
+                        {memorizedSummary.juzCount} Full Juz
+                      </Badge>
+                    )}
+                    {memorizedSummary.surahCount > 0 && (
+                      <Badge variant="secondary">
+                        {memorizedSummary.surahCount} Individual Surahs
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Content is loaded from your Muraja'ah memorization tracking.
+                  </p>
                 </div>
               )}
             </div>
@@ -476,4 +457,53 @@ export const OutOfOrderTest = ({ onBack, memorizedEntries }: OutOfOrderTestProps
       )}
     </div>
   );
+};
+
+const handleDragStart = (e: React.DragEvent, index: number) => {
+  setDraggedItem(index);
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+const handleDragOver = (e: React.DragEvent) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+};
+
+const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+  e.preventDefault();
+  
+  if (draggedItem === null || draggedItem === dropIndex) {
+    setDraggedItem(null);
+    return;
+  }
+
+  const newVerses = [...verses];
+  const draggedVerse = newVerses[draggedItem];
+  
+  // Remove the dragged item
+  newVerses.splice(draggedItem, 1);
+  
+  // Insert it at the new position
+  const actualDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
+  newVerses.splice(actualDropIndex, 0, draggedVerse);
+  
+  // Update current orders
+  newVerses.forEach((verse, index) => {
+    verse.currentOrder = index;
+  });
+
+  setVerses(newVerses);
+  setDraggedItem(null);
+};
+
+const checkAnswer = () => {
+  const isCorrect = verses.every((verse, index) => verse.originalOrder === index);
+  setTestResult(isCorrect ? 'correct' : 'incorrect');
+};
+
+const resetTest = () => {
+  setIsTestActive(false);
+  setTestResult(null);
+  setVerses([]);
+  setCurrentPassage("");
 };
