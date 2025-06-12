@@ -18,10 +18,16 @@ const Murajah = () => {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="dashboard">Today's Review</TabsTrigger>
-          <TabsTrigger value="tracker">Memorization Tracker</TabsTrigger>
-          <TabsTrigger value="settings">Review Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto md:h-10">
+          <TabsTrigger value="dashboard" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+            Today's Review
+          </TabsTrigger>
+          <TabsTrigger value="tracker" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+            Memorization Tracker
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+            Review Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
