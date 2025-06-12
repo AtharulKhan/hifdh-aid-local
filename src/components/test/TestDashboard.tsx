@@ -9,17 +9,53 @@ import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
-import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
+
+interface JuzMemorization {
+  juzNumber: number;
+  isMemorized: boolean;
+  dateMemorized?: string;
+  startPage?: number;
+  endPage?: number;
+}
+
+// Convert juz memorization to legacy format for compatibility with test components
+interface MemorizationEntry {
+  id: string;
+  type: 'surah' | 'juz' | 'page';
+  name: string;
+  reference: string;
+  dateMemorized: string;
+  isMemorized: boolean;
+}
 
 export const TestDashboard = () => {
   const [activeTest, setActiveTest] = useState<string | null>(null);
   const [memorizedEntries, setMemorizedEntries] = useState<MemorizationEntry[]>([]);
 
-  // Load memorized entries from localStorage
+  // Load memorized juz from localStorage and convert to legacy format
   useEffect(() => {
-    const savedEntries = localStorage.getItem('murajah-memorization-entries');
-    if (savedEntries) {
-      setMemorizedEntries(JSON.parse(savedEntries));
+    const savedJuz = localStorage.getItem('murajah-juz-memorization');
+    if (savedJuz) {
+      try {
+        const juzMemorization: JuzMemorization[] = JSON.parse(savedJuz);
+        const memorizedJuz = juzMemorization.filter(juz => juz.isMemorized);
+        
+        // Convert to legacy format for test components
+        const legacyEntries: MemorizationEntry[] = memorizedJuz.map(juz => ({
+          id: `juz-${juz.juzNumber}`,
+          type: 'juz' as const,
+          name: `Juz ${juz.juzNumber}`,
+          reference: juz.startPage && juz.endPage 
+            ? `Pages ${juz.startPage}-${juz.endPage}`
+            : `Juz ${juz.juzNumber}`,
+          dateMemorized: juz.dateMemorized || new Date().toISOString().split('T')[0],
+          isMemorized: true
+        }));
+        
+        setMemorizedEntries(legacyEntries);
+      } catch (error) {
+        console.error('Error loading juz memorization data:', error);
+      }
     }
   }, []);
 
@@ -50,6 +86,30 @@ export const TestDashboard = () => {
           Test and strengthen your Quran memorization with various challenging exercises designed to help you master your Hifz.
         </p>
       </div>
+
+      {/* Your Memorization Summary */}
+      {memorizedEntries.length > 0 && (
+        <Card className="p-3 md:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <div className="text-center space-y-2">
+            <h4 className="font-semibold text-gray-800 text-sm md:text-base">📚 Your Memorization</h4>
+            <p className="text-xs md:text-sm text-gray-600">
+              You have memorized {memorizedEntries.length} Juz. Ready to test your knowledge!
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
+              {memorizedEntries.slice(0, 5).map((entry) => (
+                <Badge key={entry.id} variant="secondary" className="text-xs">
+                  {entry.name}
+                </Badge>
+              ))}
+              {memorizedEntries.length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{memorizedEntries.length - 5} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Test Options Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
@@ -146,15 +206,26 @@ export const TestDashboard = () => {
         </Card>
       </div>
 
-      {/* Quick Stats or Tips */}
-      <Card className="p-3 md:p-4 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-        <div className="text-center space-y-2">
-          <h4 className="font-semibold text-gray-800 text-sm md:text-base">💡 Test Tips</h4>
-          <p className="text-xs md:text-sm text-gray-600">
-            Start with easier tests and gradually increase difficulty. Regular testing strengthens long-term retention.
-          </p>
-        </div>
-      </Card>
+      {/* Tips or No Memorization Message */}
+      {memorizedEntries.length === 0 ? (
+        <Card className="p-3 md:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+          <div className="text-center space-y-2">
+            <h4 className="font-semibold text-gray-800 text-sm md:text-base">📖 No Memorization Data</h4>
+            <p className="text-xs md:text-sm text-gray-600">
+              Mark your memorized Juz in the "Muraja'ah - Smart Review" → "Juz" tab to enable testing features.
+            </p>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-3 md:p-4 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <div className="text-center space-y-2">
+            <h4 className="font-semibold text-gray-800 text-sm md:text-base">💡 Test Tips</h4>
+            <p className="text-xs md:text-sm text-gray-600">
+              Start with easier tests and gradually increase difficulty. Regular testing strengthens long-term retention.
+            </p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
