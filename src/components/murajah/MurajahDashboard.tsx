@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,7 @@ interface JuzMemorization {
   dateMemorized?: string;
   startPage?: number;
   endPage?: number;
+  memorizedSurahs?: number[]; // Array of surah IDs that are memorized within this juz
 }
 
 export const MurajahDashboard = () => {
@@ -322,37 +322,65 @@ export const MurajahDashboard = () => {
   const calculateOMV = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
     if (memorizedJuz.length === 0) return '';
 
-    // Calculate days since start date for rotation
+    // Get all available memorization units (full juz + partial juz with individual surahs)
+    const memorizationUnits: Array<{
+      type: 'full_juz' | 'partial_juz';
+      juzNumber: number;
+      surahIds?: number[];
+      displayText: string;
+    }> = [];
+
+    memorizedJuz.forEach(juzMem => {
+      if (juzMem.isMemorized) {
+        // Full juz memorized
+        const juz = juzData[juzMem.juzNumber.toString() as keyof typeof juzData];
+        if (juz) {
+          let displayText = `Juz ${juzMem.juzNumber}`;
+          if (juzMem.startPage && juzMem.endPage) {
+            displayText += ` (Pages ${juzMem.startPage}-${juzMem.endPage})`;
+          } else {
+            displayText += ` (${juz.first_verse_key} - ${juz.last_verse_key})`;
+          }
+          
+          memorizationUnits.push({
+            type: 'full_juz',
+            juzNumber: juzMem.juzNumber,
+            displayText
+          });
+        }
+      } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
+        // Partial juz with individual surahs
+        const surahNames = require('@/data/surah-names.json');
+        const surahTexts = juzMem.memorizedSurahs.map(surahId => {
+          const surah = surahNames[surahId.toString() as keyof typeof surahNames];
+          return surah ? surah.name_simple : `Surah ${surahId}`;
+        });
+        
+        memorizationUnits.push({
+          type: 'partial_juz',
+          juzNumber: juzMem.juzNumber,
+          surahIds: juzMem.memorizedSurahs,
+          displayText: `Juz ${juzMem.juzNumber} (${surahTexts.join(', ')})`
+        });
+      }
+    });
+
+    if (memorizationUnits.length === 0) return '';
+
+    // Calculate rotation based on date
     const startDate = new Date(settings.startDate);
     const currentDate = new Date(date);
     const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Ensure we have a positive cycle index
-    const cycleIndex = Math.max(0, daysSinceStart) % memorizedJuz.length;
+    const cycleIndex = Math.max(0, daysSinceStart) % memorizationUnits.length;
     
-    const selectedJuz = [];
-    for (let i = 0; i < settings.omvJuz && i < memorizedJuz.length; i++) {
-      const juzIndex = (cycleIndex + i) % memorizedJuz.length;
-      selectedJuz.push(memorizedJuz[juzIndex]);
+    const selectedUnits = [];
+    for (let i = 0; i < settings.omvJuz && i < memorizationUnits.length; i++) {
+      const unitIndex = (cycleIndex + i) % memorizationUnits.length;
+      selectedUnits.push(memorizationUnits[unitIndex]);
     }
 
-    return selectedJuz.map(juzMem => {
-      const juzNumber = juzMem.juzNumber;
-      const juz = juzData[juzNumber.toString() as keyof typeof juzData];
-      
-      // Prioritize page range if both start and end pages are set
-      if (juzMem.startPage && juzMem.endPage) {
-        return `Juz ${juzNumber} (Pages ${juzMem.startPage}-${juzMem.endPage})`;
-      } 
-      // Fallback to verse range if juz data exists
-      else if (juz) {
-        return `Juz ${juzNumber} (${juz.first_verse_key} - ${juz.last_verse_key})`;
-      } 
-      // Final fallback to just juz number
-      else {
-        return `Juz ${juzNumber}`;
-      }
-    }).filter(content => content).join(', ');
+    return selectedUnits.map(unit => unit.displayText).join(', ');
   };
 
   const calculateListeningCycle = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
@@ -377,14 +405,14 @@ export const MurajahDashboard = () => {
     saveTodaysCompletions(completions);
   };
 
-  if (juzMemorization.filter(j => j.isMemorized).length === 0) {
+  if (juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0)).length === 0) {
     return (
       <Card className="text-center py-12">
         <CardContent>
           <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorized Juz</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorized Content</h3>
           <p className="text-gray-500 mb-4">
-            Mark your memorized Juz in the Juz tab to generate your daily review cycles.
+            Mark your memorized Juz or individual Surahs in the Juz tab to generate your daily review cycles.
           </p>
         </CardContent>
       </Card>
@@ -461,7 +489,7 @@ export const MurajahDashboard = () => {
         <Card className="text-center py-8">
           <CardContent>
             <p className="text-gray-500">
-              Configure your settings and mark memorized Juz to generate review cycles.
+              Configure your settings and mark memorized Juz or individual Surahs to generate review cycles.
             </p>
           </CardContent>
         </Card>

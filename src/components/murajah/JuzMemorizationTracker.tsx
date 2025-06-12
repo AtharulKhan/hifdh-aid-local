@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +14,7 @@ interface JuzMemorization {
   dateMemorized?: string;
   startPage?: number;
   endPage?: number;
+  memorizedSurahs?: number[]; // Array of surah IDs that are memorized within this juz
 }
 
 export const JuzMemorizationTracker = () => {
@@ -43,7 +43,8 @@ export const JuzMemorizationTracker = () => {
             ? { 
                 ...juz, 
                 isMemorized,
-                dateMemorized: isMemorized ? new Date().toISOString().split('T')[0] : undefined
+                dateMemorized: isMemorized ? new Date().toISOString().split('T')[0] : undefined,
+                memorizedSurahs: isMemorized ? undefined : juz.memorizedSurahs // Clear individual surahs if full juz is marked
               }
             : juz
         );
@@ -52,6 +53,42 @@ export const JuzMemorizationTracker = () => {
           juzNumber,
           isMemorized: true,
           dateMemorized: new Date().toISOString().split('T')[0]
+        }];
+      }
+      
+      return prev;
+    });
+  };
+
+  const toggleSurahMemorization = (juzNumber: number, surahId: number, isMemorized: boolean) => {
+    setMemorizedJuz(prev => {
+      const existingJuz = prev.find(j => j.juzNumber === juzNumber);
+      
+      if (existingJuz) {
+        return prev.map(juz => {
+          if (juz.juzNumber === juzNumber) {
+            const currentSurahs = juz.memorizedSurahs || [];
+            let newSurahs: number[];
+            
+            if (isMemorized) {
+              newSurahs = [...currentSurahs, surahId];
+            } else {
+              newSurahs = currentSurahs.filter(id => id !== surahId);
+            }
+            
+            return {
+              ...juz,
+              memorizedSurahs: newSurahs.length > 0 ? newSurahs : undefined,
+              isMemorized: false // Uncheck full juz if individual surahs are being tracked
+            };
+          }
+          return juz;
+        });
+      } else if (isMemorized) {
+        return [...prev, {
+          juzNumber,
+          isMemorized: false,
+          memorizedSurahs: [surahId]
         }];
       }
       
@@ -100,12 +137,26 @@ export const JuzMemorizationTracker = () => {
       }
     });
     
+    memorizedJuz.forEach(juz => {
+      if (juz.memorizedSurahs) {
+        juz.memorizedSurahs.forEach(surahId => {
+          memorizedSurahs.add(surahId.toString());
+        });
+      }
+    });
+    
     return memorizedSurahs.size;
   };
 
   const isJuzMemorized = (juzNumber: number) => {
     const juz = memorizedJuz.find(j => j.juzNumber === juzNumber);
     return juz?.isMemorized || false;
+  };
+
+  const isSurahMemorizedInJuz = (juzNumber: number, surahId: number) => {
+    const juz = memorizedJuz.find(j => j.juzNumber === juzNumber);
+    if (juz?.isMemorized) return true; // If full juz is memorized, all surahs are memorized
+    return juz?.memorizedSurahs?.includes(surahId) || false;
   };
 
   const getJuzData = (juzNumber: number) => {
@@ -263,11 +314,29 @@ export const JuzMemorizationTracker = () => {
                       Surahs in this Juz
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {surahsInJuz.map((surah) => (
-                        <Badge key={surah.id} variant="secondary" className="text-xs">
-                          {surah.name_simple} ({surah.verses})
-                        </Badge>
-                      ))}
+                      {surahsInJuz.map((surah) => {
+                        const isSurahMemorized = isSurahMemorizedInJuz(juz.juz_number, surah.id);
+                        return (
+                          <div key={surah.id} className="flex items-center gap-1">
+                            <Checkbox
+                              checked={isSurahMemorized}
+                              onCheckedChange={(checked) => toggleSurahMemorization(juz.juz_number, surah.id, checked as boolean)}
+                              className="h-3 w-3"
+                              disabled={isMemorized} // Disable if full juz is memorized
+                            />
+                            <Badge 
+                              variant={isSurahMemorized ? "default" : "secondary"} 
+                              className={`text-xs cursor-pointer ${
+                                isSurahMemorized ? 'bg-green-500 hover:bg-green-600' : ''
+                              }`}
+                              onClick={() => toggleSurahMemorization(juz.juz_number, surah.id, !isSurahMemorized)}
+                            >
+                              {surah.name_simple} ({surah.verses})
+                              {isSurahMemorized && <Check className="h-3 w-3 ml-1" />}
+                            </Badge>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
