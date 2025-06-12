@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Settings, RefreshCw, Plus, Minus, Eye, EyeOff } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { getVersesArray, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 
 interface TestMemorizationEntry {
@@ -39,9 +40,10 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
   const [currentVerses, setCurrentVerses] = useState<QuranVerse[]>([]);
   const [versesCount, setVersesCount] = useState<number>(5);
   const [hiddenWords, setHiddenWords] = useState<Map<string, HiddenWord[]>>(new Map());
-  const [gapRate, setGapRate] = useState<number>(30); // Percentage of words to hide
+  const [gapRate, setGapRate] = useState<number>(60); // Default 60% of words to hide
   const [showSettings, setShowSettings] = useState(false);
   const [showAllWords, setShowAllWords] = useState(false);
+  const [enableTajweed, setEnableTajweed] = useState(false);
 
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
@@ -125,12 +127,16 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
     
     verses.forEach(verse => {
       const words = verse.text.split(' ');
-      const wordsToHide = Math.floor(words.length * (gapRate / 100));
+      const wordsToHide = Math.max(1, Math.floor(words.length * (gapRate / 100)));
       const hiddenIndices = new Set<number>();
       
       // Randomly select words to hide, avoiding first and last word
-      while (hiddenIndices.size < wordsToHide && hiddenIndices.size < words.length - 2) {
-        const randomIndex = Math.floor(Math.random() * (words.length - 2)) + 1;
+      const availableIndices = words.length > 2 ? 
+        Array.from({ length: words.length - 2 }, (_, i) => i + 1) : 
+        [0]; // If only 1-2 words, hide the first one
+      
+      while (hiddenIndices.size < wordsToHide && hiddenIndices.size < availableIndices.length) {
+        const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
         hiddenIndices.add(randomIndex);
       }
       
@@ -232,6 +238,11 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
           <Badge variant="outline" className="bg-blue-50 text-blue-700">
             Gap Rate: {gapRate}%
           </Badge>
+          {enableTajweed && (
+            <Badge variant="outline" className="bg-green-50 text-green-700">
+              Tajweed: On
+            </Badge>
+          )}
           <Button 
             variant="outline" 
             size="sm" 
@@ -321,11 +332,28 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
                 <Slider
                   value={[gapRate]}
                   onValueChange={(value) => setGapRate(value[0])}
-                  max={60}
-                  min={10}
+                  max={80}
+                  min={20}
                   step={5}
                   className="w-full"
                 />
+              </div>
+            </div>
+
+            {/* Additional Settings Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="tajweed-mode"
+                  checked={enableTajweed}
+                  onCheckedChange={setEnableTajweed}
+                />
+                <label 
+                  htmlFor="tajweed-mode" 
+                  className="text-xs md:text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  Enable Tajweed Rules Display
+                </label>
               </div>
             </div>
           </div>
@@ -336,7 +364,7 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
       <Card className="p-3 md:p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-center sm:text-left">
-            <h4 className="font-semibold text-gray-800 text-sm md:text-base">Reading Passage</h4>
+            <h4 className="font-semibold text-gray-800 text-sm md:text-base">Word Recall Gap Fill</h4>
             <p className="text-xs md:text-sm text-gray-600">
               Showing {currentVerses.length} verses {getScopeDescription()}
             </p>
@@ -380,11 +408,11 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
                   Verse {index + 1} of {currentVerses.length}
                 </Badge>
               </div>
-              <div className="font-arabic text-lg md:text-2xl text-right leading-relaxed text-gray-800 break-words p-4 bg-white rounded-lg border border-slate-100">
+              <div className={`font-arabic text-lg md:text-2xl text-right leading-relaxed text-gray-800 break-words p-4 bg-white rounded-lg border border-slate-100 ${enableTajweed ? 'tajweed-text' : ''}`}>
                 {renderVerseWithHiddenWords(verse)}
               </div>
               <p className="text-xs text-gray-500 text-center">
-                Hover over the gaps to reveal hidden words
+                Hover over the gaps to reveal hidden words • {hiddenWords.get(verse.verse_key)?.length || 0} words hidden
               </p>
             </div>
           </Card>
@@ -396,7 +424,7 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
         <div className="text-center space-y-2">
           <h4 className="font-semibold text-gray-800 text-sm md:text-base">💡 How to Use</h4>
           <p className="text-xs md:text-sm text-gray-600">
-            Read the passage mentally, filling in the gaps from memory. Hover over any gap to check if you remembered correctly. Use settings to adjust difficulty.
+            Read the passage mentally, filling in the gaps from memory. Hover over any gap to check if you remembered correctly. Move your mouse away to hide the word again. Use settings to adjust difficulty and enable Tajweed rules display.
           </p>
         </div>
       </Card>
