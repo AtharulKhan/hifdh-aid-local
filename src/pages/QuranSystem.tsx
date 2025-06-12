@@ -17,9 +17,13 @@ const QuranSystem = () => {
       </div>
 
       <Tabs defaultValue="memorization" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="memorization">Qur'an Memorization System</TabsTrigger>
-          <TabsTrigger value="review">Qur'an Review System</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 h-auto md:h-10">
+          <TabsTrigger value="memorization" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+            Qur'an Memorization System
+          </TabsTrigger>
+          <TabsTrigger value="review" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+            Qur'an Review System
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="memorization" className="space-y-6">
