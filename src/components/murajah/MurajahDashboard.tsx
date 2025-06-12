@@ -115,9 +115,13 @@ export const MurajahDashboard = () => {
 
   const generateDailyCycles = (juzMem: JuzMemorization[], settings: ReviewSettings, date: string): ReviewCycle[] => {
     const cycles: ReviewCycle[] = [];
-    const memorizedJuz = juzMem.filter(j => j.isMemorized);
+    
+    // Get all Juz that have some memorization (either full Juz or individual surahs)
+    const juzWithMemorization = juzMem.filter(j => 
+      j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0)
+    );
 
-    if (memorizedJuz.length === 0) return cycles;
+    if (juzWithMemorization.length === 0) return cycles;
 
     // Check for carry-overs from previous days
     const carryOvers = getCarryOverCycles(date);
@@ -142,12 +146,12 @@ export const MurajahDashboard = () => {
       }
     }
 
-    // OMV - Old Memorization (Rotating through memorized Juz)
+    // OMV - Old Memorization (Rotating through memorized Juz and partial Juz)
     const omvCarryOver = carryOvers.find(c => c.type === 'OMV');
     if (omvCarryOver) {
       cycles.push(omvCarryOver);
     } else {
-      const omvContent = calculateOMV(memorizedJuz, settings, date);
+      const omvContent = calculateOMV(juzWithMemorization, settings, date);
       if (omvContent) {
         cycles.push({
           type: 'OMV',
@@ -167,7 +171,7 @@ export const MurajahDashboard = () => {
     if (listeningCarryOver) {
       cycles.push(listeningCarryOver);
     } else {
-      const listeningContent = calculateListeningCycle(memorizedJuz, settings, date);
+      const listeningContent = calculateListeningCycle(juzWithMemorization, settings, date);
       if (listeningContent) {
         cycles.push({
           type: 'Listening',
@@ -187,7 +191,7 @@ export const MurajahDashboard = () => {
     if (readingCarryOver) {
       cycles.push(readingCarryOver);
     } else {
-      const readingContent = calculateReadingCycle(memorizedJuz, settings, date);
+      const readingContent = calculateReadingCycle(juzWithMemorization, settings, date);
       if (readingContent) {
         cycles.push({
           type: 'Reading',
@@ -319,8 +323,8 @@ export const MurajahDashboard = () => {
     return `Juz ${settings.currentJuz} - Pages (${startPage}-${maxPage})`;
   };
 
-  const calculateOMV = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
-    if (memorizedJuz.length === 0) return '';
+  const calculateOMV = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    if (juzWithMemorization.length === 0) return '';
 
     // Get all available memorization units (full juz + partial juz with individual surahs)
     const memorizationUnits: Array<{
@@ -330,7 +334,7 @@ export const MurajahDashboard = () => {
       displayText: string;
     }> = [];
 
-    memorizedJuz.forEach(juzMem => {
+    juzWithMemorization.forEach(juzMem => {
       if (juzMem.isMemorized) {
         // Full juz memorized
         const juz = juzData[juzMem.juzNumber.toString() as keyof typeof juzData];
@@ -383,12 +387,12 @@ export const MurajahDashboard = () => {
     return selectedUnits.map(unit => unit.displayText).join(', ');
   };
 
-  const calculateListeningCycle = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
-    return calculateOMV(memorizedJuz, { ...settings, omvJuz: settings.listeningJuz }, date);
+  const calculateListeningCycle = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    return calculateOMV(juzWithMemorization, { ...settings, omvJuz: settings.listeningJuz }, date);
   };
 
-  const calculateReadingCycle = (memorizedJuz: JuzMemorization[], settings: ReviewSettings, date: string): string => {
-    return calculateOMV(memorizedJuz, { ...settings, omvJuz: settings.readingJuz }, date);
+  const calculateReadingCycle = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    return calculateOMV(juzWithMemorization, { ...settings, omvJuz: settings.readingJuz }, date);
   };
 
   const toggleCycleCompletion = (index: number) => {
@@ -405,6 +409,7 @@ export const MurajahDashboard = () => {
     saveTodaysCompletions(completions);
   };
 
+  // Updated condition to check for any memorized content (full Juz or individual surahs)
   if (juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0)).length === 0) {
     return (
       <Card className="text-center py-12">
