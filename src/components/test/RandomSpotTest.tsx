@@ -9,15 +9,17 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings, ArrowRight } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
+import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 
 interface RandomSpotTestProps {
   onBack: () => void;
+  memorizedEntries: MemorizationEntry[];
 }
 
-type TestScope = "surah" | "juz" | "entire";
+type TestScope = "memorized" | "surah" | "juz" | "entire";
 
-export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
-  const [testScope, setTestScope] = useState<TestScope>("surah");
+export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorizedEntries }) => {
+  const [testScope, setTestScope] = useState<TestScope>("memorized");
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [numberOfVerses, setNumberOfVerses] = useState<number>(1);
@@ -31,10 +33,43 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
 
+  const getMemorizedJuzNumbers = () => {
+    return [...new Set(memorizedEntries.map(entry => entry.juz))].sort((a, b) => a - b);
+  };
+
   const generateRandomTest = () => {
     let eligibleVerses: QuranVerse[] = [];
 
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          // Fallback to entire Quran if no memorized entries
+          eligibleVerses = allVerses;
+        } else {
+          for (const juzNumber of memorizedJuzNumbers) {
+            const juzInfo = getJuzInfo(juzNumber);
+            if (juzInfo) {
+              const juzVerses = allVerses.filter(verse => {
+                const verseMapping = juzInfo.verse_mapping;
+                const surahKey = verse.surah.toString();
+                
+                if (verseMapping[surahKey]) {
+                  const range = verseMapping[surahKey];
+                  if (range.includes('-')) {
+                    const [start, end] = range.split('-').map(Number);
+                    return verse.ayah >= start && verse.ayah <= end;
+                  } else {
+                    return verse.ayah === parseInt(range);
+                  }
+                }
+                return false;
+              });
+              eligibleVerses.push(...juzVerses);
+            }
+          }
+        }
+        break;
       case "surah":
         eligibleVerses = allVerses.filter(verse => verse.surah === selectedSurah);
         break;
@@ -138,7 +173,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
 
   useEffect(() => {
     generateRandomTest();
-  }, [testScope, selectedSurah, selectedJuz, numberOfVerses]);
+  }, [testScope, selectedSurah, selectedJuz, numberOfVerses, memorizedEntries]);
 
   useEffect(() => {
     setSliderValue([1]);
@@ -163,6 +198,12 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
   const getScopeDescription = () => {
     const verseText = numberOfVerses === 1 ? "verse" : "verses";
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          return `${numberOfVerses} random ${verseText} from your memorized portion (no entries found - using entire Quran)`;
+        }
+        return `${numberOfVerses} random ${verseText} from your memorized Juz: ${memorizedJuzNumbers.join(', ')}`;
       case "surah":
         return `${numberOfVerses} random ${verseText} from ${getSurahName(selectedSurah)}`;
       case "juz":
@@ -234,6 +275,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack }) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="memorized">Your Memorized</SelectItem>
                     <SelectItem value="surah">Within a Surah</SelectItem>
                     <SelectItem value="juz">Within a Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>

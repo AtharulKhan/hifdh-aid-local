@@ -7,15 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
 import { getVersesArray, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
+import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 
 interface FillInBlankTestProps {
   onBack: () => void;
+  memorizedEntries: MemorizationEntry[];
 }
 
-type TestScope = "surah" | "juz" | "entire";
+type TestScope = "memorized" | "surah" | "juz" | "entire";
 
-export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack }) => {
-  const [testScope, setTestScope] = useState<TestScope>("entire");
+export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack, memorizedEntries }) => {
+  const [testScope, setTestScope] = useState<TestScope>("memorized");
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [currentVerse, setCurrentVerse] = useState<QuranVerse | null>(null);
@@ -28,10 +30,43 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack }) => {
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
 
+  const getMemorizedJuzNumbers = () => {
+    return [...new Set(memorizedEntries.map(entry => entry.juz))].sort((a, b) => a - b);
+  };
+
   const generateRandomTest = () => {
     let eligibleVerses: QuranVerse[] = [];
 
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          // Fallback to entire Quran if no memorized entries
+          eligibleVerses = allVerses;
+        } else {
+          for (const juzNumber of memorizedJuzNumbers) {
+            const juzInfo = getJuzInfo(juzNumber);
+            if (juzInfo) {
+              const juzVerses = allVerses.filter(verse => {
+                const verseMapping = juzInfo.verse_mapping;
+                const surahKey = verse.surah.toString();
+                
+                if (verseMapping[surahKey]) {
+                  const range = verseMapping[surahKey];
+                  if (range.includes('-')) {
+                    const [start, end] = range.split('-').map(Number);
+                    return verse.ayah >= start && verse.ayah <= end;
+                  } else {
+                    return verse.ayah === parseInt(range);
+                  }
+                }
+                return false;
+              });
+              eligibleVerses.push(...juzVerses);
+            }
+          }
+        }
+        break;
       case "surah":
         eligibleVerses = allVerses.filter(verse => verse.surah === selectedSurah);
         break;
@@ -80,7 +115,7 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack }) => {
 
   useEffect(() => {
     generateRandomTest();
-  }, [testScope, selectedSurah, selectedJuz]);
+  }, [testScope, selectedSurah, selectedJuz, memorizedEntries]);
 
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
@@ -94,6 +129,12 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack }) => {
 
   const getScopeDescription = () => {
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          return "from your memorized portion (no entries found - using entire Quran)";
+        }
+        return `from your memorized Juz: ${memorizedJuzNumbers.join(', ')}`;
       case "surah":
         return `from ${getSurahName(selectedSurah)}`;
       case "juz":
@@ -164,6 +205,7 @@ export const FillInBlankTest: React.FC<FillInBlankTestProps> = ({ onBack }) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="memorized">Your Memorized</SelectItem>
                     <SelectItem value="surah">Within a Surah</SelectItem>
                     <SelectItem value="juz">Within a Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>

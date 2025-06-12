@@ -6,15 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
 import { getVersesArray, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
+import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 
 interface FirstVerseTestProps {
   onBack: () => void;
+  memorizedEntries: MemorizationEntry[];
 }
 
-type TestScope = "surah" | "juz" | "entire";
+type TestScope = "memorized" | "surah" | "juz" | "entire";
 
-export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack }) => {
-  const [testScope, setTestScope] = useState<TestScope>("entire");
+export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack, memorizedEntries }) => {
+  const [testScope, setTestScope] = useState<TestScope>("memorized");
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [currentSurah, setCurrentSurah] = useState<number | null>(null);
@@ -26,10 +28,32 @@ export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack }) => {
   const allVerses = getVersesArray();
   const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
 
+  const getMemorizedJuzNumbers = () => {
+    return [...new Set(memorizedEntries.map(entry => entry.juz))].sort((a, b) => a - b);
+  };
+
   const generateRandomTest = () => {
     let eligibleSurahs: number[] = [];
 
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          // Fallback to entire Quran if no memorized entries
+          eligibleSurahs = surahNumbers;
+        } else {
+          const memorizedSurahs = new Set<number>();
+          for (const juzNumber of memorizedJuzNumbers) {
+            const juzInfo = getJuzInfo(juzNumber);
+            if (juzInfo) {
+              Object.keys(juzInfo.verse_mapping).forEach(surahKey => {
+                memorizedSurahs.add(Number(surahKey));
+              });
+            }
+          }
+          eligibleSurahs = Array.from(memorizedSurahs).sort((a, b) => a - b);
+        }
+        break;
       case "surah":
         eligibleSurahs = [selectedSurah];
         break;
@@ -58,7 +82,7 @@ export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack }) => {
 
   useEffect(() => {
     generateRandomTest();
-  }, [testScope, selectedSurah, selectedJuz]);
+  }, [testScope, selectedSurah, selectedJuz, memorizedEntries]);
 
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
@@ -72,6 +96,12 @@ export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack }) => {
 
   const getScopeDescription = () => {
     switch (testScope) {
+      case "memorized":
+        const memorizedJuzNumbers = getMemorizedJuzNumbers();
+        if (memorizedJuzNumbers.length === 0) {
+          return "from your memorized portion (no entries found - using entire Quran)";
+        }
+        return `from your memorized Juz: ${memorizedJuzNumbers.join(', ')}`;
       case "surah":
         return `for ${getSurahName(selectedSurah)}`;
       case "juz":
@@ -126,6 +156,7 @@ export const FirstVerseTest: React.FC<FirstVerseTestProps> = ({ onBack }) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="memorized">Your Memorized</SelectItem>
                     <SelectItem value="surah">Specific Surah</SelectItem>
                     <SelectItem value="juz">Within a Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>

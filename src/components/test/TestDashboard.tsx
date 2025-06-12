@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,20 +9,30 @@ import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
+import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
 
 export const TestDashboard = () => {
   const [activeTest, setActiveTest] = useState<string | null>(null);
+  const [memorizedEntries, setMemorizedEntries] = useState<MemorizationEntry[]>([]);
+
+  // Load memorized entries from localStorage
+  useEffect(() => {
+    const savedEntries = localStorage.getItem('murajah-memorization-entries');
+    if (savedEntries) {
+      setMemorizedEntries(JSON.parse(savedEntries));
+    }
+  }, []);
 
   if (activeTest) {
     switch (activeTest) {
       case "before-after":
-        return <BeforeAfterTest onBack={() => setActiveTest(null)} />;
+        return <BeforeAfterTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "first-verse":
-        return <FirstVerseTest onBack={() => setActiveTest(null)} />;
+        return <FirstVerseTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "random-spot":
-        return <RandomSpotTest onBack={() => setActiveTest(null)} />;
+        return <RandomSpotTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "fill-blank":
-        return <FillInBlankTest onBack={() => setActiveTest(null)} />;
+        return <FillInBlankTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       default:
         return null;
     }
