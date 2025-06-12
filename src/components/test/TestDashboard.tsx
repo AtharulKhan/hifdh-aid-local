@@ -86,7 +86,7 @@ export const TestDashboard = () => {
       case "word-recall":
         return <WordRecallTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "out-of-order":
-        return <OutOfOrderTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
+        return <OutOfOrderTest onBack={() => setActiveTest(null)} />;
       default:
         return null;
     }

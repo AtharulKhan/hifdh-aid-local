@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface JuzMemorization {
 
 interface OutOfOrderTestProps {
   onBack: () => void;
+  memorizedEntries?: any[];
 }
 
 interface VerseItem {
@@ -52,6 +54,55 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
       }
     }
   }, []);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedItem === null || draggedItem === dropIndex) {
+      setDraggedItem(null);
+      return;
+    }
+
+    const newVerses = [...verses];
+    const draggedVerse = newVerses[draggedItem];
+    
+    // Remove the dragged item
+    newVerses.splice(draggedItem, 1);
+    
+    // Insert it at the new position
+    const actualDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
+    newVerses.splice(actualDropIndex, 0, draggedVerse);
+    
+    // Update current orders
+    newVerses.forEach((verse, index) => {
+      verse.currentOrder = index;
+    });
+
+    setVerses(newVerses);
+    setDraggedItem(null);
+  };
+
+  const checkAnswer = () => {
+    const isCorrect = verses.every((verse, index) => verse.originalOrder === index);
+    setTestResult(isCorrect ? 'correct' : 'incorrect');
+  };
+
+  const resetTest = () => {
+    setIsTestActive(false);
+    setTestResult(null);
+    setVerses([]);
+    setCurrentPassage("");
+  };
 
   const generateTest = () => {
     const allVerses = getVersesArray();
@@ -457,53 +508,4 @@ export const OutOfOrderTest = ({ onBack }: OutOfOrderTestProps) => {
       )}
     </div>
   );
-};
-
-const handleDragStart = (e: React.DragEvent, index: number) => {
-  setDraggedItem(index);
-  e.dataTransfer.effectAllowed = 'move';
-};
-
-const handleDragOver = (e: React.DragEvent) => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-};
-
-const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-  e.preventDefault();
-  
-  if (draggedItem === null || draggedItem === dropIndex) {
-    setDraggedItem(null);
-    return;
-  }
-
-  const newVerses = [...verses];
-  const draggedVerse = newVerses[draggedItem];
-  
-  // Remove the dragged item
-  newVerses.splice(draggedItem, 1);
-  
-  // Insert it at the new position
-  const actualDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
-  newVerses.splice(actualDropIndex, 0, draggedVerse);
-  
-  // Update current orders
-  newVerses.forEach((verse, index) => {
-    verse.currentOrder = index;
-  });
-
-  setVerses(newVerses);
-  setDraggedItem(null);
-};
-
-const checkAnswer = () => {
-  const isCorrect = verses.every((verse, index) => verse.originalOrder === index);
-  setTestResult(isCorrect ? 'correct' : 'incorrect');
-};
-
-const resetTest = () => {
-  setIsTestActive(false);
-  setTestResult(null);
-  setVerses([]);
-  setCurrentPassage("");
 };
