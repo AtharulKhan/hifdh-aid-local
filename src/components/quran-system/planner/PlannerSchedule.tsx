@@ -95,7 +95,7 @@ export const PlannerSchedule = ({
                           id={`day-${item.date}`}
                         />
                         <div>
-                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d")}</Label>
+                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
                           <p className="text-sm text-muted-foreground">{item.task}</p>
                         </div>
                       </div>
@@ -120,7 +120,7 @@ export const PlannerSchedule = ({
                           id={`day-${item.date}`}
                         />
                         <div>
-                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d")}</Label>
+                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
                           <p className="text-sm text-muted-foreground">{item.task}</p>
                         </div>
                       </div>
