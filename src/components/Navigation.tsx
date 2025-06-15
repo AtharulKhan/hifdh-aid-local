@@ -19,13 +19,13 @@ import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
+  { path: "/dashboard", icon: BarChart3, label: "Dashboard" }
   { path: "/", icon: Home, label: "Quran Review (by Verse)" },
   { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
-  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" },
-  { path: "/dashboard", icon: BarChart3, label: "Dashboard" }
+  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" }
 ];
 
 export const Navigation = () => {
