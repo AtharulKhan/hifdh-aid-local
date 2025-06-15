@@ -1,4 +1,3 @@
-
 export interface SurahJuzPageInfo {
     juz: number;
     surahName: string;
@@ -6,7 +5,8 @@ export interface SurahJuzPageInfo {
     endPage: number;
 }
 export const surahJuzPageMapData: SurahJuzPageInfo[] = [
-    { juz: 1, surahName: "Al-Baqarah", startPage: 1, endPage: 21 },
+    { juz: 1, surahName: "Al-Fatihah", startPage: 1, endPage: 1 },
+    { juz: 1, surahName: "Al-Baqarah", startPage: 2, endPage: 21 },
     { juz: 2, surahName: "Al-Baqarah", startPage: 22, endPage: 41 },
     { juz: 3, surahName: "Al-Baqarah", startPage: 42, endPage: 49 },
     { juz: 3, surahName: "Aal-E-Imran", startPage: 50, endPage: 61 },
@@ -148,8 +148,6 @@ export const getSurahForPage = (page: number): string => {
     const uniqueSurahs = [...new Set(surahs)];
     
     if (uniqueSurahs.length === 0) {
-        // Fallback for page 1 being Al-Fatihah, as it's not in the provided table.
-        if (page === 1) return "Al-Fatihah";
         return "Unknown Surah";
     }
     return uniqueSurahs.join(' / ');
