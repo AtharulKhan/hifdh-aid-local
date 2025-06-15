@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,11 @@ interface Achievement {
   date?: string;
 }
 
+interface DailyCompletion {
+  date: string;
+  completions: boolean[];
+}
+
 export const MurajahMainDashboard = () => {
   const [todaysReviewCycles, setTodaysReviewCycles] = useState<ReviewCycle[]>([]);
   const [weeklyReviewCycles, setWeeklyReviewCycles] = useState<ReviewCycle[]>([]);
@@ -78,18 +84,19 @@ export const MurajahMainDashboard = () => {
   const loadDashboardData = () => {
     console.log('Loading dashboard data...');
     
-    // Load Murajah review data
+    // Load Murajah review data from MurajahDashboard
     const savedCompletions = localStorage.getItem('murajah-daily-completions');
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
     const savedSettings = localStorage.getItem('murajah-review-settings');
     
-    // Load memorization planner data
+    // Load memorization planner data from MemorizationPlanner
     const savedSchedule = localStorage.getItem('memorizationPlannerSchedule');
     
     console.log('Saved completions:', savedCompletions);
     console.log('Saved schedule:', savedSchedule);
     console.log('Saved juz:', savedJuz);
     
+    // Parse Juz memorization data
     if (savedJuz) {
       try {
         const juzData = JSON.parse(savedJuz);
@@ -101,6 +108,7 @@ export const MurajahMainDashboard = () => {
       }
     }
     
+    // Parse memorization schedule from MemorizationPlanner
     if (savedSchedule) {
       try {
         const scheduleData = JSON.parse(savedSchedule);
@@ -112,6 +120,7 @@ export const MurajahMainDashboard = () => {
       }
     }
 
+    // Parse review completions from MurajahDashboard
     if (savedCompletions && savedSettings) {
       try {
         const completions = JSON.parse(savedCompletions);
@@ -120,12 +129,11 @@ export const MurajahMainDashboard = () => {
         
         console.log('Parsed completions data:', completions, 'Type:', typeof completions);
         
-        // Handle the correct data format for daily completions
-        // The data should be an object with date keys and completion arrays as values
-        if (completions && typeof completions === 'object' && !Array.isArray(completions)) {
+        // Handle different data formats for completions
+        if (completions) {
           generateReviewCycles(completions, settings, juzMem);
         } else {
-          console.warn('Unexpected completions data format:', completions);
+          console.warn('No completions data found');
           setTodaysReviewCycles([]);
           setWeeklyReviewCycles([]);
         }
@@ -144,8 +152,8 @@ export const MurajahMainDashboard = () => {
   const generateReviewCycles = (completions: any, settings: any, juzMem: JuzMemorization[]) => {
     console.log('Generating review cycles with:', { completions, settings, juzMem });
     
-    if (!completions || typeof completions !== 'object') {
-      console.warn('Expected completions to be an object, got:', typeof completions);
+    if (!completions) {
+      console.warn('No completions data provided');
       return;
     }
 
@@ -155,20 +163,51 @@ export const MurajahMainDashboard = () => {
 
     console.log('Looking for today:', today);
 
-    // Get today's cycles - completions is an object with date keys
-    const todayCompletions = completions[today];
+    // Handle different completion data formats
+    let todayCompletions: boolean[] | undefined;
+    let allCompletionsData: DailyCompletion[] = [];
+
+    if (Array.isArray(completions)) {
+      // Old format: array of DailyCompletion objects
+      allCompletionsData = completions;
+      const todayData = completions.find((d: DailyCompletion) => d.date === today);
+      todayCompletions = todayData?.completions;
+    } else if (completions.date && completions.completions) {
+      // New format: single object with date and completions
+      allCompletionsData = [completions];
+      if (completions.date === today) {
+        todayCompletions = completions.completions;
+      }
+    } else if (typeof completions === 'object') {
+      // Alternative format: object with date keys
+      todayCompletions = completions[today];
+      // Convert to array format for processing
+      Object.entries(completions).forEach(([date, comps]) => {
+        if (Array.isArray(comps)) {
+          allCompletionsData.push({ date, completions: comps });
+        }
+      });
+    }
+
     console.log('Today completions found:', todayCompletions);
     
     const todayCycles: ReviewCycle[] = [];
     
     if (todayCompletions && Array.isArray(todayCompletions)) {
-      // Map array indices to cycle types based on typical order
+      // Map array indices to cycle types based on typical order from MurajahDashboard
       const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
       todayCompletions.forEach((completed, index) => {
         if (index < cycleTypes.length) {
-          const cycle = createReviewCycle(cycleTypes[index], completed);
+          const cycle = createReviewCycle(cycleTypes[index], completed, settings, juzMem);
           if (cycle) todayCycles.push(cycle);
         }
+      });
+    } else {
+      // Generate cycles based on current data even if no completion data exists
+      const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
+      cycleTypes.forEach((type) => {
+        const cycle = createReviewCycle(type, false, settings, juzMem);
+        if (cycle) todayCycles.push(cycle);
       });
     }
 
@@ -176,17 +215,17 @@ export const MurajahMainDashboard = () => {
 
     // Get this week's cycles
     const weekCycles: ReviewCycle[] = [];
-    Object.entries(completions).forEach(([dateStr, dayCompletions]) => {
-      if (!dateStr || !dayCompletions) return;
+    allCompletionsData.forEach((dayData) => {
+      if (!dayData.date || !dayData.completions) return;
       
       try {
-        const date = new Date(dateStr);
+        const date = new Date(dayData.date);
         if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
-          if (Array.isArray(dayCompletions)) {
+          if (Array.isArray(dayData.completions)) {
             const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
-            dayCompletions.forEach((completed, index) => {
+            dayData.completions.forEach((completed, index) => {
               if (index < cycleTypes.length) {
-                const cycle = createReviewCycle(cycleTypes[index], completed);
+                const cycle = createReviewCycle(cycleTypes[index], completed, settings, juzMem);
                 if (cycle && !weekCycles.some(c => c.type === cycle.type)) {
                   weekCycles.push(cycle);
                 }
@@ -195,7 +234,7 @@ export const MurajahMainDashboard = () => {
           }
         }
       } catch (error) {
-        console.error('Error processing date:', dateStr, error);
+        console.error('Error processing date:', dayData.date, error);
       }
     });
 
@@ -205,15 +244,37 @@ export const MurajahMainDashboard = () => {
     setWeeklyReviewCycles(weekCycles);
   };
 
-  const createReviewCycle = (type: string, completed: boolean): ReviewCycle | null => {
+  const createReviewCycle = (type: string, completed: boolean, settings?: any, juzMem?: JuzMemorization[]): ReviewCycle | null => {
     const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    
+    // Generate content based on settings and juz memorization data
+    let content = '';
+    if (settings && juzMem) {
+      switch (upperType) {
+        case 'RMV':
+          content = `Last ${settings.rmvPages || 7} pages from current Juz`;
+          break;
+        case 'OMV':
+          const memorizedJuz = juzMem.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0));
+          content = memorizedJuz.length > 0 ? `Review ${settings.omvJuz || 1} memorized Juz` : 'No memorized content yet';
+          break;
+        case 'LISTENING':
+          content = `Listen to ${settings.listeningJuz || 2} Juz`;
+          break;
+        case 'READING':
+          content = `Read ${settings.readingJuz || 1} Juz`;
+          break;
+      }
+    } else {
+      content = `${upperType} review session`;
+    }
     
     switch (upperType) {
       case 'RMV':
         return {
           type: 'RMV',
           title: 'RMV (Recent)',
-          content: 'Recent memorization review',
+          content,
           completed,
           icon: <Clock className="h-4 w-4" />,
           color: 'bg-green-50 border-green-200'
@@ -222,7 +283,7 @@ export const MurajahMainDashboard = () => {
         return {
           type: 'OMV',
           title: 'OMV (Old)',
-          content: 'Old memorization review',
+          content,
           completed,
           icon: <RotateCcw className="h-4 w-4" />,
           color: 'bg-purple-50 border-purple-200'
@@ -231,7 +292,7 @@ export const MurajahMainDashboard = () => {
         return {
           type: 'Listening',
           title: 'Listening Cycle',
-          content: 'Audio review session',
+          content,
           completed,
           icon: <PlayCircle className="h-4 w-4" />,
           color: 'bg-blue-50 border-blue-200'
@@ -240,7 +301,7 @@ export const MurajahMainDashboard = () => {
         return {
           type: 'Reading',
           title: 'Reading Cycle',
-          content: 'Reading review session',
+          content,
           completed,
           icon: <BookOpen className="h-4 w-4" />,
           color: 'bg-orange-50 border-orange-200'
@@ -261,20 +322,33 @@ export const MurajahMainDashboard = () => {
       const data = JSON.parse(completions);
       console.log('Calculating streaks with data:', data, 'Type:', typeof data);
       
-      if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        console.warn('Expected streak data to be an object');
-        return;
-      }
-      
       let streak = 0;
       const today = new Date();
+      
+      // Handle different data formats for streak calculation
+      let completionsData: { [date: string]: boolean[] } = {};
+      
+      if (Array.isArray(data)) {
+        // Convert array format to object format
+        data.forEach((item: DailyCompletion) => {
+          if (item.date && item.completions) {
+            completionsData[item.date] = item.completions;
+          }
+        });
+      } else if (data.date && data.completions) {
+        // Single day format
+        completionsData[data.date] = data.completions;
+      } else if (typeof data === 'object') {
+        // Already in object format
+        completionsData = data;
+      }
       
       for (let i = 0; i < 365; i++) {
         const checkDate = new Date(today);
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = checkDate.toISOString().split('T')[0];
         
-        const dayCompletions = data[dateStr];
+        const dayCompletions = completionsData[dateStr];
         if (dayCompletions && Array.isArray(dayCompletions)) {
           const allCompleted = dayCompletions.every(c => c === true);
           if (allCompleted) {
@@ -492,7 +566,7 @@ export const MurajahMainDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No review cycles for today</p>
+                <p className="text-gray-500">Set up your memorization data in the Juz tab to see review cycles</p>
               )}
             </CardContent>
           </Card>
@@ -528,7 +602,7 @@ export const MurajahMainDashboard = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-gray-500">No memorization task for today</p>
+                <p className="text-gray-500">Create a memorization plan in the Memorization Planner tab to see today's task</p>
               )}
             </CardContent>
           </Card>
