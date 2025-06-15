@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -377,6 +376,11 @@ export const MurajahMainDashboard = () => {
     isToday(parseISO(item.date)) && !item.completed
   );
   
+  const upcomingMemorizationTasks = React.useMemo(() => {
+    const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
+    return uncompletedTasks.slice(1, 6); // Skip today's task, get next 5
+  }, [memorizationSchedule]);
+  
   const weeklyMemorizationTasks = memorizationSchedule.filter(item => {
     const date = parseISO(item.date);
     return isWithinInterval(date, { 
@@ -507,11 +511,26 @@ export const MurajahMainDashboard = () => {
             </CardHeader>
             <CardContent>
               {todaysMemorizationTask ? (
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                  <p className="font-medium">{todaysMemorizationTask.task}</p>
-                  <p className="text-sm text-gray-600">
-                    {format(parseISO(todaysMemorizationTask.date), "EEEE, MMM d, yyyy")}
-                  </p>
+                <div className="space-y-4">
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <p className="font-medium">{todaysMemorizationTask.task}</p>
+                    <p className="text-sm text-gray-600">
+                      {format(parseISO(todaysMemorizationTask.date), "EEEE, MMM d, yyyy")}
+                    </p>
+                  </div>
+                  
+                  {upcomingMemorizationTasks.length > 0 && (
+                    <div>
+                      <h5 className="font-medium mb-2 text-sm text-gray-700">Upcoming Tasks</h5>
+                      <div className="space-y-2">
+                        {upcomingMemorizationTasks.map(item => (
+                          <div key={item.date} className="text-sm p-2 rounded-md bg-muted/50">
+                            <strong>{format(parseISO(item.date), 'EEE, MMM d')}:</strong> {item.task}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-gray-500">No memorization task for today</p>
