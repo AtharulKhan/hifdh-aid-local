@@ -36,27 +36,31 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
     onAlreadyMemorizedChange(newAlreadyMemorized);
   };
 
-  const memorizedSurahs = React.useMemo(() => {
+  const memorizedInfoByJuz = React.useMemo(() => {
     if (alreadyMemorized.length === 0) {
       return [];
     }
 
-    const surahIds = new Set<string>();
+    const sortedMemorizedJuz = [...alreadyMemorized].sort((a, b) => a - b);
 
-    alreadyMemorized.forEach(juzNumber => {
+    return sortedMemorizedJuz.map(juzNumber => {
       const juzData = typedJuzNumbers[juzNumber];
-      if (juzData && juzData.verse_mapping) {
-        Object.keys(juzData.verse_mapping).forEach(surahId => {
-          surahIds.add(surahId);
-        });
+      if (!juzData || !juzData.verse_mapping) {
+        return { juz: juzNumber, surahs: [] };
       }
-    });
 
-    const sortedSurahIds = Array.from(surahIds).sort((a, b) => parseInt(a) - parseInt(b));
+      const surahIds = Object.keys(juzData.verse_mapping);
+      const sortedSurahIds = surahIds.sort((a, b) => parseInt(a) - parseInt(b));
 
-    return sortedSurahIds.map(surahId => {
-      const surahData = typedSurahNames[surahId];
-      return surahData ? surahData.name_simple : `Surah ${surahId}`;
+      const surahs = sortedSurahIds.map(surahId => {
+        const surahData = typedSurahNames[surahId];
+        return {
+          id: surahId,
+          name: surahData ? surahData.name_simple : `Surah ${surahId}`,
+        };
+      });
+
+      return { juz: juzNumber, surahs };
     });
   }, [alreadyMemorized]);
 
@@ -90,14 +94,21 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
             </div>
           ))}
         </div>
-        {memorizedSurahs.length > 0 && (
+        {memorizedInfoByJuz.length > 0 && (
           <div className="mt-6 pt-6 border-t">
             <h4 className="text-md font-semibold mb-3">Memorized Surahs Summary</h4>
-            <div className="flex flex-wrap gap-2">
-              {memorizedSurahs.map(surahName => (
-                <Badge key={surahName} variant="secondary" className="font-normal">
-                  {surahName}
-                </Badge>
+            <div className="space-y-4">
+              {memorizedInfoByJuz.map(({ juz, surahs }) => (
+                <div key={juz}>
+                  <p className="font-semibold text-sm mb-2 underline">Juz {juz}</p>
+                  <ul className="list-disc list-inside space-y-1 pl-4">
+                    {surahs.map(surah => (
+                      <li key={`${juz}-${surah.id}`} className="text-sm">
+                        Surah {surah.id}: {surah.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
           </div>
