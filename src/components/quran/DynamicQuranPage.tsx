@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ProcessedLine } from '@/lib/quran-data-utils'; // Import the type
 import { cn } from '@/lib/utils';
@@ -34,7 +35,7 @@ const DynamicQuranPage: React.FC<DynamicQuranPageProps> = ({
       </div>
 
       {lines.map((line, idx) => (
-        <React.Fragment key={idx}>
+        <React.Fragment key={`${pageNumber}-${line.lineNumber}`}>
           <div
             className={cn(
               'whitespace-pre-wrap text-right py-2', // font-serif was here, moved to parent for consistency

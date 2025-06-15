@@ -28,6 +28,7 @@ export interface ProcessedLine {
   centered: boolean;
   verseKeys: string[];
   text: string;
+  lineNumber: number;
 }
 
 export interface ProcessedPages {
@@ -184,6 +185,7 @@ export async function processQuranData(
       centered: !!r.isCentered,
       verseKeys: uniqueVerseKeys,
       text: lineText || (r.lineType === 'bismillah' && r.surah !== 1 && r.surah !== 9 ? (quran[`${r.surah}:0`]?.text || 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ') : (r.lineType === 'surah_header' ? '' : '')),
+      lineNumber: r.line,
     };
 
     (processedPages[r.page] ??= []).push(line);
