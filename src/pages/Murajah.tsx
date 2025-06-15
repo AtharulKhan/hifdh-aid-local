@@ -5,6 +5,7 @@ import { MurajahDashboard } from "@/components/murajah/MurajahDashboard";
 import { JuzMemorizationTracker } from "@/components/murajah/JuzMemorizationTracker";
 import { ReviewSettings } from "@/components/murajah/ReviewSettings";
 import { MurajahLog } from "@/components/murajah/MurajahLog";
+import { MurajahMainDashboard } from "@/components/murajah/MurajahMainDashboard";
 
 const Murajah = () => {
   return (
@@ -19,8 +20,11 @@ const Murajah = () => {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto md:h-10">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto md:h-10">
           <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="review" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Today's Review
           </TabsTrigger>
           <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
@@ -35,6 +39,10 @@ const Murajah = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
+          <MurajahMainDashboard />
+        </TabsContent>
+
+        <TabsContent value="review" className="space-y-6">
           <MurajahDashboard />
         </TabsContent>
 
