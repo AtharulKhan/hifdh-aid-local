@@ -7,6 +7,13 @@ import { format, parseISO } from 'date-fns';
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { juzPageMapData } from '@/data/juz-page-map';
+
+// Helper function to get juz number for a page
+const getJuzForPage = (page: number): number | undefined => {
+  const juzInfo = juzPageMapData.find(juz => page >= juz.startPage && page <= juz.endPage);
+  return juzInfo?.juz;
+};
 
 export const PlannerSchedule = ({
   schedule,
@@ -86,21 +93,28 @@ export const PlannerSchedule = ({
             <TabsContent value="upcoming">
               <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
                 {upcomingTasks.length > 0 ? (
-                  upcomingTasks.map((item) => (
-                    <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center space-x-4">
-                        <Checkbox
-                          checked={item.completed}
-                          onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
-                          id={`day-${item.date}`}
-                        />
-                        <div>
-                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
-                          <p className="text-sm text-muted-foreground">{item.task}</p>
+                  upcomingTasks.map((item) => {
+                    const juzNumber = getJuzForPage(item.page);
+                    const taskWithJuz = juzNumber 
+                      ? `Juz ${juzNumber}, Surah ${item.surah}, Page ${item.page}, Lines ${item.startLine}-${item.endLine}`
+                      : item.task;
+                    
+                    return (
+                      <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center space-x-4">
+                          <Checkbox
+                            checked={item.completed}
+                            onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
+                            id={`day-${item.date}`}
+                          />
+                          <div>
+                            <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
+                            <p className="text-sm text-muted-foreground">{taskWithJuz}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                    <div className="text-center py-10">
                      <p className="text-muted-foreground">You've completed all tasks in this plan!</p>
@@ -111,21 +125,28 @@ export const PlannerSchedule = ({
             <TabsContent value="completed">
                <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
                 {completedTasks.length > 0 ? (
-                  completedTasks.map((item) => (
-                    <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 opacity-70">
-                      <div className="flex items-center space-x-4">
-                        <Checkbox
-                          checked={item.completed}
-                          onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
-                          id={`day-${item.date}`}
-                        />
-                        <div>
-                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
-                          <p className="text-sm text-muted-foreground">{item.task}</p>
+                  completedTasks.map((item) => {
+                    const juzNumber = getJuzForPage(item.page);
+                    const taskWithJuz = juzNumber 
+                      ? `Juz ${juzNumber}, Surah ${item.surah}, Page ${item.page}, Lines ${item.startLine}-${item.endLine}`
+                      : item.task;
+                    
+                    return (
+                      <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 opacity-70">
+                        <div className="flex items-center space-x-4">
+                          <Checkbox
+                            checked={item.completed}
+                            onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
+                            id={`day-${item.date}`}
+                          />
+                          <div>
+                            <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
+                            <p className="text-sm text-muted-foreground">{taskWithJuz}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-10">
                     <p className="text-muted-foreground">No tasks completed yet.</p>
