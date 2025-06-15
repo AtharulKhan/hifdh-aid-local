@@ -5,6 +5,7 @@ import { PlannerSchedule } from "./planner/PlannerSchedule";
 import { useMemorizationPlanner } from "@/hooks/use-memorization-planner";
 import { PlannerActions } from "./planner/PlannerActions";
 import { juzPageMapData } from "@/data/juz-page-map";
+import { PlannerSummary } from "./planner/PlannerSummary";
 
 export const MemorizationPlanner = () => {
   const {
@@ -63,7 +64,8 @@ export const MemorizationPlanner = () => {
         />
         <PlannerActions onReset={resetPlanner} />
       </div>
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 space-y-6">
+        <PlannerSummary schedule={schedule} />
         <PlannerSchedule 
           schedule={schedule} 
           onDayStatusChange={updateDayStatus}
