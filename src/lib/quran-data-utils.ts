@@ -49,23 +49,30 @@ async function getDb(dbPath: string): Promise<initSqlJs.Database> {
   return dbInstance;
 }
 
-// --- Helper to build wordId to verseKey map ---
-async function getWordIdToVerseKeyMap(database: initSqlJs.Database): Promise<Map<number, string>> {
+// --- Helper to build wordId to verseKey map from quranData ---
+function getWordIdToVerseKeyMap(): Map<number, string> {
   if (wordIdToVerseKeyMapInstance) {
     return wordIdToVerseKeyMapInstance;
   }
-  const wordRows: WordInfoFromDb[] = database.exec(
-    'SELECT id, surah_number, ayah_number FROM words'
-  )[0]?.values.map((row: any) => ({
-    id: row[0] as number,
-    surah_number: row[1] as number,
-    ayah_number: row[2] as number,
-  })) || [];
+  
+  const newMap = new Map<number, string>();
+  // Sort verses to ensure words are counted in Quranic order
+  const verses = Object.values(quranData as QuranJson).sort((a, b) => a.id - b.id);
+  
+  let wordIdCounter = 1;
 
-  wordIdToVerseKeyMapInstance = new Map<number, string>();
-  for (const w of wordRows) {
-    wordIdToVerseKeyMapInstance.set(w.id, `${w.surah_number}:${w.ayah_number}`);
+  for (const verse of verses) {
+    // Remove verse number symbols, then trim whitespace
+    const cleanedText = verse.text.replace(/[\u0660-\u0669]+$/, '').trim();
+    const words = cleanedText.split(/\s+/).filter(w => w.length > 0);
+
+    for (let i = 0; i < words.length; i++) {
+      newMap.set(wordIdCounter, verse.verse_key);
+      wordIdCounter++;
+    }
   }
+
+  wordIdToVerseKeyMapInstance = newMap;
   return wordIdToVerseKeyMapInstance;
 }
 
@@ -75,7 +82,7 @@ export async function processQuranData(
 ): Promise<ProcessedPages> {
   const database = await getDb(dbPath);
   const quran: QuranJson = quranData;
-  const wordIdToVerseKey = await getWordIdToVerseKeyMap(database);
+  const wordIdToVerseKey = getWordIdToVerseKeyMap();
 
   const pageLineRows: PageLineFromDb[] = database.exec(`
     SELECT
