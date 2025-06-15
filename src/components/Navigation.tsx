@@ -19,7 +19,7 @@ import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
-  { path: "/dashboard", icon: BarChart3, label: "Dashboard" }
+  { path: "/dashboard", icon: BarChart3, label: "Dashboard" },
   { path: "/", icon: Home, label: "Quran Review (by Verse)" },
   { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
