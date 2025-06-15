@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -10,9 +11,7 @@ import {
   ClipboardCheck,
   BookText,
   RotateCcw,
-  Book,
-  BookCopy,
-  BookMarked,
+  Book
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -21,8 +20,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const navItems = [
   { path: "/", icon: Home, label: "Quran Review (by Verse)" },
   { path: "/page-view", icon: BookOpen, label: "Quran Review (by Page)" },
-  { path: "/mushaf-view", icon: BookCopy, label: "Quran (15-line View)" },
-  { path: "/dynamic-mushaf-view", icon: BookMarked, label: "Quran (15-Line Dynamic)" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
