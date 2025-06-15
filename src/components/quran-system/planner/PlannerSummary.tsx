@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
-import { format, parseISO, isFuture } from 'date-fns';
+import { format, parseISO, isToday, isFuture } from 'date-fns';
 
 interface PlannerSummaryProps {
   schedule: ScheduleItem[];
@@ -11,11 +11,10 @@ interface PlannerSummaryProps {
 
 export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
 
-  const todaysTask = React.useMemo(() => {
-    // Today's goal is the first uncompleted task in the schedule.
-    // The schedule is assumed to be sorted by date.
-    return schedule.find(item => !item.completed);
-  }, [schedule]);
+  const todaysTask = React.useMemo(() => 
+    schedule.find(item => isToday(parseISO(item.date))),
+    [schedule]
+  );
 
   const pastSessions = React.useMemo(() => 
     schedule
@@ -36,27 +35,16 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
     return uniquePages.slice(0, 7);
   }, [schedule]);
 
-  const upcomingTasks = React.useMemo(() => {
-    return schedule
-      .filter(item => {
-        // Must be a future task
-        if (!isFuture(parseISO(item.date))) {
-          return false;
-        }
-        // And must not be the current "Today's Goal"
-        if (todaysTask && item.date === todaysTask.date) {
-          return false;
-        }
-        return true;
-      })
-      .slice(0, 5)
-  }, [schedule, todaysTask]);
+  const upcomingTasks = React.useMemo(() => 
+    schedule
+      .filter(item => isFuture(parseISO(item.date)))
+      .slice(0, 5),
+    [schedule]
+  );
 
   if (schedule.length === 0) {
     return null; // Don't show anything if no schedule
   }
-
-  const allTasksCompleted = schedule.length > 0 && !todaysTask;
 
   return (
     <Card>
@@ -72,10 +60,8 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
               <p className="font-bold">{format(parseISO(todaysTask.date), "EEE, MMM d")}</p>
               <p className="text-muted-foreground">{todaysTask.task}</p>
             </div>
-          ) : allTasksCompleted ? (
-            <p className="text-muted-foreground">🎉 Congratulations! You have completed your plan.</p>
           ) : (
-            <p className="text-muted-foreground">No tasks scheduled. Please generate a plan.</p>
+            <p className="text-muted-foreground">No task scheduled for today.</p>
           )}
         </div>
 
@@ -131,7 +117,7 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
               ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground">No more upcoming tasks.</p>
+            <p className="text-muted-foreground">No upcoming tasks in the next 5 days.</p>
           )}
         </div>
       </CardContent>
