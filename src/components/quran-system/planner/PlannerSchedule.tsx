@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -5,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { format, parseISO } from 'date-fns';
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const PlannerSchedule = ({
   schedule,
@@ -40,6 +42,9 @@ export const PlannerSchedule = ({
 
   const completionDate = schedule[schedule.length - 1].date;
 
+  const upcomingTasks = schedule.filter(item => !item.completed);
+  const completedTasks = schedule.filter(item => item.completed).sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+
   return (
     <Card>
       <CardHeader>
@@ -72,23 +77,64 @@ export const PlannerSchedule = ({
                 <Progress value={planProgress} className="w-full" aria-label={`${Math.round(planProgress)}% of current plan completed`} />
             </div>
           </div>
-          <div className="max-h-96 overflow-y-auto pr-4 space-y-2">
-            {schedule.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center space-x-4">
-                  <Checkbox
-                    checked={item.completed}
-                    onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
-                    id={`day-${index}`}
-                  />
-                  <div>
-                    <Label htmlFor={`day-${index}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d")}</Label>
-                    <p className="text-sm text-muted-foreground">{item.task}</p>
-                  </div>
-                </div>
+
+          <Tabs defaultValue="upcoming" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upcoming">
+              <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
+                {upcomingTasks.length > 0 ? (
+                  upcomingTasks.map((item) => (
+                    <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center space-x-4">
+                        <Checkbox
+                          checked={item.completed}
+                          onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
+                          id={`day-${item.date}`}
+                        />
+                        <div>
+                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d")}</Label>
+                          <p className="text-sm text-muted-foreground">{item.task}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                   <div className="text-center py-10">
+                     <p className="text-muted-foreground">You've completed all tasks in this plan!</p>
+                   </div>
+                )}
               </div>
-            ))}
-          </div>
+            </TabsContent>
+            <TabsContent value="completed">
+               <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
+                {completedTasks.length > 0 ? (
+                  completedTasks.map((item) => (
+                    <div key={item.date} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 opacity-70">
+                      <div className="flex items-center space-x-4">
+                        <Checkbox
+                          checked={item.completed}
+                          onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
+                          id={`day-${item.date}`}
+                        />
+                        <div>
+                          <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d")}</Label>
+                          <p className="text-sm text-muted-foreground">{item.task}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-muted-foreground">No tasks completed yet.</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+
         </div>
       </CardContent>
     </Card>

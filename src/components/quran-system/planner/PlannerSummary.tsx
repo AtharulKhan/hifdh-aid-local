@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
-import { format, parseISO, isToday, isFuture } from 'date-fns';
+import { format, parseISO, isFuture } from 'date-fns';
 
 interface PlannerSummaryProps {
   schedule: ScheduleItem[];
@@ -11,9 +11,14 @@ interface PlannerSummaryProps {
 
 export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
 
-  const todaysTask = React.useMemo(() => 
-    schedule.find(item => isToday(parseISO(item.date))),
+  const uncompletedTasks = React.useMemo(() =>
+    schedule.filter(item => !item.completed),
     [schedule]
+  );
+  
+  const todaysTask = React.useMemo(() =>
+    uncompletedTasks[0],
+    [uncompletedTasks]
   );
 
   const pastSessions = React.useMemo(() => 
@@ -35,11 +40,9 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
     return uniquePages.slice(0, 7);
   }, [schedule]);
 
-  const upcomingTasks = React.useMemo(() => 
-    schedule
-      .filter(item => isFuture(parseISO(item.date)))
-      .slice(0, 5),
-    [schedule]
+  const upcomingTasks = React.useMemo(() =>
+    uncompletedTasks.slice(1, 6),
+    [uncompletedTasks]
   );
 
   if (schedule.length === 0) {
@@ -61,7 +64,7 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
               <p className="text-muted-foreground">{todaysTask.task}</p>
             </div>
           ) : (
-            <p className="text-muted-foreground">No task scheduled for today.</p>
+            <p className="text-muted-foreground">Congratulations! You've completed your plan.</p>
           )}
         </div>
 
@@ -117,7 +120,7 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
               ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground">No upcoming tasks in the next 5 days.</p>
+            <p className="text-muted-foreground">No further tasks in this plan.</p>
           )}
         </div>
       </CardContent>
