@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { DayOfWeek, PlannerSettingsData } from '@/hooks/use-memorization-planner';
+import { DayOfWeek, PlannerSettingsData, AlreadyMemorizedData } from '@/hooks/use-memorization-planner';
 import { AlreadyMemorizedManager } from './AlreadyMemorizedManager';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -27,7 +27,19 @@ const formSchema = z.object({
   startDate: z.date(),
 });
 
-export const PlannerSettings = ({ settings, onSettingsChange, onGeneratePlan, alreadyMemorized, onAlreadyMemorizedChange }: { settings: PlannerSettingsData, onSettingsChange: (settings: PlannerSettingsData) => void, onGeneratePlan: () => void, alreadyMemorized: number[], onAlreadyMemorizedChange: (juz: number[]) => void }) => {
+export const PlannerSettings = ({
+  settings,
+  onSettingsChange,
+  onGeneratePlan,
+  alreadyMemorized,
+  onAlreadyMemorizedChange,
+}: {
+  settings: PlannerSettingsData;
+  onSettingsChange: (settings: PlannerSettingsData) => void;
+  onGeneratePlan: () => void;
+  alreadyMemorized: AlreadyMemorizedData;
+  onAlreadyMemorizedChange: (data: AlreadyMemorizedData) => void;
+}) => {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
 import { addDays, getDay, parseISO } from 'date-fns';
@@ -56,7 +57,21 @@ export const useMemorizationPlanner = () => {
 
   const [alreadyMemorized, setAlreadyMemorized] = useState<AlreadyMemorizedData>(() => {
     const saved = localStorage.getItem('memorizationPlannerAlreadyMemorized');
-    return saved ? JSON.parse(saved) : defaultAlreadyMemorized;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && 'juz' in parsed && 'surahs' in parsed && Array.isArray(parsed.juz) && Array.isArray(parsed.surahs)) {
+          return parsed;
+        }
+        // Handle old format which might be just an array of numbers (juz)
+        if (Array.isArray(parsed)) {
+          return { juz: parsed.filter(item => typeof item === 'number'), surahs: [] };
+        }
+      } catch (error) {
+        console.error('Failed to parse already memorized data from local storage:', error);
+      }
+    }
+    return defaultAlreadyMemorized;
   });
   
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
