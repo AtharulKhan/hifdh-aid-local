@@ -1,14 +1,7 @@
 import initSqlJs from 'sql.js';
+import { quranData, QuranVerse } from '@/data/quranData';
 
 // --- Type Definitions ---
-export interface QuranVerse {
-  id: number;
-  verse_key: string;
-  surah: number;
-  ayah: number;
-  text: string;
-}
-
 export interface QuranJson {
   [key: string]: QuranVerse;
 }
@@ -41,7 +34,6 @@ export interface ProcessedPages {
 }
 
 let dbInstance: initSqlJs.Database | null = null;
-let quranDataInstance: QuranJson | null = null;
 let wordIdToVerseKeyMapInstance: Map<number, string> | null = null;
 
 // --- Helper to fetch and initialize the database ---
@@ -55,15 +47,6 @@ async function getDb(dbPath: string): Promise<initSqlJs.Database> {
   const dbBuffer = await fetch(dbPath).then(res => res.arrayBuffer());
   dbInstance = new SQL.Database(new Uint8Array(dbBuffer));
   return dbInstance;
-}
-
-// --- Helper to fetch and parse quran.json ---
-async function getQuranData(quranJsonPath: string): Promise<QuranJson> {
-  if (quranDataInstance) {
-    return quranDataInstance;
-  }
-  quranDataInstance = await fetch(quranJsonPath).then(res => res.json());
-  return quranDataInstance;
 }
 
 // --- Helper to build wordId to verseKey map ---
@@ -88,11 +71,10 @@ async function getWordIdToVerseKeyMap(database: initSqlJs.Database): Promise<Map
 
 // --- Main processing function ---
 export async function processQuranData(
-  dbPath: string = '/qpc-hafs-15-lines.db', // Path relative to public folder
-  quranJsonPath: string = '/quran.json'    // Path relative to public folder
+  dbPath: string
 ): Promise<ProcessedPages> {
   const database = await getDb(dbPath);
-  const quran = await getQuranData(quranJsonPath);
+  const quran: QuranJson = quranData;
   const wordIdToVerseKey = await getWordIdToVerseKeyMap(database);
 
   const pageLineRows: PageLineFromDb[] = database.exec(`
@@ -186,7 +168,7 @@ export async function processQuranData(
       lineType: r.lineType,
       centered: !!r.isCentered,
       verseKeys: uniqueVerseKeys,
-      text: text || (r.lineType === 'bismillah' && r.surah !== 1 && r.surah !== 9 ? (quran[`${r.surah}:0`]?.text || 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ') : (r.lineType === 'surah_header' ? '' : 'Error: Text not found')),
+      text: text || (r.lineType === 'bismillah' && r.surah !== 1 && r.surah !== 9 ? (quran[`${r.surah}:0`]?.text || 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ') : (r.lineType === 'surah_header' ? '' : 'Error: Text not found')),
     };
 
     (processedPages[r.page] ??= []).push(line);
@@ -198,6 +180,5 @@ export async function processQuranData(
 // Optional: Function to clear cached instances if re-processing is needed with different files
 export function clearQuranDataCache(): void {
   dbInstance = null;
-  quranDataInstance = null;
   wordIdToVerseKeyMapInstance = null;
 }

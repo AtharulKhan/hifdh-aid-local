@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import DynamicQuranPage from '@/components/quran/DynamicQuranPage';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ProcessedPages, ProcessedLine, processQuranData, clearQuranDataCache } from '@/lib/quran-data-utils';
+import { ProcessedPages, ProcessedLine, processQuranData } from '@/lib/quran-data-utils';
+import dbUrl from '@/data/qpc-hafs-15-lines.db?url';
 
 const TOTAL_PAGES = 604; // As per the 15-line Mushaf standard
 
@@ -18,8 +20,7 @@ const DynamicMushafView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Paths are relative to the public folder
-        const data = await processQuranData('/qpc-hafs-15-lines.db', '/quran.json');
+        const data = await processQuranData(dbUrl);
         setAllPagesData(data);
       } catch (e) {
         console.error("Error processing Quran data:", e);
