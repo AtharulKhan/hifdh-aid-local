@@ -1,10 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
-import { addDays, format, getDay, parseISO } from 'date-fns';
-import { getSurahForPage } from "@/data/surah-juz-page-map";
+import { addDays, getDay, parseISO } from 'date-fns';
+import { getSurahForPage, surahJuzPageMapData } from "@/data/surah-juz-page-map";
+import surahNamesData from '@/data/surah-names.json';
+
+type SurahNames = {
+  [key: string]: {
+    name_simple: string;
+  }
+}
+const typedSurahNames: SurahNames = surahNamesData;
 
 export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 const dayMapping: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export interface AlreadyMemorizedData {
+  juz: number[];
+  surahs: number[];
+}
 
 export interface PlannerSettingsData {
   linesPerDay: number;
@@ -30,15 +43,20 @@ const defaultSettings: PlannerSettingsData = {
   startDate: new Date().toISOString(),
 };
 
+const defaultAlreadyMemorized: AlreadyMemorizedData = {
+  juz: [],
+  surahs: [],
+};
+
 export const useMemorizationPlanner = () => {
   const [settings, setSettings] = useState<PlannerSettingsData>(() => {
     const savedSettings = localStorage.getItem('memorizationPlannerSettings');
     return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
   });
 
-  const [alreadyMemorized, setAlreadyMemorized] = useState<number[]>(() => {
+  const [alreadyMemorized, setAlreadyMemorized] = useState<AlreadyMemorizedData>(() => {
     const saved = localStorage.getItem('memorizationPlannerAlreadyMemorized');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : defaultAlreadyMemorized;
   });
   
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
@@ -63,33 +81,65 @@ export const useMemorizationPlanner = () => {
     localStorage.removeItem('memorizationPlannerAlreadyMemorized');
     localStorage.removeItem('memorizationPlannerSchedule');
     setSettings(defaultSettings);
-    setAlreadyMemorized([]);
+    setAlreadyMemorized(defaultAlreadyMemorized);
     setSchedule([]);
   }, []);
 
+  const memorizedPagesSet = useMemo(() => {
+    const pages = new Set<number>();
+    
+    alreadyMemorized.juz.forEach(juzNumber => {
+      const juzData = juzPageMapData.find(j => j.juz === juzNumber);
+      if (juzData) {
+        for (let i = juzData.startPage; i <= juzData.endPage; i++) {
+          pages.add(i);
+        }
+      }
+    });
+
+    const surahNumberToName = (surahNumber: number) => {
+        return typedSurahNames[surahNumber]?.name_simple;
+    };
+    
+    alreadyMemorized.surahs.forEach(surahNumber => {
+        const surahName = surahNumberToName(surahNumber);
+        if (surahName) {
+            const surahPagesData = surahJuzPageMapData.filter(item => item.surahName === surahName);
+            surahPagesData.forEach(entry => {
+                for (let i = entry.startPage; i <= entry.endPage; i++) {
+                    pages.add(i);
+                }
+            });
+        }
+    });
+
+    return pages;
+  }, [alreadyMemorized]);
+
   const generateSchedule = useCallback(() => {
     const newSchedule: ScheduleItem[] = [];
-    const juzToMemorize = juzPageMapData
-      .filter(juz => !alreadyMemorized.includes(juz.juz))
-      .sort((a, b) => settings.juzOrder === 'sequential' ? a.juz - b.juz : b.juz - a.juz);
+    
+    let allQuranPages: {page: number, juz: number}[] = [];
+    juzPageMapData.forEach(juzInfo => {
+      for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
+        if (!allQuranPages.some(p => p.page === i)) {
+          allQuranPages.push({page: i, juz: juzInfo.juz});
+        }
+      }
+    });
 
-    if (juzToMemorize.length === 0) {
+    if (settings.juzOrder === 'reverse') {
+      allQuranPages.reverse();
+    }
+    
+    const pagesToMemorize = allQuranPages.filter(p => !memorizedPagesSet.has(p.page));
+
+    if (pagesToMemorize.length === 0) {
       setSchedule([]);
       return;
     }
 
     let currentDate = parseISO(settings.startDate);
-    let currentLineInQuran = 0; // This will be a cumulative line count
-
-    const totalLinesToMemorize = juzToMemorize.reduce((acc, juz) => acc + (juz.totalPages * 15), 0);
-    
-    const pagesToMemorize: {page: number, juz: number}[] = [];
-    juzToMemorize.forEach(juzInfo => {
-      for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
-        pagesToMemorize.push({page: i, juz: juzInfo.juz});
-      }
-    });
-
     let pageIndex = 0;
     let lineOnPage = 1;
 
@@ -123,7 +173,7 @@ export const useMemorizationPlanner = () => {
     }
 
     setSchedule(newSchedule);
-  }, [settings, alreadyMemorized]);
+  }, [settings, alreadyMemorized, memorizedPagesSet]);
   
   const updateDayStatus = (date: string, completed: boolean) => {
     setSchedule(prevSchedule =>
@@ -133,5 +183,5 @@ export const useMemorizationPlanner = () => {
     );
   };
   
-  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, setAlreadyMemorized, resetPlanner };
+  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, setAlreadyMemorized, resetPlanner, memorizedPagesSet };
 };

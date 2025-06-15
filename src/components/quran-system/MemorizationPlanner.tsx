@@ -1,10 +1,8 @@
-
 import React from "react";
 import { PlannerSettings } from "./planner/PlannerSettings";
 import { PlannerSchedule } from "./planner/PlannerSchedule";
 import { useMemorizationPlanner } from "@/hooks/use-memorization-planner";
 import { PlannerActions } from "./planner/PlannerActions";
-import { juzPageMapData } from "@/data/juz-page-map";
 import { PlannerSummary } from "./planner/PlannerSummary";
 
 export const MemorizationPlanner = () => {
@@ -17,23 +15,18 @@ export const MemorizationPlanner = () => {
     alreadyMemorized,
     setAlreadyMemorized,
     resetPlanner,
+    memorizedPagesSet,
   } = useMemorizationPlanner();
 
   const totalQuranPages = 604;
 
-  const alreadyMemorizedPages = React.useMemo(() => 
-    juzPageMapData
-      .filter(j => alreadyMemorized.includes(j.juz))
-      .reduce((acc, j) => acc + j.totalPages, 0),
-    [alreadyMemorized]
-  );
+  const alreadyMemorizedPages = memorizedPagesSet.size;
   
-  const totalPagesInPlan = React.useMemo(() =>
-    juzPageMapData
-      .filter(j => !alreadyMemorized.includes(j.juz))
-      .reduce((acc, j) => acc + j.totalPages, 0),
-    [alreadyMemorized]
-  );
+  const totalPagesInPlan = React.useMemo(() => {
+    if (schedule.length === 0) return 0;
+    const uniquePages = new Set(schedule.map(item => item.page));
+    return uniquePages.size;
+  }, [schedule]);
 
   const completedPagesInPlan = React.useMemo(() => {
     if (schedule.length === 0) return 0;
@@ -50,7 +43,6 @@ export const MemorizationPlanner = () => {
   const planProgress = totalPagesInPlan > 0 
     ? (completedPagesInPlan / totalPagesInPlan) * 100 
     : 0;
-
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
