@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import juzNumbersData from '@/data/juz-numbers.json';
 import surahNamesData from '@/data/surah-names.json';
@@ -71,13 +72,28 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
 
     for (let i = 1; i <= 30; i++) {
       const isJuzMemorized = alreadyMemorized.juz.includes(i);
-      const surahsInThisJuz = selectedSurahsInJuz[i] || [];
+      const surahsFromSelection = selectedSurahsInJuz[i] || [];
 
-      if (isJuzMemorized || surahsInThisJuz.length > 0) {
+      let surahsForDisplay: { id: string; name: string }[] = [];
+
+      if (isJuzMemorized) {
+        const juzData = typedJuzNumbers[i];
+        if (juzData && juzData.verse_mapping) {
+          const surahIds = Object.keys(juzData.verse_mapping);
+          surahsForDisplay = surahIds.map(surahId => ({
+            id: surahId,
+            name: typedSurahNames[surahId]?.name_simple || `Surah ${surahId}`
+          }));
+        }
+      } else {
+        surahsForDisplay = surahsFromSelection;
+      }
+
+      if (isJuzMemorized || surahsFromSelection.length > 0) {
         summary.push({
           juz: i,
           isFullyMemorized: isJuzMemorized,
-          surahs: surahsInThisJuz.sort((a, b) => parseInt(a.id) - parseInt(b.id))
+          surahs: surahsForDisplay.sort((a, b) => parseInt(a.id) - parseInt(b.id))
         });
       }
     }
@@ -140,30 +156,34 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
         {memorizedSummary.length > 0 && (
           <div className="mt-6 pt-6 border-t">
             <h4 className="text-md font-semibold mb-3">Memorized Summary</h4>
-            <div className="space-y-4">
+            <Accordion type="multiple" className="w-full">
               {memorizedSummary.map(({ juz, isFullyMemorized, surahs }) => (
-                <div key={juz}>
-                  <div className="flex items-center font-semibold text-sm mb-2">
-                    <p className='underline'>Juz {juz}</p>
-                    {isFullyMemorized && (
-                      <span className="ml-2 flex items-center text-green-600">
-                        <Check className="h-4 w-4 mr-1" />
-                        Fully Memorized
-                      </span>
+                <AccordionItem value={`juz-${juz}`} key={juz}>
+                  <AccordionTrigger>
+                    <div className="flex items-center font-semibold text-sm">
+                      <p>Juz {juz}</p>
+                      {isFullyMemorized && (
+                        <span className="ml-2 flex items-center text-green-600">
+                          <Check className="h-4 w-4 mr-1" />
+                          Fully Memorized
+                        </span>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {surahs.length > 0 && (
+                      <ul className="list-disc list-inside space-y-1 pl-4">
+                        {surahs.map(surah => (
+                          <li key={`${juz}-${surah.id}`} className="text-sm">
+                            Surah {surah.id}: {surah.name}
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                  </div>
-                  {!isFullyMemorized && surahs.length > 0 && (
-                    <ul className="list-disc list-inside space-y-1 pl-4">
-                      {surahs.map(surah => (
-                        <li key={`${juz}-${surah.id}`} className="text-sm">
-                          Surah {surah.id}: {surah.name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         )}
       </CardContent>
