@@ -112,29 +112,22 @@ export const MurajahMainDashboard = () => {
       }
     }
 
-    if (savedCompletions) {
+    if (savedCompletions && savedSettings) {
       try {
         const completions = JSON.parse(savedCompletions);
+        const settings = JSON.parse(savedSettings);
+        const juzMem = savedJuz ? JSON.parse(savedJuz) : [];
+        
         console.log('Parsed completions data:', completions, 'Type:', typeof completions);
         
-        // Handle both array and object formats
-        let completionsArray = [];
-        if (Array.isArray(completions)) {
-          completionsArray = completions;
-        } else if (completions && typeof completions === 'object') {
-          // Convert object format to array format
-          completionsArray = Object.keys(completions).map(date => ({
-            date,
-            completions: completions[date]
-          }));
-        }
-        
-        console.log('Completions array:', completionsArray);
-        
-        if (savedSettings && savedJuz) {
-          const settings = JSON.parse(savedSettings);
-          const juzMem = JSON.parse(savedJuz);
-          generateReviewCycles(completionsArray, settings, juzMem);
+        // Handle the correct data format for daily completions
+        // The data should be an object with date keys and completion arrays as values
+        if (completions && typeof completions === 'object' && !Array.isArray(completions)) {
+          generateReviewCycles(completions, settings, juzMem);
+        } else {
+          console.warn('Unexpected completions data format:', completions);
+          setTodaysReviewCycles([]);
+          setWeeklyReviewCycles([]);
         }
       } catch (error) {
         console.error('Error parsing dashboard data:', error);
@@ -142,17 +135,17 @@ export const MurajahMainDashboard = () => {
         setWeeklyReviewCycles([]);
       }
     } else {
-      console.log('No saved completions found');
+      console.log('No saved completions or settings found');
       setTodaysReviewCycles([]);
       setWeeklyReviewCycles([]);
     }
   };
 
-  const generateReviewCycles = (completions: any[], settings: any, juzMem: JuzMemorization[]) => {
+  const generateReviewCycles = (completions: any, settings: any, juzMem: JuzMemorization[]) => {
     console.log('Generating review cycles with:', { completions, settings, juzMem });
     
-    if (!Array.isArray(completions)) {
-      console.warn('Expected completions to be an array, got:', typeof completions);
+    if (!completions || typeof completions !== 'object') {
+      console.warn('Expected completions to be an object, got:', typeof completions);
       return;
     }
 
@@ -162,17 +155,20 @@ export const MurajahMainDashboard = () => {
 
     console.log('Looking for today:', today);
 
-    // Get today's cycles
-    const todayData = completions.find(d => d && d.date === today);
-    console.log('Today data found:', todayData);
+    // Get today's cycles - completions is an object with date keys
+    const todayCompletions = completions[today];
+    console.log('Today completions found:', todayCompletions);
     
     const todayCycles: ReviewCycle[] = [];
     
-    if (todayData && todayData.completions) {
-      Object.entries(todayData.completions).forEach(([cycleId, completed]) => {
-        const [cycleType] = cycleId.split('-');
-        const cycle = createReviewCycle(cycleType, completed as boolean);
-        if (cycle) todayCycles.push(cycle);
+    if (todayCompletions && Array.isArray(todayCompletions)) {
+      // Map array indices to cycle types based on typical order
+      const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
+      todayCompletions.forEach((completed, index) => {
+        if (index < cycleTypes.length) {
+          const cycle = createReviewCycle(cycleTypes[index], completed);
+          if (cycle) todayCycles.push(cycle);
+        }
       });
     }
 
@@ -180,18 +176,26 @@ export const MurajahMainDashboard = () => {
 
     // Get this week's cycles
     const weekCycles: ReviewCycle[] = [];
-    completions.forEach(dayData => {
-      if (!dayData || !dayData.date || !dayData.completions) return;
+    Object.entries(completions).forEach(([dateStr, dayCompletions]) => {
+      if (!dateStr || !dayCompletions) return;
       
-      const date = new Date(dayData.date);
-      if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
-        Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
-          const [cycleType] = cycleId.split('-');
-          const cycle = createReviewCycle(cycleType, completed as boolean);
-          if (cycle && !weekCycles.some(c => c.type === cycle.type)) {
-            weekCycles.push(cycle);
+      try {
+        const date = new Date(dateStr);
+        if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
+          if (Array.isArray(dayCompletions)) {
+            const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
+            dayCompletions.forEach((completed, index) => {
+              if (index < cycleTypes.length) {
+                const cycle = createReviewCycle(cycleTypes[index], completed);
+                if (cycle && !weekCycles.some(c => c.type === cycle.type)) {
+                  weekCycles.push(cycle);
+                }
+              }
+            });
           }
-        });
+        }
+      } catch (error) {
+        console.error('Error processing date:', dateStr, error);
       }
     });
 
@@ -257,17 +261,8 @@ export const MurajahMainDashboard = () => {
       const data = JSON.parse(completions);
       console.log('Calculating streaks with data:', data, 'Type:', typeof data);
       
-      let completionsArray = [];
-      if (Array.isArray(data)) {
-        completionsArray = data;
-      } else if (data && typeof data === 'object') {
-        // Convert object format to array format
-        completionsArray = Object.keys(data).map(date => ({
-          date,
-          completions: data[date]
-        }));
-      } else {
-        console.warn('Expected streak data to be an array or object');
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        console.warn('Expected streak data to be an object');
         return;
       }
       
@@ -279,9 +274,9 @@ export const MurajahMainDashboard = () => {
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = checkDate.toISOString().split('T')[0];
         
-        const dayData = completionsArray.find((d: any) => d && d.date === dateStr);
-        if (dayData && dayData.completions) {
-          const allCompleted = Object.values(dayData.completions).every(c => c === true);
+        const dayCompletions = data[dateStr];
+        if (dayCompletions && Array.isArray(dayCompletions)) {
+          const allCompleted = dayCompletions.every(c => c === true);
           if (allCompleted) {
             streak++;
           } else {
