@@ -16,6 +16,7 @@ import Tajweed from "./pages/Tajweed";
 import Murajah from "./pages/Murajah";
 import QuranSystem from "./pages/QuranSystem";
 import MushafView from "./pages/MushafView";
+import DynamicMushafView from "./pages/DynamicMushafView";
 
 function App() {
   const isMobile = useIsMobile();
@@ -30,6 +31,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/page-view" element={<PageView />} />
               <Route path="/mushaf-view" element={<MushafView />} />
+              <Route path="/dynamic-mushaf-view" element={<DynamicMushafView />} />
               <Route path="/test" element={<Test />} />
               <Route path="/tajweed" element={<Tajweed />} />
               <Route path="/murajah" element={<Murajah />} />
