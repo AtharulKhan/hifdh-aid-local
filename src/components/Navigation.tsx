@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -11,7 +10,8 @@ import {
   ClipboardCheck,
   BookText,
   RotateCcw,
-  Book
+  Book,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -23,7 +23,8 @@ const navItems = [
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
-  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" }
+  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" },
+  { path: "/dashboard", icon: BarChart3, label: "Dashboard" }
 ];
 
 export const Navigation = () => {

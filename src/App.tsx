@@ -15,6 +15,7 @@ import Test from "./pages/Test";
 import Tajweed from "./pages/Tajweed";
 import Murajah from "./pages/Murajah";
 import QuranSystem from "./pages/QuranSystem";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   const isMobile = useIsMobile();
@@ -32,6 +33,7 @@ function App() {
               <Route path="/tajweed" element={<Tajweed />} />
               <Route path="/murajah" element={<Murajah />} />
               <Route path="/quran-system" element={<QuranSystem />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/mindfulness" element={<Mindfulness />} />

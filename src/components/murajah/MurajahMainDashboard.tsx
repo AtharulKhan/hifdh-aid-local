@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,28 +85,61 @@ export const MurajahMainDashboard = () => {
     const savedSchedule = localStorage.getItem('memorizationPlannerSchedule');
     
     if (savedJuz) {
-      setJuzMemorization(JSON.parse(savedJuz));
+      try {
+        setJuzMemorization(JSON.parse(savedJuz));
+      } catch (error) {
+        console.error('Error parsing juz memorization data:', error);
+        setJuzMemorization([]);
+      }
     }
     
     if (savedSchedule) {
-      setMemorizationSchedule(JSON.parse(savedSchedule));
+      try {
+        setMemorizationSchedule(JSON.parse(savedSchedule));
+      } catch (error) {
+        console.error('Error parsing memorization schedule:', error);
+        setMemorizationSchedule([]);
+      }
     }
 
     if (savedCompletions && savedSettings && savedJuz) {
-      generateReviewCycles(JSON.parse(savedCompletions), JSON.parse(savedSettings), JSON.parse(savedJuz));
+      try {
+        const completions = JSON.parse(savedCompletions);
+        const settings = JSON.parse(savedSettings);
+        const juzMem = JSON.parse(savedJuz);
+        
+        // Ensure completions is an array
+        if (Array.isArray(completions)) {
+          generateReviewCycles(completions, settings, juzMem);
+        } else {
+          console.warn('Completions data is not an array:', typeof completions);
+          setTodaysReviewCycles([]);
+          setWeeklyReviewCycles([]);
+        }
+      } catch (error) {
+        console.error('Error parsing dashboard data:', error);
+        setTodaysReviewCycles([]);
+        setWeeklyReviewCycles([]);
+      }
     }
   };
 
   const generateReviewCycles = (completions: any[], settings: any, juzMem: JuzMemorization[]) => {
+    // Ensure completions is an array
+    if (!Array.isArray(completions)) {
+      console.warn('Expected completions to be an array, got:', typeof completions);
+      return;
+    }
+
     const today = new Date().toISOString().split('T')[0];
     const weekStart = startOfWeek(new Date());
     const weekEnd = endOfWeek(new Date());
 
     // Get today's cycles
-    const todayData = completions.find(d => d.date === today);
+    const todayData = completions.find(d => d && d.date === today);
     const todayCycles: ReviewCycle[] = [];
     
-    if (todayData) {
+    if (todayData && todayData.completions) {
       Object.entries(todayData.completions).forEach(([cycleId, completed]) => {
         const [cycleType] = cycleId.split('-');
         const cycle = createReviewCycle(cycleType, completed as boolean);
@@ -118,6 +150,8 @@ export const MurajahMainDashboard = () => {
     // Get this week's cycles
     const weekCycles: ReviewCycle[] = [];
     completions.forEach(dayData => {
+      if (!dayData || !dayData.date || !dayData.completions) return;
+      
       const date = new Date(dayData.date);
       if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
         Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
@@ -185,6 +219,11 @@ export const MurajahMainDashboard = () => {
 
     try {
       const data = JSON.parse(completions);
+      if (!Array.isArray(data)) {
+        console.warn('Expected streak data to be an array');
+        return;
+      }
+      
       let streak = 0;
       const today = new Date();
       
@@ -193,8 +232,8 @@ export const MurajahMainDashboard = () => {
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = checkDate.toISOString().split('T')[0];
         
-        const dayData = data.find((d: any) => d.date === dateStr);
-        if (dayData) {
+        const dayData = data.find((d: any) => d && d.date === dateStr);
+        if (dayData && dayData.completions) {
           const allCompleted = Object.values(dayData.completions).every(c => c === true);
           if (allCompleted) {
             streak++;
