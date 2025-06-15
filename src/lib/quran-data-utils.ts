@@ -1,3 +1,4 @@
+
 import initSqlJs from 'sql.js';
 import { quranData, QuranVerse } from '@/data/quranData';
 
@@ -35,6 +36,7 @@ export interface ProcessedPages {
 
 let dbInstance: initSqlJs.Database | null = null;
 let wordIdToVerseKeyMapInstance: Map<number, string> | null = null;
+let wordIdToWordTextMapInstance: Map<number, string> | null = null;
 
 // --- Helper to fetch and initialize the database ---
 async function getDb(dbPath: string): Promise<initSqlJs.Database> {
@@ -62,9 +64,8 @@ function getWordIdToVerseKeyMap(): Map<number, string> {
   let wordIdCounter = 1;
 
   for (const verse of verses) {
-    // Remove verse number symbols, then trim whitespace
-    const cleanedText = verse.text.replace(/[\u0660-\u0669]+$/, '').trim();
-    const words = cleanedText.split(/\s+/).filter(w => w.length > 0);
+    // The verse number is a word, so we don't remove it.
+    const words = verse.text.trim().split(/\s+/).filter(w => w.length > 0);
 
     for (let i = 0; i < words.length; i++) {
       newMap.set(wordIdCounter, verse.verse_key);
@@ -73,8 +74,31 @@ function getWordIdToVerseKeyMap(): Map<number, string> {
   }
 
   wordIdToVerseKeyMapInstance = newMap;
-  return wordIdToVerseKeyMapInstance;
+  return newMap;
 }
+
+// --- Helper to build wordId to word text map ---
+function getWordIdToWordTextMap(): Map<number, string> {
+    if (wordIdToWordTextMapInstance) {
+        return wordIdToWordTextMapInstance;
+    }
+
+    const newMap = new Map<number, string>();
+    const verses = Object.values(quranData as QuranJson).sort((a, b) => a.id - b.id);
+    let wordIdCounter = 1;
+
+    for (const verse of verses) {
+        const words = verse.text.trim().split(/\s+/).filter(w => w.length > 0);
+        for (const word of words) {
+            newMap.set(wordIdCounter, word);
+            wordIdCounter++;
+        }
+    }
+
+    wordIdToWordTextMapInstance = newMap;
+    return newMap;
+}
+
 
 // --- Main processing function ---
 export async function processQuranData(
@@ -83,6 +107,7 @@ export async function processQuranData(
   const database = await getDb(dbPath);
   const quran: QuranJson = quranData;
   const wordIdToVerseKey = getWordIdToVerseKeyMap();
+  const wordIdToWordText = getWordIdToWordTextMap();
 
   const pageLineRows: PageLineFromDb[] = database.exec(`
     SELECT
@@ -111,71 +136,54 @@ export async function processQuranData(
     const firstKey = wordIdToVerseKey.get(r.first_word_id);
     const lastKey = wordIdToVerseKey.get(r.last_word_id);
 
-    if (!firstKey || !lastKey) {
-      console.warn(`Could not find verse keys for line: page ${r.page}, line ${r.line}. Word IDs: ${r.first_word_id}, ${r.last_word_id}`);
-      // Fallback or skip this line
-      // For now, we'll create a line with a placeholder text if keys are missing.
-      const line: ProcessedLine = {
-        lineType: r.lineType,
-        centered: !!r.isCentered,
-        verseKeys: [],
-        text: 'Error: Verse keys not found for this line.',
-      };
-      (processedPages[r.page] ??= []).push(line);
-      continue;
-    }
-
     const verseKeys: string[] = [];
-    if (firstKey === lastKey) {
-      verseKeys.push(firstKey);
-    } else {
-      // This is a simplified logic. A more robust solution would iterate through
-      // all verse numbers between firstKey and lastKey if a line can span multiple verses.
-      // For the 15-line mushaf, lines usually don't span widely separated verses.
-      // We will parse surah and ayah numbers to determine the range if needed.
-      const [s1, a1] = firstKey.split(':').map(Number);
-      const [s2, a2] = lastKey.split(':').map(Number);
-
-      if (s1 !== s2) {
-        // Line spans surahs - this is complex and rare in 15-line mushaf lines.
-        // Sticking to simple first/last for now.
+    if (firstKey && lastKey) {
+      if (firstKey === lastKey) {
         verseKeys.push(firstKey);
-        if (firstKey !== lastKey) verseKeys.push(lastKey);
-         console.warn(`Line spans surahs: ${firstKey} to ${lastKey}. Page ${r.page}, Line ${r.line}. Text might be incomplete.`);
       } else {
-         // Line is within the same surah
-        for (let ayahNum = a1; ayahNum <= a2; ayahNum++) {
-          const currentKey = `${s1}:${ayahNum}`;
-          if (quran[currentKey]) { // Check if the verse key exists in quran.json
-            verseKeys.push(currentKey);
-          } else {
-            // This case might happen if last_word_id points to a verse that doesn't exist (e.g. end of surah)
-            // or if the wordIdToVerseKey map is somehow incomplete for this range.
-            console.warn(`Verse key ${currentKey} not found in quran.json for page ${r.page}, line ${r.line}`);
+        const [s1, a1] = firstKey.split(':').map(Number);
+        const [s2, a2] = lastKey.split(':').map(Number);
+
+        if (s1 !== s2) {
+          verseKeys.push(firstKey);
+          if (firstKey !== lastKey) verseKeys.push(lastKey);
+           console.warn(`Line spans surahs: ${firstKey} to ${lastKey}. Page ${r.page}, Line ${r.line}.`);
+        } else {
+          for (let ayahNum = a1; ayahNum <= a2; ayahNum++) {
+            const currentKey = `${s1}:${ayahNum}`;
+            if (quran[currentKey]) { // Check if the verse key exists in quran.json
+              verseKeys.push(currentKey);
+            }
           }
-        }
-        // Ensure unique keys, though the loop should naturally produce them if quran.json is consistent.
-        // And if no keys were added (e.g. a1 > a2), use first and last.
-        if (verseKeys.length === 0) {
-            verseKeys.push(firstKey);
-            if (firstKey !== lastKey) verseKeys.push(lastKey); // Should not happen if a1 > a2
+          if (verseKeys.length === 0) {
+              verseKeys.push(firstKey);
+              if (firstKey !== lastKey) verseKeys.push(lastKey);
+          }
         }
       }
     }
 
-    // Remove duplicates just in case (e.g. if firstKey and lastKey were the same and added twice)
     const uniqueVerseKeys = [...new Set(verseKeys)];
 
-    const text = uniqueVerseKeys
-      .map(k => quran[k]?.text || '') // Add null check for quran[k]
-      .join(' ')
-      .trim();
-
+    let lineText = '';
+    if (r.first_word_id && r.last_word_id && r.last_word_id >= r.first_word_id) {
+        const wordsInLine = [];
+        for (let wordId = r.first_word_id; wordId <= r.last_word_id; wordId++) {
+            const wordText = wordIdToWordText.get(wordId);
+            if (wordText) {
+                wordsInLine.push(wordText);
+            } else {
+                console.warn(`Word text not found for word_id: ${wordId} on page ${r.page}, line ${r.line}`);
+            }
+        }
+        lineText = wordsInLine.join(' ');
+    }
+    
     const line: ProcessedLine = {
       lineType: r.lineType,
       centered: !!r.isCentered,
       verseKeys: uniqueVerseKeys,
-      text: text || (r.lineType === 'bismillah' && r.surah !== 1 && r.surah !== 9 ? (quran[`${r.surah}:0`]?.text || 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ') : (r.lineType === 'surah_header' ? '' : 'Error: Text not found')),
+      text: lineText || (r.lineType === 'bismillah' && r.surah !== 1 && r.surah !== 9 ? (quran[`${r.surah}:0`]?.text || 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ') : (r.lineType === 'surah_header' ? '' : '')),
     };
 
     (processedPages[r.page] ??= []).push(line);
@@ -188,4 +196,5 @@ export async function processQuranData(
 export function clearQuranDataCache(): void {
   dbInstance = null;
   wordIdToVerseKeyMapInstance = null;
+  wordIdToWordTextMapInstance = null;
 }
