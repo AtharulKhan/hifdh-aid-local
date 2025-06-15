@@ -39,9 +39,10 @@ export const PlannerSettings = ({ settings, onSettingsChange, onGeneratePlan, al
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onSettingsChange({
-      ...values,
-      startDate: values.startDate.toISOString(),
+      linesPerDay: values.linesPerDay,
       daysOfWeek: values.daysOfWeek as DayOfWeek[],
+      juzOrder: values.juzOrder,
+      startDate: values.startDate.toISOString(),
     });
     onGeneratePlan();
     toast({

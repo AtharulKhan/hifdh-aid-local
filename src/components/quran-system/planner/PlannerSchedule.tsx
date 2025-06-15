@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { format, parseISO } from 'date-fns';
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
+import { Label } from '@/components/ui/label';
 
 export const PlannerSchedule = ({ schedule, onDayStatusChange }: { schedule: ScheduleItem[], onDayStatusChange: (date: string, completed: boolean) => void }) => {
   if (schedule.length === 0) {
@@ -63,4 +64,3 @@ export const PlannerSchedule = ({ schedule, onDayStatusChange }: { schedule: Sch
     </Card>
   );
 };
-
