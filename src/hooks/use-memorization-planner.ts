@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
 import { addDays, format, getDay, parseISO } from 'date-fns';
+import { getSurahForPage } from "@/data/surah-juz-page-map";
 
 export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 const dayMapping: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -20,6 +20,7 @@ export interface ScheduleItem {
   page: number;
   startLine: number;
   endLine: number;
+  surah: string;
 }
 
 const defaultSettings: PlannerSettingsData = {
@@ -57,6 +58,15 @@ export const useMemorizationPlanner = () => {
     localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(schedule));
   }, [schedule]);
 
+  const resetPlanner = useCallback(() => {
+    localStorage.removeItem('memorizationPlannerSettings');
+    localStorage.removeItem('memorizationPlannerAlreadyMemorized');
+    localStorage.removeItem('memorizationPlannerSchedule');
+    setSettings(defaultSettings);
+    setAlreadyMemorized([]);
+    setSchedule([]);
+  }, []);
+
   const generateSchedule = useCallback(() => {
     const newSchedule: ScheduleItem[] = [];
     const juzToMemorize = juzPageMapData
@@ -87,6 +97,7 @@ export const useMemorizationPlanner = () => {
       const dayOfWeek = getDay(currentDate);
       if (settings.daysOfWeek.includes(dayMapping[dayOfWeek])) {
         const { page } = pagesToMemorize[pageIndex];
+        const surah = getSurahForPage(page);
         const startLine = lineOnPage;
         let linesForThisDay = settings.linesPerDay;
         
@@ -94,11 +105,12 @@ export const useMemorizationPlanner = () => {
 
         newSchedule.push({
           date: currentDate.toISOString(),
-          task: `Page ${page}, Lines ${startLine}-${Math.min(endLine, 15)}`,
+          task: `Surah ${surah}, Page ${page}, Lines ${startLine}-${Math.min(endLine, 15)}`,
           completed: false,
           page: page,
           startLine: startLine,
-          endLine: Math.min(endLine, 15)
+          endLine: Math.min(endLine, 15),
+          surah: surah
         });
 
         lineOnPage += linesForThisDay;
@@ -121,6 +133,5 @@ export const useMemorizationPlanner = () => {
     );
   };
   
-  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, setAlreadyMemorized };
+  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, setAlreadyMemorized, resetPlanner };
 };
-

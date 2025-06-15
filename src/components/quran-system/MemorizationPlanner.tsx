@@ -3,6 +3,8 @@ import React from "react";
 import { PlannerSettings } from "./planner/PlannerSettings";
 import { PlannerSchedule } from "./planner/PlannerSchedule";
 import { useMemorizationPlanner } from "@/hooks/use-memorization-planner";
+import { PlannerActions } from "./planner/PlannerActions";
+import { juzPageMapData } from "@/data/juz-page-map";
 
 export const MemorizationPlanner = () => {
   const {
@@ -13,7 +15,41 @@ export const MemorizationPlanner = () => {
     updateDayStatus,
     alreadyMemorized,
     setAlreadyMemorized,
+    resetPlanner,
   } = useMemorizationPlanner();
+
+  const totalQuranPages = 604;
+
+  const alreadyMemorizedPages = React.useMemo(() => 
+    juzPageMapData
+      .filter(j => alreadyMemorized.includes(j.juz))
+      .reduce((acc, j) => acc + j.totalPages, 0),
+    [alreadyMemorized]
+  );
+  
+  const totalPagesInPlan = React.useMemo(() =>
+    juzPageMapData
+      .filter(j => !alreadyMemorized.includes(j.juz))
+      .reduce((acc, j) => acc + j.totalPages, 0),
+    [alreadyMemorized]
+  );
+
+  const completedPagesInPlan = React.useMemo(() => {
+    if (schedule.length === 0) return 0;
+    const completedLines = schedule
+      .filter(s => s.completed)
+      .reduce((acc, s) => acc + (s.endLine - s.startLine + 1), 0);
+    return completedLines / 15;
+  }, [schedule]);
+
+  const totalProgress = totalQuranPages > 0 
+    ? ((alreadyMemorizedPages + completedPagesInPlan) / totalQuranPages) * 100
+    : 0;
+  
+  const planProgress = totalPagesInPlan > 0 
+    ? (completedPagesInPlan / totalPagesInPlan) * 100 
+    : 0;
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -25,9 +61,19 @@ export const MemorizationPlanner = () => {
           alreadyMemorized={alreadyMemorized}
           onAlreadyMemorizedChange={setAlreadyMemorized}
         />
+        <PlannerActions onReset={resetPlanner} />
       </div>
       <div className="lg:col-span-2">
-        <PlannerSchedule schedule={schedule} onDayStatusChange={updateDayStatus} />
+        <PlannerSchedule 
+          schedule={schedule} 
+          onDayStatusChange={updateDayStatus}
+          totalProgress={totalProgress}
+          planProgress={planProgress}
+          alreadyMemorizedPages={alreadyMemorizedPages}
+          completedPagesInPlan={completedPagesInPlan}
+          totalPagesInPlan={totalPagesInPlan}
+          totalQuranPages={totalQuranPages}
+        />
       </div>
     </div>
   );
