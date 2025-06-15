@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -23,7 +24,7 @@ const navItems = [
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
-  { path: "/murajah", icon: RotateCcw, label: "Muraja'ah (Smart Review)" },
+  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" },
   { path: "/dashboard", icon: BarChart3, label: "Dashboard" }
 ];
 

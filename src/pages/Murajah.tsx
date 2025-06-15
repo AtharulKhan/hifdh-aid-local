@@ -6,13 +6,14 @@ import { JuzMemorizationTracker } from "@/components/murajah/JuzMemorizationTrac
 import { ReviewSettings } from "@/components/murajah/ReviewSettings";
 import { MurajahLog } from "@/components/murajah/MurajahLog";
 import { MurajahMainDashboard } from "@/components/murajah/MurajahMainDashboard";
+import { MemorizationPlanner } from "@/components/quran-system/MemorizationPlanner";
 
 const Murajah = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-          Muraja'ah - Smart Review
+          Your Schedule
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
           Intelligent spaced repetition system for Quran memorization. Track your progress and get automated daily review cycles.
@@ -20,12 +21,15 @@ const Murajah = () => {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto md:h-10">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto md:h-10">
           <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Dashboard
           </TabsTrigger>
           <TabsTrigger value="review" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Today's Review
+          </TabsTrigger>
+          <TabsTrigger value="planner" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Memorization Planner
           </TabsTrigger>
           <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Log
@@ -44,6 +48,10 @@ const Murajah = () => {
 
         <TabsContent value="review" className="space-y-6">
           <MurajahDashboard />
+        </TabsContent>
+
+        <TabsContent value="planner" className="space-y-6">
+          <MemorizationPlanner />
         </TabsContent>
 
         <TabsContent value="juz" className="space-y-6">
