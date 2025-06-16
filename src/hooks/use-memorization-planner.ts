@@ -60,6 +60,8 @@ export const useMemorizationPlanner = () => {
     return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
   });
 
+  const [refreshKey, setRefreshKey] = useState<number>(0); // Added refreshKey state
+
   // Derive alreadyMemorized from 'murajah-juz-memorization'
   const alreadyMemorized = useMemo((): AlreadyMemorizedData => {
     const savedJuzData = localStorage.getItem('murajah-juz-memorization');
@@ -85,9 +87,7 @@ export const useMemorizationPlanner = () => {
       }
     }
     return derived;
-  }, []); // Dependency array is empty, will re-evaluate on every render or when hook is re-initialized.
-          // A more robust solution might involve a global state or context for murajah-juz-memorization
-          // or passing a trigger/timestamp to re-evaluate this memo when underlying data changes.
+  }, [refreshKey]); // Added refreshKey to dependency array
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
     const saved = localStorage.getItem('memorizationPlannerSchedule');
@@ -145,6 +145,7 @@ export const useMemorizationPlanner = () => {
   }, [alreadyMemorized]);
 
   const generateSchedule = useCallback(() => {
+    setRefreshKey(prev => prev + 1); // Update refreshKey at the beginning
     const newSchedule: ScheduleItem[] = [];
     
     let allQuranPages: {page: number, juz: number}[] = [];
