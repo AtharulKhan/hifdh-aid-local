@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { SkipForward, SkipBack, BookOpen } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
@@ -33,6 +34,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
   const currentSurahVerses = allVerses.filter(verse => verse.surah === currentSurah);
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
   const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
+
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
     if (verse) {
@@ -59,6 +61,13 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
     setRevelationRate([100]);
     setVerseRange([1, 0]); // Reset verse range for new surah
   };
+
+  const handleSurahSelect = (surahNumber: number) => {
+    setCurrentSurah(surahNumber);
+    setRevelationRate([100]);
+    setVerseRange([1, 0]);
+  };
+
   const getTajweedText = (verse: QuranVerse): string => {
     const words: string[] = [];
     let wordIndex = 1;
@@ -89,6 +98,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
   const wordsToShow = Math.ceil(words.length * sliderProgress);
   const visibleText = words.slice(0, wordsToShow).join(' ');
   const displayText = hideVerses ? visibleText : getCombinedText();
+
   return <div className="space-y-6">
       {/* Header with Surah Info */}
       <div className="bg-white p-6 rounded-lg border border-green-100 text-center">
@@ -102,6 +112,33 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
           <Badge variant="outline" className="border-green-200 text-green-600">
             {currentSurahVerses.length} verses
           </Badge>
+        </div>
+
+        {/* Horizontal Surah Navigation Carousel */}
+        <div className="mb-6">
+          <Carousel className="w-full max-w-4xl mx-auto">
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {Array.from({ length: maxSurah }, (_, i) => i + 1).map((surahNum) => (
+                <CarouselItem key={surahNum} className="pl-2 md:pl-4 basis-1/6 md:basis-1/8">
+                  <Button
+                    variant={currentSurah === surahNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSurahSelect(surahNum)}
+                    className={`w-full h-12 text-xs flex flex-col items-center justify-center ${
+                      currentSurah === surahNum 
+                        ? "bg-green-600 text-white border-green-600" 
+                        : "bg-white border-green-200 text-green-600 hover:bg-green-50"
+                    }`}
+                  >
+                    <span className="font-bold">{surahNum}</span>
+                    <span className="text-[10px] truncate w-full">{getSurahName(surahNum).split(' ')[0]}</span>
+                  </Button>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="border-green-200 text-green-600 hover:bg-green-50" />
+            <CarouselNext className="border-green-200 text-green-600 hover:bg-green-50" />
+          </Carousel>
         </div>
 
         {/* Navigation */}
