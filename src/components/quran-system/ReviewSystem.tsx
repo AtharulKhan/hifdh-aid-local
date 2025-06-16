@@ -3,6 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Headphones, Eye, RotateCcw, TrendingUp, Clock, BookOpen } from "lucide-react";
+import { ExpandableSection } from "@/components/ui/ExpandableSection"; // Import ExpandableSection
 
 export const ReviewSystem = () => {
   return (
@@ -18,10 +19,11 @@ export const ReviewSystem = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Introduction */}
-          <div className="bg-white/70 rounded-lg p-4">
-            <p className="text-gray-700 mb-3">
+        <ExpandableSection initialHeight="200px">
+          <CardContent className="space-y-6 pt-0 md:pt-0"> {/* Adjusted padding */}
+            {/* Introduction */}
+            <div className="bg-white/70 rounded-lg p-4">
+              <p className="text-gray-700 mb-3">
               <strong>Proper review is defined as reciting your memorized portion from memory at least once.</strong> 
               Simply listening or reading from the Mushaf does not count as active review, though these can be supplementary tools.
             </p>
@@ -182,10 +184,11 @@ export const ReviewSystem = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Overview */}
-          <div className="bg-white/70 rounded-lg p-4">
-            <p className="text-gray-700">
+        <ExpandableSection initialHeight="200px">
+          <CardContent className="space-y-6 pt-0 md:pt-0"> {/* Adjusted padding */}
+            {/* Overview */}
+            <div className="bg-white/70 rounded-lg p-4">
+              <p className="text-gray-700">
               Designed for <strong>Hifdh graduates</strong> who want to solidify and master their memorization, 
               aiming to recite any part of the Qur'an with confidence and minimal mistakes.
             </p>
