@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { getVersesArray, getSurahName, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
+import { PersonalNotes } from "./PersonalNotes";
 
 interface TafsirViewerProps {
   startingVerseId?: number;
@@ -159,6 +160,12 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Personal Notes for Current Verse */}
+      <PersonalNotes 
+        surahNumber={currentVerse.surah} 
+        verseNumber={currentVerse.ayah} 
+      />
 
       {/* Tafsir Info */}
       <Card className="p-4 bg-blue-50 border-blue-200">
