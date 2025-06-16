@@ -1,8 +1,6 @@
 
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MurajahMainDashboard } from "@/components/murajah/MurajahMainDashboard";
-import { MushafViewer } from "@/components/mushaf/MushafViewer";
 
 const Dashboard = () => {
   return (
@@ -16,24 +14,7 @@ const Dashboard = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 h-auto">
-          <TabsTrigger value="overview" className="text-sm px-3 py-2">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="mushaf" className="text-sm px-3 py-2">
-            Mushaf
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <MurajahMainDashboard />
-        </TabsContent>
-
-        <TabsContent value="mushaf" className="space-y-6">
-          <MushafViewer />
-        </TabsContent>
-      </Tabs>
+      <MurajahMainDashboard />
     </div>
   );
 };
