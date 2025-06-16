@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3, Brain, ArrowUpDown } from "lucide-react";
+import { ClipboardCheck, ArrowRight, BookOpen, Shuffle, Edit3, Brain, ArrowUpDown, Type } from "lucide-react";
 import { BeforeAfterTest } from "./BeforeAfterTest";
 import { FirstVerseTest } from "./FirstVerseTest";
 import { RandomSpotTest } from "./RandomSpotTest";
 import { FillInBlankTest } from "./FillInBlankTest";
 import { WordRecallTest } from "./WordRecallTest";
 import { OutOfOrderTest } from "./OutOfOrderTest";
+import { FirstWordTest } from "./FirstWordTest";
 import juzData from "@/data/juz-numbers.json";
 
 interface JuzMemorization {
@@ -87,6 +89,8 @@ export const TestDashboard = () => {
         return <WordRecallTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       case "out-of-order":
         return <OutOfOrderTest onBack={() => setActiveTest(null)} />;
+      case "first-word":
+        return <FirstWordTest onBack={() => setActiveTest(null)} memorizedEntries={memorizedEntries} />;
       default:
         return null;
     }
@@ -131,6 +135,29 @@ export const TestDashboard = () => {
 
       {/* Test Options Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* First Word Test */}
+        <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-cyan-500"
+              onClick={() => setActiveTest("first-word")}>
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-cyan-50 rounded-lg flex-shrink-0">
+                <Type className="h-5 md:h-6 w-5 md:w-6 text-cyan-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base md:text-lg font-semibold text-gray-800 break-words">First Word Test</h3>
+                <Badge variant="secondary" className="bg-cyan-50 text-cyan-700 text-xs mt-1">Word Recognition</Badge>
+              </div>
+            </div>
+            <p className="text-gray-600 text-xs md:text-sm">
+              Only the first word is shown. Hover or click to reveal more words gradually. Perfect for word-by-word memorization.
+            </p>
+            <Button variant="outline" className="w-full border-cyan-200 text-cyan-700 hover:bg-cyan-50 text-xs md:text-sm">
+              Start Test
+              <ArrowRight className="h-3 md:h-4 w-3 md:w-4 ml-2" />
+            </Button>
+          </div>
+        </Card>
+
         {/* Before & After Test */}
         <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-yellow-200"
               onClick={() => setActiveTest("before-after")}>
