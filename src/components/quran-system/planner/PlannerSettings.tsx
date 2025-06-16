@@ -32,13 +32,11 @@ export const PlannerSettings = ({
   onSettingsChange,
   onGeneratePlan,
   alreadyMemorized,
-  onAlreadyMemorizedChange,
 }: {
   settings: PlannerSettingsData;
   onSettingsChange: (settings: PlannerSettingsData) => void;
   onGeneratePlan: () => void;
   alreadyMemorized: AlreadyMemorizedData;
-  onAlreadyMemorizedChange: (data: AlreadyMemorizedData) => void;
 }) => {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -179,7 +177,7 @@ export const PlannerSettings = ({
         </Form>
       </CardContent>
     </Card>
-    <AlreadyMemorizedManager alreadyMemorized={alreadyMemorized} onAlreadyMemorizedChange={onAlreadyMemorizedChange} />
+    <AlreadyMemorizedManager alreadyMemorized={alreadyMemorized} />
     </div>
   );
 };

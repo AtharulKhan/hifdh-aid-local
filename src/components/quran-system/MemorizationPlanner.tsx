@@ -14,7 +14,6 @@ export const MemorizationPlanner = () => {
     generateSchedule,
     updateDayStatus,
     alreadyMemorized,
-    setAlreadyMemorized,
     resetPlanner,
     memorizedPagesSet,
   } = useMemorizationPlanner();
@@ -66,7 +65,6 @@ export const MemorizationPlanner = () => {
             onSettingsChange={setSettings}
             onGeneratePlan={generateSchedule}
             alreadyMemorized={alreadyMemorized}
-            onAlreadyMemorizedChange={setAlreadyMemorized}
           />
         </div>
         <div className="lg:col-span-1 space-y-6">
