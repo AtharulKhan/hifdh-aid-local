@@ -3,7 +3,8 @@ import quranJson from './quran.json';
 import tajweedJson from './tajweed.json';
 import surahNamesJson from './surah-names.json';
 import juzNumbersJson from './juz-numbers.json';
-import tafsirJson from './tafsir.json';
+import tafsirIbnKathirJson from './tafsir-ibn-kathir.json';
+import tafsirMaarifJson from './tafsir-maarif.json';
 
 export interface QuranVerse {
   id: number;
@@ -58,8 +59,15 @@ export const surahNamesData: Record<string, SurahInfo> = surahNamesJson;
 export const juzNumbersData: Record<string, JuzInfo> = juzNumbersJson;
 
 // Load Tafsir data from JSON with proper type handling
-export const tafsirData: Record<string, TafsirData> = Object.fromEntries(
-  Object.entries(tafsirJson as Record<string, string | TafsirData>).map(([key, value]) => [
+export const tafsirIbnKathirData: Record<string, TafsirData> = Object.fromEntries(
+  Object.entries(tafsirIbnKathirJson as Record<string, string | TafsirData>).map(([key, value]) => [
+    key,
+    typeof value === 'string' ? { text: value } : value
+  ])
+);
+
+export const tafsirMaarifData: Record<string, TafsirData> = Object.fromEntries(
+  Object.entries(tafsirMaarifJson as Record<string, string | TafsirData>).map(([key, value]) => [
     key,
     typeof value === 'string' ? { text: value } : value
   ])
@@ -121,8 +129,19 @@ export const getFirstVerseOfJuz = (juzNumber: number): QuranVerse | undefined =>
   return getVersesArray().find(verse => verse.surah === surah && verse.ayah === ayah);
 };
 
-// Helper function to get tafsir for a verse
-export const getTafsirForVerse = (surah: number, ayah: number): TafsirData | undefined => {
+// Helper function to get Ibn Kathir tafsir for a verse
+export const getTafsirIbnKathirForVerse = (surah: number, ayah: number): TafsirData | undefined => {
   const verseKey = `${surah}:${ayah}`;
-  return tafsirData[verseKey];
+  return tafsirIbnKathirData[verseKey];
+};
+
+// Helper function to get Maarif-ul-Qur'an tafsir for a verse
+export const getTafsirMaarifForVerse = (surah: number, ayah: number): TafsirData | undefined => {
+  const verseKey = `${surah}:${ayah}`;
+  return tafsirMaarifData[verseKey];
+};
+
+// Legacy function for backward compatibility
+export const getTafsirForVerse = (surah: number, ayah: number): TafsirData | undefined => {
+  return getTafsirIbnKathirForVerse(surah, ayah);
 };

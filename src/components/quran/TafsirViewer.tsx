@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import { getVersesArray, getSurahName, getTafsirForVerse } from "@/data/quranData";
+import { getVersesArray, getSurahName, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
 
 interface TafsirViewerProps {
   startingVerseId?: number;
@@ -20,7 +20,8 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
   });
 
   const currentVerse = allVerses[currentVerseIndex];
-  const currentTafsir = getTafsirForVerse(currentVerse.surah, currentVerse.ayah);
+  const currentTafsirIbnKathir = getTafsirIbnKathirForVerse(currentVerse.surah, currentVerse.ayah);
+  const currentTafsirMaarif = getTafsirMaarifForVerse(currentVerse.surah, currentVerse.ayah);
 
   const goToNextVerse = () => {
     if (currentVerseIndex < allVerses.length - 1) {
@@ -117,10 +118,10 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
           
           <TabsContent value="ibn-kathir" className="mt-0">
             <ScrollArea className="h-[400px] p-6">
-              {currentTafsir ? (
+              {currentTafsirIbnKathir ? (
                 <div 
                   className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: currentTafsir.text }}
+                  dangerouslySetInnerHTML={{ __html: currentTafsirIbnKathir.text }}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
@@ -138,10 +139,10 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
 
           <TabsContent value="maarif-ul-quran" className="mt-0">
             <ScrollArea className="h-[400px] p-6">
-              {currentTafsir ? (
+              {currentTafsirMaarif ? (
                 <div 
                   className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: currentTafsir.text }}
+                  dangerouslySetInnerHTML={{ __html: currentTafsirMaarif.text }}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
