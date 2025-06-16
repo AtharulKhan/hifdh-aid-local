@@ -1,0 +1,27 @@
+{
+  "name": "typescript_firebase_cache_sync",
+  "version": "1.0.0",
+  "description": "Firebase TypeScript Cache Sync",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "parcel src/index.html --open",
+    "build": "parcel build src/index.html",
+    "test-node": "ts-node src/index.ts"
+  },
+  "keywords": [
+    "firebase",
+    "typescript",
+    "cache"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^10.12.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "parcel": "^2.12.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}
