@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { getVersesArray, getSurahName } from "@/data/quranData";
 import tafsirIbnKathirData from "@/data/tafsir-ibn-kathir.json";
@@ -50,7 +51,7 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-green-700 mb-2">
-          Tafsir Ibn Kathir
+          Tafsir Commentary
         </h2>
         <p className="text-gray-600">
           Classical commentary on the Holy Qur'an
@@ -105,7 +106,7 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
         </div>
       </Card>
 
-      {/* Tafsir Content */}
+      {/* Tafsir Content with Tabs */}
       <Card className="border-amber-200">
         <div className="p-4 bg-amber-50 border-b border-amber-200">
           <div className="flex items-center space-x-2">
@@ -116,24 +117,34 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
           </div>
         </div>
         
-        <ScrollArea className="h-[400px] p-6">
-          {currentTafsir ? (
-            <div 
-              className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: currentTafsir.text }}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <BookOpen className="h-12 w-12 text-gray-300" />
-              <div>
-                <p className="text-gray-500 font-medium">No commentary available</p>
-                <p className="text-sm text-gray-400">
-                  Tafsir for this verse is not yet available in our collection
-                </p>
-              </div>
-            </div>
-          )}
-        </ScrollArea>
+        <Tabs defaultValue="ibn-kathir" className="w-full">
+          <TabsList className="grid w-full grid-cols-1 bg-amber-25">
+            <TabsTrigger value="ibn-kathir" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+              Ibn Kathir
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ibn-kathir" className="mt-0">
+            <ScrollArea className="h-[400px] p-6">
+              {currentTafsir ? (
+                <div 
+                  className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: currentTafsir.text }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                  <BookOpen className="h-12 w-12 text-gray-300" />
+                  <div>
+                    <p className="text-gray-500 font-medium">No commentary available</p>
+                    <p className="text-sm text-gray-400">
+                      Tafsir for this verse is not yet available in our collection
+                    </p>
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </Card>
 
       {/* Tafsir Info */}
