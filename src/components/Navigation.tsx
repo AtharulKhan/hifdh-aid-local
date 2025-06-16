@@ -12,14 +12,11 @@ import {
   BookText,
   RotateCcw,
   Book,
-  BarChart3,
-  LogOut
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { path: "/", icon: BarChart3, label: "Dashboard" },
@@ -35,24 +32,6 @@ export const Navigation = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { logout, currentUser } = useAuth();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Logged out",
-        description: "You have been logged out successfully"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log out",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Mobile Navigation
   if (isMobile) {
@@ -90,9 +69,6 @@ export const Navigation = () => {
             <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               Quran Hifz Aid
             </h1>
-            {currentUser && (
-              <p className="text-sm text-gray-600 mt-1">{currentUser.email}</p>
-            )}
           </div>
           <div className="space-y-2 p-4">
             {navItems.map(({ path, icon: Icon, label }) => (
@@ -113,16 +89,6 @@ export const Navigation = () => {
               </Link>
             ))}
           </div>
-          <div className="absolute bottom-4 left-4 right-4">
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              className="w-full flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
-          </div>
         </nav>
       </>
     );
@@ -135,19 +101,14 @@ export const Navigation = () => {
       "bg-white/95 backdrop-blur-xl border-r border-gray-100 min-h-screen shadow-sm animate-fadeIn",
       isMinimized ? "w-16" : "w-64"
     )}>
-      <div className="w-full flex flex-col">
+      <div className="w-full">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
-          <div className={cn(
-            "transition-opacity duration-300",
+          <h1 className={cn(
+            "text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent transition-opacity duration-300",
             isMinimized ? "opacity-0 hidden" : "opacity-100"
           )}>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Quran Hifz Aid
-            </h1>
-            {currentUser && (
-              <p className="text-sm text-gray-600">{currentUser.email}</p>
-            )}
-          </div>
+            Quran Hifz Aid
+          </h1>
           <Button
             variant="ghost"
             size="icon"
@@ -161,7 +122,7 @@ export const Navigation = () => {
             )}
           </Button>
         </div>
-        <div className="space-y-2 p-2 flex-1">
+        <div className="space-y-2 p-2">
           {navItems.map(({ path, icon: Icon, label }) => (
             <Link
               key={path}
@@ -183,24 +144,6 @@ export const Navigation = () => {
               </span>
             </Link>
           ))}
-        </div>
-        <div className="p-4">
-          <Button 
-            onClick={handleLogout}
-            variant="outline"
-            className={cn(
-              "flex items-center space-x-2 w-full",
-              isMinimized ? "px-2" : "px-4"
-            )}
-          >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            <span className={cn(
-              "transition-opacity duration-300",
-              isMinimized ? "opacity-0 hidden" : "opacity-100"
-            )}>
-              Logout
-            </span>
-          </Button>
         </div>
       </div>
     </nav>
