@@ -1,3 +1,4 @@
+
 import React from "react";
 import { PlannerSettings } from "./planner/PlannerSettings";
 import { PlannerSchedule } from "./planner/PlannerSchedule";
@@ -13,7 +14,7 @@ export const MemorizationPlanner = () => {
     generateSchedule,
     updateDayStatus,
     alreadyMemorized,
-    // setAlreadyMemorized, // This was removed from the hook in a previous task
+    setAlreadyMemorized,
     resetPlanner,
     memorizedPagesSet,
   } = useMemorizationPlanner();
@@ -45,9 +46,7 @@ export const MemorizationPlanner = () => {
     : 0;
 
   return (
-    // Main container class changed to space-y-6 for vertical flow
     <div className="space-y-6">
-      {/* PlannerSchedule moved to the top */}
       <PlannerSchedule
         schedule={schedule}
         onDayStatusChange={updateDayStatus}
@@ -58,10 +57,8 @@ export const MemorizationPlanner = () => {
         totalPagesInPlan={totalPagesInPlan}
         totalQuranPages={totalQuranPages}
       />
-      {/* PlannerSummary moved after PlannerSchedule */}
       <PlannerSummary schedule={schedule} />
 
-      {/* New div wrapper for settings and actions with a grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2 space-y-6">
           <PlannerSettings
@@ -69,7 +66,7 @@ export const MemorizationPlanner = () => {
             onSettingsChange={setSettings}
             onGeneratePlan={generateSchedule}
             alreadyMemorized={alreadyMemorized}
-            // onAlreadyMemorizedChange prop is correctly removed as setAlreadyMemorized is no longer available
+            onAlreadyMemorizedChange={setAlreadyMemorized}
           />
         </div>
         <div className="lg:col-span-1 space-y-6">
