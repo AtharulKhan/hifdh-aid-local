@@ -5,13 +5,14 @@ import { getDatabase, Database, connectDatabaseEmulator } from "firebase/databas
 
 // IMPORTANT: Replace with your actual Firebase project configuration!
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  apiKey: "AIzaSyAgjN-hsjUy4Ir3jmK-oh7-dsconPaTdgw",
+  authDomain: "hifdh-aid.firebaseapp.com",
   databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", // Ensure this is the RTDB URL
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  projectId: "hifdh-aid",
+  storageBucket: "hifdh-aid.firebasestorage.app",
+  messagingSenderId: "840898828694",
+  measurementId: "G-NHE6J2680F",
+  appId: "1:840898828694:web:002424d8790489835625b7"
 };
 
 // Initialize Firebase
