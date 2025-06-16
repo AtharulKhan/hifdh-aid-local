@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { getVersesArray, getSurahName, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
@@ -36,6 +37,10 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
     }
   };
 
+  const handleVerseSliderChange = (value: number[]) => {
+    setCurrentVerseIndex(value[0]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -47,6 +52,30 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
           Classical commentary on the Holy Qur'an
         </p>
       </div>
+
+      {/* Verse Navigation Slider */}
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-blue-700">Navigate to Verse:</span>
+            <span className="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded">
+              {currentVerseIndex + 1} of {allVerses.length}
+            </span>
+          </div>
+          <Slider 
+            value={[currentVerseIndex]} 
+            onValueChange={handleVerseSliderChange} 
+            max={allVerses.length - 1} 
+            min={0} 
+            step={1} 
+            className="w-full" 
+          />
+          <div className="flex justify-between text-xs text-blue-400">
+            <span>1:1</span>
+            <span>{allVerses[allVerses.length - 1]?.surah}:{allVerses[allVerses.length - 1]?.ayah}</span>
+          </div>
+        </div>
+      </Card>
 
       {/* Current Verse Info */}
       <Card className="p-4 bg-green-50 border-green-200">
