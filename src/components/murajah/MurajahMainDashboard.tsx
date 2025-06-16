@@ -23,7 +23,23 @@ import {
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json"; // Import juzData
+import surahNamesData from "@/data/surah-names.json"; // Import surahNamesData
 import { PracticeVerseCard } from './PracticeVerseCard'; // Import PracticeVerseCard
+
+// Define a type for surahNamesData
+interface SurahNameInfo {
+  id: number;
+  name_simple: string;
+  name_arabic: string;
+  verses_count: number;
+  revelation_place: string;
+  translated_name: { language_name: string; name: string };
+}
+interface SurahNamesType {
+  [key: string]: SurahNameInfo;
+}
+const surahNames: SurahNamesType = surahNamesData;
+
 
 // Define a type for juzDataJson to avoid 'any' type if possible
 interface JuzVerseMapping {
@@ -43,13 +59,32 @@ interface JuzData {
 }
 const juzData: JuzData = juzDataJson; // Assign with type
 
+// Updated ReviewCycle interface
 interface ReviewCycle {
-  type: 'RMV' | 'OMV' | 'Listening' | 'Reading';
+  id: string; // Added id
+  type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New'; // Added 'New' for potential future use
   title: string;
   content: string;
+  startDate: string; // Added startDate
   completed: boolean;
   icon: React.ReactNode;
   color: string;
+}
+
+// Added ReviewSettings interface
+interface ReviewSettings {
+  rmvPages: number;
+  omvJuz: number;
+  listeningJuz: number;
+  readingJuz: number;
+  currentJuz: number; // Current Juz being memorized, for RMV context
+  startDate: string; // ISO string, for OMV rotation
+}
+
+// Updated DailyCompletion interface
+interface DailyCompletion {
+  date: string;
+  completions: { [cycleId: string]: boolean }; // Changed from boolean[]
 }
 
 interface ScheduleItem {
@@ -87,15 +122,28 @@ interface DailyCompletion {
 
 export const MurajahMainDashboard = () => {
   const [todaysReviewCycles, setTodaysReviewCycles] = useState<ReviewCycle[]>([]);
-  const [weeklyReviewCycles, setWeeklyReviewCycles] = useState<ReviewCycle[]>([]);
+  const [weeklyReviewCycles, setWeeklyReviewCycles] = useState<ReviewCycle[]>([]); // This might need re-evaluation based on new cycle generation
   const [memorizationSchedule, setMemorizationSchedule] = useState<ScheduleItem[]>([]);
   const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
+  const [reviewSettings, setReviewSettings] = useState<ReviewSettings>({ // Added reviewSettings state
+    rmvPages: 7,
+    omvJuz: 1,
+    listeningJuz: 2,
+    readingJuz: 1,
+    currentJuz: 1,
+    startDate: new Date().toISOString().split('T')[0]
+  });
   const [currentStreak, setCurrentStreak] = useState(0);
   const [randomVerses, setRandomVerses] = useState<QuranVerse[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
-    loadDashboardData();
+    // Load review settings first as other data might depend on it for generation logic
+    const savedSettings = localStorage.getItem('murajah-review-settings');
+    if (savedSettings) {
+      setReviewSettings(JSON.parse(savedSettings));
+    }
+    loadDashboardData(); // loadDashboardData might use reviewSettings, so ensure it's loaded or default is fine
     generateRandomVerses();
     calculateStreaks();
     generateAchievements();
@@ -104,35 +152,33 @@ export const MurajahMainDashboard = () => {
   const loadDashboardData = () => {
     console.log('Loading dashboard data...');
     
-    // Load Murajah review data from MurajahDashboard
-    const savedCompletions = localStorage.getItem('murajah-daily-completions');
+    // Load Murajah review data
+    // savedSettings is already loaded in useEffect
+    const savedCompletions = localStorage.getItem('murajah-daily-completions'); // This will be used by new helper functions
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
-    const savedSettings = localStorage.getItem('murajah-review-settings');
-    
-    // Load memorization planner data from MemorizationPlanner
+
+    // Load memorization planner data
     const savedSchedule = localStorage.getItem('memorizationPlannerSchedule');
     
-    console.log('Saved completions:', savedCompletions);
-    console.log('Saved schedule:', savedSchedule);
-    console.log('Saved juz:', savedJuz);
+    console.log('Saved juz:', savedJuz); // Settings already logged or available via state
     
-    // Parse Juz memorization data
+    let currentJuzMemorization: JuzMemorization[] = [];
     if (savedJuz) {
       try {
-        const juzData = JSON.parse(savedJuz);
-        console.log('Parsed juz data:', juzData);
-        setJuzMemorization(Array.isArray(juzData) ? juzData : []);
+        const parsedJuz = JSON.parse(savedJuz);
+        if (Array.isArray(parsedJuz)) {
+          setJuzMemorization(parsedJuz);
+          currentJuzMemorization = parsedJuz;
+        }
       } catch (error) {
         console.error('Error parsing juz memorization data:', error);
-        setJuzMemorization([]);
+        setJuzMemorization([]); // Set to empty array on error
       }
     }
     
-    // Parse memorization schedule from MemorizationPlanner
     if (savedSchedule) {
       try {
         const scheduleData = JSON.parse(savedSchedule);
-        console.log('Parsed schedule data:', scheduleData);
         setMemorizationSchedule(Array.isArray(scheduleData) ? scheduleData : []);
       } catch (error) {
         console.error('Error parsing memorization schedule:', error);
@@ -140,199 +186,304 @@ export const MurajahMainDashboard = () => {
       }
     }
 
-    // Parse review completions from MurajahDashboard
-    if (savedCompletions && savedSettings) {
-      try {
-        const completions = JSON.parse(savedCompletions);
-        const settings = JSON.parse(savedSettings);
-        const juzMem = savedJuz ? JSON.parse(savedJuz) : [];
-        
-        console.log('Parsed completions data:', completions, 'Type:', typeof completions);
-        
-        // Handle different data formats for completions
-        if (completions) {
-          generateReviewCycles(completions, settings, juzMem);
-        } else {
-          console.warn('No completions data found');
-          setTodaysReviewCycles([]);
-          setWeeklyReviewCycles([]);
-        }
-      } catch (error) {
-        console.error('Error parsing dashboard data:', error);
-        setTodaysReviewCycles([]);
-        setWeeklyReviewCycles([]);
-      }
+    // Generate cycles using the new logic if settings and juzMemorization are available
+    // Note: reviewSettings state might not be updated immediately after setReviewSettings from localStorage
+    // So, we use the locally loaded savedSettings for the initial generation if available.
+    const settingsToUse = localStorage.getItem('murajah-review-settings')
+      ? JSON.parse(localStorage.getItem('murajah-review-settings')!)
+      : reviewSettings; // reviewSettings state is used as a fallback
+
+    if (currentJuzMemorization.length > 0 || Object.keys(settingsToUse).length > 0) { // Check if there's any data to process
+      const today = new Date().toISOString().split('T')[0];
+      const dailyCycles = generateDailyCycles(currentJuzMemorization, settingsToUse, today);
+      setTodaysReviewCycles(dailyCycles);
+
+      // For weekly cycles: This is a simplified approach.
+      // The old logic for weekly cycles was tied to the old completions format.
+      // A more robust weekly view would need to aggregate data based on the new completion format
+      // or re-generate cycles for each day of the week.
+      // For now, we'll just show today's cycles for the week view or leave it empty.
+      // This part can be enhanced later.
+      // const weekStart = startOfWeek(new Date());
+      // const weekEnd = endOfWeek(new Date());
+      // let tempWeeklyCycles: ReviewCycle[] = [];
+      // todo: logic to populate weekly cycles if needed, for now, it's not directly supported by generateDailyCycles for a week.
+      setWeeklyReviewCycles([]); // Clearing it as the old logic is not compatible.
     } else {
-      console.log('No saved completions or settings found');
       setTodaysReviewCycles([]);
       setWeeklyReviewCycles([]);
     }
   };
 
-  const generateReviewCycles = (completions: any, settings: any, juzMem: JuzMemorization[]) => {
-    console.log('Generating review cycles with:', { completions, settings, juzMem });
-    
-    if (!completions) {
-      console.warn('No completions data provided');
-      return;
-    }
+  // --- START: Functions copied and adapted from MurajahDashboard.tsx ---
 
+  const loadTodaysCompletions = (): { [cycleId: string]: boolean } => {
     const today = new Date().toISOString().split('T')[0];
-    const weekStart = startOfWeek(new Date());
-    const weekEnd = endOfWeek(new Date());
-
-    console.log('Looking for today:', today);
-
-    // Handle different completion data formats
-    let todayCompletions: boolean[] | undefined;
-    let allCompletionsData: DailyCompletion[] = [];
-
-    if (Array.isArray(completions)) {
-      // Old format: array of DailyCompletion objects
-      allCompletionsData = completions;
-      const todayData = completions.find((d: DailyCompletion) => d.date === today);
-      todayCompletions = todayData?.completions;
-    } else if (completions.date && completions.completions) {
-      // New format: single object with date and completions
-      allCompletionsData = [completions];
-      if (completions.date === today) {
-        todayCompletions = completions.completions;
-      }
-    } else if (typeof completions === 'object') {
-      // Alternative format: object with date keys
-      todayCompletions = completions[today];
-      // Convert to array format for processing
-      Object.entries(completions).forEach(([date, comps]) => {
-        if (Array.isArray(comps)) {
-          allCompletionsData.push({ date, completions: comps });
-        }
-      });
-    }
-
-    console.log('Today completions found:', todayCompletions);
+    const savedData = localStorage.getItem('murajah-daily-completions');
     
-    const todayCycles: ReviewCycle[] = [];
+    if (!savedData) return {};
     
-    if (todayCompletions && Array.isArray(todayCompletions)) {
-      // Map array indices to cycle types based on typical order from MurajahDashboard
-      const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
-      todayCompletions.forEach((completed, index) => {
-        if (index < cycleTypes.length) {
-          const cycle = createReviewCycle(cycleTypes[index], completed, settings, juzMem);
-          if (cycle) todayCycles.push(cycle);
-        }
-      });
-    } else {
-      // Generate cycles based on current data even if no completion data exists
-      const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
-      cycleTypes.forEach((type) => {
-        const cycle = createReviewCycle(type, false, settings, juzMem);
-        if (cycle) todayCycles.push(cycle);
-      });
-    }
-
-    console.log('Today cycles:', todayCycles);
-
-    // Get this week's cycles
-    const weekCycles: ReviewCycle[] = [];
-    allCompletionsData.forEach((dayData) => {
-      if (!dayData.date || !dayData.completions) return;
-      
+    try {
+      // Assuming new DailyCompletion format: { date: string; completions: { [cycleId: string]: boolean }; }[]
+      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const todaysData = allCompletions.find(d => d.date === today);
+      return todaysData?.completions || {};
+    } catch (error) {
+      // Attempt to handle old format: { [date: string]: boolean[] } or DailyCompletion[] with boolean[]
       try {
-        const date = new Date(dayData.date);
-        if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
-          if (Array.isArray(dayData.completions)) {
-            const cycleTypes = ['RMV', 'OMV', 'LISTENING', 'READING'];
-            dayData.completions.forEach((completed, index) => {
-              if (index < cycleTypes.length) {
-                const cycle = createReviewCycle(cycleTypes[index], completed, settings, juzMem);
-                if (cycle && !weekCycles.some(c => c.type === cycle.type)) {
-                  weekCycles.push(cycle);
-                }
-              }
-            });
-          }
+        const oldFormatCompletions = JSON.parse(savedData);
+        if (Array.isArray(oldFormatCompletions)) { // Old DailyCompletion[]
+            const oldTodayData = oldFormatCompletions.find(d => d.date === today);
+            if (oldTodayData && Array.isArray(oldTodayData.completions)) {
+                // Convert boolean[] to { [cycleId: string]: boolean }
+                // This requires knowing the cycle IDs for that day, which is tricky here.
+                // For simplicity, if old format is detected, return empty or a basic mapping if possible.
+                // This part might need more sophisticated migration logic outside this scope.
+                console.warn("Old completion format detected and cannot be fully converted here.");
+                return {};
+            }
+        } else if (typeof oldFormatCompletions === 'object' && oldFormatCompletions[today] && Array.isArray(oldFormatCompletions[today])) {
+             // Old { [date: string]: boolean[] } format
+             console.warn("Old completion format (date map to boolean[]) detected and cannot be fully converted here.");
+             return {};
         }
-      } catch (error) {
-        console.error('Error processing date:', dayData.date, error);
+      } catch (e) {
+        // If secondary parsing fails, then it's likely a format we can't automatically handle here or corrupted.
+        console.error('Error loading or converting completions:', error, e);
       }
-    });
-
-    console.log('Week cycles:', weekCycles);
-
-    setTodaysReviewCycles(todayCycles);
-    setWeeklyReviewCycles(weekCycles);
+      return {};
+    }
   };
 
-  const createReviewCycle = (type: string, completed: boolean, settings?: any, juzMem?: JuzMemorization[]): ReviewCycle | null => {
-    const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
-    
-    // Generate content based on settings and juz memorization data
-    let content = '';
-    if (settings && juzMem) {
-      switch (upperType) {
-        case 'RMV':
-          content = `Last ${settings.rmvPages || 7} pages from current Juz`;
-          break;
-        case 'OMV':
-          const memorizedJuz = juzMem.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0));
-          content = memorizedJuz.length > 0 ? `Review ${settings.omvJuz || 1} memorized Juz` : 'No memorized content yet';
-          break;
-        case 'LISTENING':
-          content = `Listen to ${settings.listeningJuz || 2} Juz`;
-          break;
-        case 'READING':
-          content = `Read ${settings.readingJuz || 1} Juz`;
-          break;
+  const calculateRMV = (currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings): string => {
+    const targetJuz = currentJuzMem.find(j => j.juzNumber === currentSettings.currentJuz);
+    if (!targetJuz || !targetJuz.startPage || !targetJuz.endPage) {
+      // Try to find any memorized juz if currentJuz is not set or not found in details
+      const anyMemorizedJuz = currentJuzMem.find(j => j.isMemorized && j.startPage && j.endPage);
+      if (!anyMemorizedJuz || !anyMemorizedJuz.startPage || !anyMemorizedJuz.endPage) {
+         return 'Set current Juz or ensure page numbers are available for RMV.';
       }
-    } else {
-      content = `${upperType} review session`;
+      // Use this anyMemorizedJuz instead
+      const maxPage = anyMemorizedJuz.endPage;
+      const minPage = anyMemorizedJuz.startPage;
+      const startPage = Math.max(maxPage - currentSettings.rmvPages + 1, minPage);
+      return `Juz ${anyMemorizedJuz.juzNumber} (Pages ${startPage}-${maxPage})`;
     }
-    
+
+    const maxPage = targetJuz.endPage;
+    const minPage = targetJuz.startPage;
+    const startPage = Math.max(maxPage - currentSettings.rmvPages + 1, minPage);
+    return `Juz ${targetJuz.juzNumber} (Pages ${startPage}-${maxPage})`;
+  };
+
+  const calculateOMV = (juzWithCompleteMemorization: JuzMemorization[], currentSettings: ReviewSettings, date: string): string => {
+    if (juzWithCompleteMemorization.length === 0) return 'No Juz fully memorized for OMV.';
+
+    // The original calculateOMV in MurajahDashboard.tsx had a more complex memorizationUnits structure
+    // that included partial surah details. This simplified version only uses Juz display text.
+    // If partial surah display for OMV is needed here, this function would need to be expanded
+    // similar to its original version, using surahNames.
+    // For now, this uses the simplified displayText from fully memorized Juz.
+    const memorizationUnits: string[] = juzWithCompleteMemorization.map(juzMem => {
+        const juzInfo = juzData[juzMem.juzNumber.toString() as keyof typeof JuzData];
+        let displayText = `Juz ${juzMem.juzNumber}`;
+        if (juzMem.startPage && juzMem.endPage) {
+            displayText += ` (Pages ${juzMem.startPage}-${juzMem.endPage})`;
+        } else if (juzInfo) { // Fallback to verse keys if no pages
+            displayText += ` (${juzInfo.first_verse_key} - ${juzInfo.last_verse_key})`;
+        }
+        // Example of how surahNames could be used if we were detailing surahs:
+        // if (juzMem.memorizedSurahs) { displayText += ` Surahs: ${juzMem.memorizedSurahs.map(id => surahNames[id.toString()]?.name_simple).join(', ')}` }
+        return displayText;
+    });
+
+    const startDate = new Date(currentSettings.startDate);
+    const currentDate = new Date(date);
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const cycleIndex = Math.max(0, daysSinceStart) % memorizationUnits.length;
+
+    const selectedUnits: string[] = [];
+    for (let i = 0; i < currentSettings.omvJuz && i < memorizationUnits.length; i++) {
+      const unitIndex = (cycleIndex + i) % memorizationUnits.length;
+      selectedUnits.push(memorizationUnits[unitIndex]);
+    }
+    return selectedUnits.join('; ');
+  };
+
+  const calculateListeningCycle = (juzWithCompleteMemorization: JuzMemorization[], currentSettings: ReviewSettings, date: string): string => {
+    return calculateOMV(juzWithCompleteMemorization, { ...currentSettings, omvJuz: currentSettings.listeningJuz }, date);
+  };
+
+  const calculateReadingCycle = (juzWithCompleteMemorization: JuzMemorization[], currentSettings: ReviewSettings, date: string): string => {
+    return calculateOMV(juzWithCompleteMemorization, { ...currentSettings, omvJuz: currentSettings.readingJuz }, date);
+  };
+
+  const createCarryOverCycle = (type: string, originalDate: string, currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings): ReviewCycle | null => {
+    const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    const baseId = type.toLowerCase();
+    const juzForOMV = currentJuzMem.filter(j => j.isMemorized); // OMV, Listening, Reading typically use fully memorized Juz
+
+    let content = '';
+    let titleSuffix = '';
+
     switch (upperType) {
       case 'RMV':
-        return {
-          type: 'RMV',
-          title: 'RMV (Recent)',
-          content,
-          completed,
-          icon: <Clock className="h-4 w-4" />,
-          color: 'bg-green-50 border-green-200'
-        };
+        content = calculateRMV(currentJuzMem, currentSettings);
+        titleSuffix = `(Last ${currentSettings.rmvPages} Pages)`;
+        break;
       case 'OMV':
-        return {
-          type: 'OMV',
-          title: 'OMV (Old)',
-          content,
-          completed,
-          icon: <RotateCcw className="h-4 w-4" />,
-          color: 'bg-purple-50 border-purple-200'
-        };
+        content = calculateOMV(juzForOMV, currentSettings, originalDate); // Use originalDate for OMV calculation consistency
+        titleSuffix = `(${currentSettings.omvJuz} Juz)`;
+        break;
       case 'LISTENING':
-        return {
-          type: 'Listening',
-          title: 'Listening Cycle',
-          content,
-          completed,
-          icon: <PlayCircle className="h-4 w-4" />,
-          color: 'bg-blue-50 border-blue-200'
-        };
+        content = calculateListeningCycle(juzForOMV, currentSettings, originalDate);
+        titleSuffix = `(${currentSettings.listeningJuz} Juz)`;
+        break;
       case 'READING':
-        return {
-          type: 'Reading',
-          title: 'Reading Cycle',
-          content,
-          completed,
-          icon: <BookOpen className="h-4 w-4" />,
-          color: 'bg-orange-50 border-orange-200'
-        };
+        content = calculateReadingCycle(juzForOMV, currentSettings, originalDate);
+        titleSuffix = `(${currentSettings.readingJuz} Juz)`;
+        break;
       default:
         return null;
     }
+    if (!content || content.startsWith('No Juz') || content.startsWith('Set current Juz')) return null;
+
+    const icons = {
+        RMV: <Clock className="h-4 w-4" />,
+        OMV: <RotateCcw className="h-4 w-4" />,
+        LISTENING: <PlayCircle className="h-4 w-4" />,
+        READING: <BookOpen className="h-4 w-4" />,
+    };
+    const colors = {
+        RMV: 'bg-green-50 border-green-200',
+        OMV: 'bg-purple-50 border-purple-200',
+        LISTENING: 'bg-blue-50 border-blue-200',
+        READING: 'bg-orange-50 border-orange-200',
+    };
+
+    return {
+      id: `${baseId}-${originalDate}-carryover`,
+      type: upperType,
+      title: `${upperType} ${titleSuffix} - Carry-over`,
+      content: content,
+      startDate: originalDate, // Keep original start date for tracking
+      completed: false, // Carry-over cycles are initially not completed
+      icon: icons[upperType],
+      color: colors[upperType],
+    };
   };
 
+  const getCarryOverCycles = (currentDateStr: string, currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings): ReviewCycle[] => {
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    if (!savedData) return [];
+    try {
+      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const carryOvers: ReviewCycle[] = [];
+      const currentDateObj = new Date(currentDateStr);
+
+      for (let i = 1; i <= 7; i++) { // Check last 7 days
+        const checkDate = new Date(currentDateObj);
+        checkDate.setDate(currentDateObj.getDate() - i);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+
+        const dayData = allCompletions.find(d => d.date === checkDateStr);
+        if (dayData && dayData.completions) {
+          Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
+            const cycleTypePart = cycleId.split('-')[0]; // e.g., "rmv" from "rmv-2023-10-26"
+            if (!completed && !carryOvers.some(c => c.type === cycleTypePart.toUpperCase() as ReviewCycle['type'])) {
+              const carryOverCycle = createCarryOverCycle(cycleTypePart, checkDateStr, currentJuzMem, currentSettings);
+              if (carryOverCycle) {
+                carryOvers.push(carryOverCycle);
+              }
+            }
+          });
+        }
+      }
+      return carryOvers;
+    } catch (error) {
+      console.error('Error getting carry-over cycles:', error);
+      return [];
+    }
+  };
+
+  const generateDailyCycles = (currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings, date: string): ReviewCycle[] => {
+    const generatedCycles: ReviewCycle[] = [];
+    const todayCompletions = loadTodaysCompletions();
+
+    // Filter for Juz that have some form of memorization for OMV, Listening, Reading.
+    const juzForOMVTypeCycles = currentJuzMem.filter(j => j.isMemorized); // Typically OMV uses fully memorized Juz
+
+    // Get carry-over cycles first
+    const carryOverCycles = getCarryOverCycles(date, currentJuzMem, currentSettings);
+    carryOverCycles.forEach(cycle => {
+        // Ensure no duplicate type carry-overs
+        if (!generatedCycles.some(c => c.type === cycle.type)) {
+            generatedCycles.push({ ...cycle, completed: todayCompletions[cycle.id] || false });
+        }
+    });
+
+
+    // Define standard cycle types and their generation logic
+    const cycleDefinitions: { type: ReviewCycle['type'], titleSuffix: string, contentFn: () => string, icon: JSX.Element, color: string }[] = [
+        { type: 'RMV', titleSuffix: `(Last ${currentSettings.rmvPages} Pages)`, contentFn: () => calculateRMV(currentJuzMem, currentSettings), icon: <Clock className="h-4 w-4" />, color: 'bg-green-50 border-green-200' },
+        { type: 'OMV', titleSuffix: `(${currentSettings.omvJuz} Juz)`, contentFn: () => calculateOMV(juzForOMVTypeCycles, currentSettings, date), icon: <RotateCcw className="h-4 w-4" />, color: 'bg-purple-50 border-purple-200' },
+        { type: 'Listening', titleSuffix: `(${currentSettings.listeningJuz} Juz)`, contentFn: () => calculateListeningCycle(juzForOMVTypeCycles, currentSettings, date), icon: <PlayCircle className="h-4 w-4" />, color: 'bg-blue-50 border-blue-200' },
+        { type: 'Reading', titleSuffix: `(${currentSettings.readingJuz} Juz)`, contentFn: () => calculateReadingCycle(juzForOMVTypeCycles, currentSettings, date), icon: <BookOpen className="h-4 w-4" />, color: 'bg-orange-50 border-orange-200' },
+    ];
+
+    cycleDefinitions.forEach(def => {
+        // If a carry-over of this type already exists, don't add a new one for today
+        if (generatedCycles.some(c => c.type === def.type)) return;
+
+        const content = def.contentFn();
+        if (content && !content.startsWith('No Juz') && !content.startsWith('Set current Juz')) {
+            const cycleId = `${def.type.toLowerCase()}-${date}`;
+            generatedCycles.push({
+                id: cycleId,
+                type: def.type,
+                title: `${def.type} ${def.titleSuffix}`,
+                content: content,
+                startDate: date,
+                completed: todayCompletions[cycleId] || false,
+                icon: def.icon,
+                color: def.color,
+            });
+        }
+    });
+
+    return generatedCycles;
+  };
+
+  // --- END: Functions copied and adapted from MurajahDashboard.tsx ---
+
+  // Removing old generateReviewCycles and createReviewCycle
+  /*
+  const generateReviewCycles = (completions: any, settings: ReviewSettings, juzMem: JuzMemorization[]) => {
+    // This function will be removed
+    console.log("Old generateReviewCycles called, will be replaced.");
+    const today = new Date().toISOString().split('T')[0];
+    const todayCycles = createReviewCycle("RMV", false, settings, juzMem) ? [createReviewCycle("RMV", false, settings, juzMem)!] : [];
+    setTodaysReviewCycles(todayCycles);
+  };
+  const createReviewCycle = (type: string, completed: boolean, settings?: ReviewSettings, juzMem?: JuzMemorization[]): ReviewCycle | null => {
+    // This function will be removed
+    console.log("Old createReviewCycle called, will be replaced.");
+    if(!settings || !juzMem || juzMem.length === 0) return null;
+    return {
+      id: `${type.toLowerCase()}-${new Date().toISOString().split('T')[0]}`,
+      type: type.toUpperCase() as ReviewCycle['type'],
+      title: `${type} Title`,
+      content: `${type} content`,
+      startDate: new Date().toISOString().split('T')[0],
+      completed: completed,
+      icon: <Clock className="h-4 w-4" />,
+      color: 'bg-gray-50 border-gray-200'
+    };
+  };
+  */
+
   const calculateStreaks = () => {
-    const completions = localStorage.getItem('murajah-daily-completions');
+    const completions = localStorage.getItem('murajah-daily-completions'); // This will use the new DailyCompletion format
     if (!completions) {
       console.log('No completions data for streak calculation');
       return;
