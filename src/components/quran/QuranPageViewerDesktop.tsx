@@ -122,7 +122,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
       <Tabs defaultValue="reader" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="reader">Reader</TabsTrigger>
-          <TabsTrigger value="tafsir-study">Tafsir (Study Mode)</TabsTrigger>
+          <TabsTrigger value="tafsir-study">Tafsir (Scrollable)</TabsTrigger>
           <TabsTrigger value="tafsir">Tafsir (Focused)</TabsTrigger>
           <TabsTrigger value="notes">Personal Notes</TabsTrigger>
         </TabsList>
@@ -226,7 +226,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
         <TabsContent value="tafsir-study" className="space-y-6">
           {/* Tafsir Study Mode Content */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold text-green-700 mb-4">Tafsir (Study Mode)</h3>
+            <h3 className="text-lg font-semibold text-green-700 mb-4">Tafsir (Scrollable)</h3>
             <div className="grid grid-cols-1 gap-6">
               {currentSurahVerses.map(verse => {
               const tafsirIbnKathir = getTafsirIbnKathirForVerse(verse.surah, verse.ayah);
