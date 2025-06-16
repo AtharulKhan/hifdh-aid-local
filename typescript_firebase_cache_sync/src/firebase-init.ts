@@ -7,7 +7,7 @@ import { getDatabase, Database, connectDatabaseEmulator } from "firebase/databas
 const firebaseConfig = {
   apiKey: "AIzaSyAgjN-hsjUy4Ir3jmK-oh7-dsconPaTdgw",
   authDomain: "hifdh-aid.firebaseapp.com",
-  databaseURL: "https://hifdh-aid-default-rtdb.firebaseio.com", // Ensure this is the RTDB URL
+  databaseURL: "https://hifdh-aid-default-rtdb.firebaseio.com/", // Ensure this is the RTDB URL
   projectId: "hifdh-aid",
   storageBucket: "hifdh-aid.firebasestorage.app",
   messagingSenderId: "840898828694",
