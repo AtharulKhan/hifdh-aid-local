@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Toaster } from "./components/ui/toaster";
 import { AudioProvider } from "./contexts/AudioContext";
@@ -27,18 +27,19 @@ function App() {
           <Navigation />
           <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/page-view" element={<PageView />} />
               <Route path="/test" element={<Test />} />
               <Route path="/tajweed" element={<Tajweed />} />
               <Route path="/murajah" element={<Murajah />} />
               <Route path="/quran-system" element={<QuranSystem />} />
-              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/mindfulness" element={<Mindfulness />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/help" element={<Help />} />
+              <Route path="/index" element={<Index />} />
             </Routes>
           </main>
         </div>
