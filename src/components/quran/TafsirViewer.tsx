@@ -6,15 +6,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import { getVersesArray, getSurahName } from "@/data/quranData";
-import tafsirIbnKathirData from "@/data/tafsir-ibn-kathir.json";
+import { getVersesArray, getSurahName, getTafsirForVerse } from "@/data/quranData";
 
 interface TafsirViewerProps {
   startingVerseId?: number;
-}
-
-interface TafsirEntry {
-  text: string;
 }
 
 export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 }) => {
@@ -25,13 +20,6 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
   });
 
   const currentVerse = allVerses[currentVerseIndex];
-  const tafsirData = tafsirIbnKathirData as Record<string, TafsirEntry>;
-  
-  const getTafsirForVerse = (surah: number, ayah: number): TafsirEntry | null => {
-    const verseKey = `${surah}:${ayah}`;
-    return tafsirData[verseKey] || null;
-  };
-
   const currentTafsir = getTafsirForVerse(currentVerse.surah, currentVerse.ayah);
 
   const goToNextVerse = () => {
