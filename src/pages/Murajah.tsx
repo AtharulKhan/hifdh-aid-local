@@ -28,7 +28,7 @@ const Murajah = () => {
           </TabsTrigger>
           <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">Muraja'ah Log</TabsTrigger>
           <TabsTrigger value="juz" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
-            Juz
+            Hifdh Progress
           </TabsTrigger>
           <TabsTrigger value="settings" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Settings
