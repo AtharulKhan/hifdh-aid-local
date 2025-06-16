@@ -20,6 +20,16 @@ export interface AlreadyMemorizedData {
   surahs: number[];
 }
 
+// Added JuzMemorization interface
+interface JuzMemorization {
+  juzNumber: number;
+  isMemorized: boolean;
+  dateMemorized?: string;
+  startPage?: number;
+  endPage?: number;
+  memorizedSurahs?: number[];
+}
+
 export interface PlannerSettingsData {
   linesPerDay: number;
   daysOfWeek: DayOfWeek[];
@@ -44,36 +54,41 @@ const defaultSettings: PlannerSettingsData = {
   startDate: new Date().toISOString(),
 };
 
-const defaultAlreadyMemorized: AlreadyMemorizedData = {
-  juz: [],
-  surahs: [],
-};
-
 export const useMemorizationPlanner = () => {
   const [settings, setSettings] = useState<PlannerSettingsData>(() => {
     const savedSettings = localStorage.getItem('memorizationPlannerSettings');
     return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
   });
 
-  const [alreadyMemorized, setAlreadyMemorized] = useState<AlreadyMemorizedData>(() => {
-    const saved = localStorage.getItem('memorizationPlannerAlreadyMemorized');
-    if (saved) {
+  // Derive alreadyMemorized from 'murajah-juz-memorization'
+  const alreadyMemorized = useMemo((): AlreadyMemorizedData => {
+    const savedJuzData = localStorage.getItem('murajah-juz-memorization');
+    const derived: AlreadyMemorizedData = { juz: [], surahs: [] };
+    if (savedJuzData) {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object' && 'juz' in parsed && 'surahs' in parsed && Array.isArray(parsed.juz) && Array.isArray(parsed.surahs)) {
-          return parsed;
-        }
-        // Handle old format which might be just an array of numbers (juz)
-        if (Array.isArray(parsed)) {
-          return { juz: parsed.filter(item => typeof item === 'number'), surahs: [] };
+        const parsedJuzData: JuzMemorization[] = JSON.parse(savedJuzData);
+        if (Array.isArray(parsedJuzData)) {
+          parsedJuzData.forEach(juzEntry => {
+            if (juzEntry.isMemorized) {
+              derived.juz.push(juzEntry.juzNumber);
+            } else if (juzEntry.memorizedSurahs && juzEntry.memorizedSurahs.length > 0) {
+              juzEntry.memorizedSurahs.forEach(surahId => {
+                if (!derived.surahs.includes(surahId)) {
+                  derived.surahs.push(surahId);
+                }
+              });
+            }
+          });
         }
       } catch (error) {
-        console.error('Failed to parse already memorized data from local storage:', error);
+        console.error('Failed to parse murajah-juz-memorization for planner:', error);
       }
     }
-    return defaultAlreadyMemorized;
-  });
-  
+    return derived;
+  }, []); // Dependency array is empty, will re-evaluate on every render or when hook is re-initialized.
+          // A more robust solution might involve a global state or context for murajah-juz-memorization
+          // or passing a trigger/timestamp to re-evaluate this memo when underlying data changes.
+
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
     const saved = localStorage.getItem('memorizationPlannerSchedule');
     return saved ? JSON.parse(saved) : [];
@@ -83,9 +98,7 @@ export const useMemorizationPlanner = () => {
     localStorage.setItem('memorizationPlannerSettings', JSON.stringify(settings));
   }, [settings]);
 
-  useEffect(() => {
-    localStorage.setItem('memorizationPlannerAlreadyMemorized', JSON.stringify(alreadyMemorized));
-  }, [alreadyMemorized]);
+  // Removed useEffect for saving alreadyMemorized separately
 
   useEffect(() => {
     localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(schedule));
@@ -93,16 +106,16 @@ export const useMemorizationPlanner = () => {
 
   const resetPlanner = useCallback(() => {
     localStorage.removeItem('memorizationPlannerSettings');
-    localStorage.removeItem('memorizationPlannerAlreadyMemorized');
+    // localStorage.removeItem('memorizationPlannerAlreadyMemorized'); // Removed
     localStorage.removeItem('memorizationPlannerSchedule');
     setSettings(defaultSettings);
-    setAlreadyMemorized(defaultAlreadyMemorized);
+    // setAlreadyMemorized(defaultAlreadyMemorized); // Removed, as it's derived
     setSchedule([]);
   }, []);
 
   const memorizedPagesSet = useMemo(() => {
     const pages = new Set<number>();
-    
+    // alreadyMemorized is now the derived data from useMemo
     alreadyMemorized.juz.forEach(juzNumber => {
       const juzData = juzPageMapData.find(j => j.juz === juzNumber);
       if (juzData) {
@@ -188,7 +201,7 @@ export const useMemorizationPlanner = () => {
     }
 
     setSchedule(newSchedule);
-  }, [settings, alreadyMemorized, memorizedPagesSet]);
+  }, [settings, memorizedPagesSet, alreadyMemorized]); // Added alreadyMemorized to dependency array for generateSchedule
   
   const updateDayStatus = (date: string, completed: boolean) => {
     setSchedule(prevSchedule =>
@@ -198,5 +211,5 @@ export const useMemorizationPlanner = () => {
     );
   };
   
-  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, setAlreadyMemorized, resetPlanner, memorizedPagesSet };
+  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, resetPlanner, memorizedPagesSet }; // Removed setAlreadyMemorized
 };
