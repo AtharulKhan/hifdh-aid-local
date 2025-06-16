@@ -22,16 +22,23 @@ const app: FirebaseApp = initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
 export const database: Database = getDatabase(app);
 
-// Optional: Connect to Firebase emulators in development
+// Only connect to emulators in development and when running locally
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-if (isDevelopment && typeof window !== 'undefined') {
+if (isDevelopment && isLocalhost) {
   try {
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-    connectDatabaseEmulator(database, "localhost", 9000);
+    // Check if emulators are already connected
+    if (!auth.config.emulator) {
+      connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    }
+    if (!database._delegate._repoInternal.app.options['databaseURL']?.includes('localhost')) {
+      connectDatabaseEmulator(database, "localhost", 9000);
+    }
     console.log("Connected to Firebase Emulators");
   } catch (error) {
-    console.log("Firebase Emulators not available or already connected");
+    console.log("Firebase Emulators not available:", error);
   }
 }
 
