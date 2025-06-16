@@ -106,12 +106,9 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
         </div>
         
         <Tabs defaultValue="ibn-kathir" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-amber-25">
+          <TabsList className="grid w-full grid-cols-1 bg-amber-25">
             <TabsTrigger value="ibn-kathir" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
               Ibn Kathir
-            </TabsTrigger>
-            <TabsTrigger value="maarif-ul-quran" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
-              Maarif-ul-Qur'an
             </TabsTrigger>
           </TabsList>
           
@@ -126,28 +123,7 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
                   <BookOpen className="h-12 w-12 text-gray-300" />
                   <div>
-                    <p className="text-gray-500 font-medium">No Ibn Kathir commentary available</p>
-                    <p className="text-sm text-gray-400">
-                      Tafsir for this verse is not yet available in our collection
-                    </p>
-                  </div>
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="maarif-ul-quran" className="mt-0">
-            <ScrollArea className="h-[400px] p-6">
-              {currentTafsir ? (
-                <div 
-                  className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: currentTafsir.text }}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                  <BookOpen className="h-12 w-12 text-gray-300" />
-                  <div>
-                    <p className="text-gray-500 font-medium">No Maarif-ul-Qur'an commentary available</p>
+                    <p className="text-gray-500 font-medium">No commentary available</p>
                     <p className="text-sm text-gray-400">
                       Tafsir for this verse is not yet available in our collection
                     </p>
@@ -162,18 +138,12 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
       {/* Tafsir Info */}
       <Card className="p-4 bg-blue-50 border-blue-200">
         <div className="text-center space-y-2">
-          <h4 className="font-semibold text-blue-700">About These Commentaries</h4>
-          <div className="text-sm text-blue-600 space-y-1">
-            <p>
-              <strong>Ibn Kathir (1300-1373 CE):</strong> Renowned Islamic scholar and historian. 
-              His tafsir is one of the most respected classical commentaries on the Qur'an, 
-              known for its authentic narrations and scholarly approach.
-            </p>
-            <p>
-              <strong>Maarif-ul-Qur'an:</strong> A comprehensive tafsir that provides detailed 
-              explanations and contemporary insights into the meanings of the Qur'an.
-            </p>
-          </div>
+          <h4 className="font-semibold text-blue-700">About Ibn Kathir</h4>
+          <p className="text-sm text-blue-600">
+            Imam Ibn Kathir (1300-1373 CE) was a renowned Islamic scholar and historian. 
+            His tafsir is one of the most respected classical commentaries on the Qur'an, 
+            known for its authentic narrations and scholarly approach.
+          </p>
         </div>
       </Card>
     </div>
