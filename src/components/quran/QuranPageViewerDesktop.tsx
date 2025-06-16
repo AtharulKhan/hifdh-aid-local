@@ -10,6 +10,7 @@ import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, ge
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
 import { TafsirViewer } from "./TafsirViewer";
+import { PersonalNotes } from "./PersonalNotes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface QuranPageViewerDesktopProps {
@@ -119,10 +120,11 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
 
       {/* Main Content */}
       <Tabs defaultValue="reader" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="reader">Reader</TabsTrigger>
           <TabsTrigger value="tafsir-study">Tafsir (Study Mode)</TabsTrigger>
           <TabsTrigger value="tafsir">Tafsir (Focused)</TabsTrigger>
+          <TabsTrigger value="notes">Personal Notes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reader" className="space-y-6">
@@ -294,6 +296,10 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
 
         <TabsContent value="tafsir" className="space-y-6">
           <TafsirViewer startingVerseId={currentSurahVerses[0]?.id || 1} />
+        </TabsContent>
+
+        <TabsContent value="notes" className="space-y-6">
+          <PersonalNotes surahNumber={currentSurah} />
         </TabsContent>
       </Tabs>
     </div>;
