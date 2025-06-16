@@ -22,6 +22,25 @@ import {
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
+import juzDataJson from "@/data/juz-numbers.json"; // Import juzData
+
+// Define a type for juzDataJson to avoid 'any' type if possible
+interface JuzVerseMapping {
+  [surahId: string]: string;
+}
+interface JuzInfo {
+  juz_number: number;
+  verse_mapping: JuzVerseMapping;
+  verses_count: number;
+  first_verse_id: number;
+  last_verse_id: number;
+  first_verse_key: string;
+  last_verse_key: string;
+}
+interface JuzData {
+  [juzKey: string]: JuzInfo;
+}
+const juzData: JuzData = juzDataJson; // Assign with type
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading';
@@ -417,28 +436,62 @@ export const MurajahMainDashboard = () => {
 
   const generateRandomVerses = () => {
     const allVerses = getVersesArray();
-    const memorizedPages = new Set<number>();
-    
-    // Get all memorized pages from Juz data
-    juzMemorization.forEach(juzMem => {
-      if (juzMem.isMemorized && juzMem.startPage && juzMem.endPage) {
-        for (let i = juzMem.startPage; i <= juzMem.endPage; i++) {
-          memorizedPages.add(i);
+    const memorizedSurahIds = new Set<number>();
+
+    juzMemorization.forEach(juzEntry => {
+      if (juzEntry.isMemorized) {
+        const juzInfo = juzData[juzEntry.juzNumber.toString() as keyof typeof juzData];
+        if (juzInfo) {
+          Object.keys(juzInfo.verse_mapping).forEach(surahIdStr => {
+            memorizedSurahIds.add(Number(surahIdStr));
+          });
         }
+      } else if (juzEntry.memorizedSurahs) {
+        juzEntry.memorizedSurahs.forEach(surahId => {
+          memorizedSurahIds.add(surahId);
+        });
       }
     });
 
-    // For now, if no specific memorized verses, show random verses from first 5 surahs
-    const sampleVerses = allVerses.filter(verse => verse.surah <= 5);
-    const shuffled = sampleVerses.sort(() => 0.5 - Math.random());
-    setRandomVerses(shuffled.slice(0, 5));
+    let versesForPractice: QuranVerse[] = [];
+    if (memorizedSurahIds.size > 0) {
+      versesForPractice = allVerses.filter(verse => memorizedSurahIds.has(verse.surah));
+    } else {
+      // Fallback: if no surahs memorized, use verses from Surah Al-Fatihah (1) and Al-Baqarah (2) up to certain verses
+      versesForPractice = allVerses.filter(verse => verse.surah === 1 || (verse.surah === 2 && verse.ayah <= 20));
+    }
+
+    if (versesForPractice.length === 0 && allVerses.length > 0) {
+        // Ultimate fallback: first 5 verses of the Quran if previous logic yielded nothing
+        versesForPractice = allVerses.slice(0,5);
+    }
+
+    const shuffled = versesForPractice.sort(() => 0.5 - Math.random());
+    setRandomVerses(shuffled.slice(0, 5)); // Show up to 5 random verses
   };
 
   // Calculate statistics
   const totalJuzMemorized = juzMemorization.filter(j => j.isMemorized).length;
-  const totalSurahsMemorized = juzMemorization.reduce((acc, j) => 
-    acc + (j.memorizedSurahs?.length || 0), 0
-  );
+
+  const totalSurahsMemorized = useMemo(() => {
+    const memorizedSurahIds = new Set<number>();
+    juzMemorization.forEach(juzEntry => {
+      if (juzEntry.isMemorized) {
+        const juzInfo = juzData[juzEntry.juzNumber.toString() as keyof typeof juzData];
+        if (juzInfo) {
+          Object.keys(juzInfo.verse_mapping).forEach(surahIdStr => {
+            memorizedSurahIds.add(Number(surahIdStr));
+          });
+        }
+      } else if (juzEntry.memorizedSurahs) {
+        juzEntry.memorizedSurahs.forEach(surahId => {
+          memorizedSurahIds.add(surahId);
+        });
+      }
+    });
+    return memorizedSurahIds.size;
+  }, [juzMemorization]); // Recalculate only when juzMemorization changes
+
   const totalQuranProgress = (totalJuzMemorized / 30) * 100;
   
   const todaysMemorizationTask = memorizationSchedule.find(item => 

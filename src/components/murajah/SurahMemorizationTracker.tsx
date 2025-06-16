@@ -5,73 +5,131 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Check } from "lucide-react";
 import surahNames from "@/data/surah-names.json";
+import juzData from "@/data/juz-numbers.json"; // Added import
 
-interface SurahMemorization {
-  surahId: number;
+// Interface for the unified Juz memorization data structure
+interface JuzMemorization {
+  juzNumber: number;
   isMemorized: boolean;
   dateMemorized?: string;
+  startPage?: number;
+  endPage?: number;
+  memorizedSurahs?: number[]; // Array of surah IDs that are memorized within this juz
 }
 
 export const SurahMemorizationTracker = () => {
-  const [memorizedSurahs, setMemorizedSurahs] = useState<SurahMemorization[]>([]);
+  const [juzMemorizationData, setJuzMemorizationData] = useState<JuzMemorization[]>([]);
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const savedSurahs = localStorage.getItem('murajah-surah-memorization');
-    if (savedSurahs) {
-      setMemorizedSurahs(JSON.parse(savedSurahs));
+    const savedJuzData = localStorage.getItem('murajah-juz-memorization');
+    if (savedJuzData) {
+      setJuzMemorizationData(JSON.parse(savedJuzData));
     }
   }, []);
 
-  // Save to localStorage whenever memorizedSurahs change
-  useEffect(() => {
-    localStorage.setItem('murajah-surah-memorization', JSON.stringify(memorizedSurahs));
-  }, [memorizedSurahs]);
-
-  const toggleMemorization = (surahId: number, isMemorized: boolean) => {
-    setMemorizedSurahs(prev => {
-      const existingSurah = prev.find(s => s.surahId === surahId);
-      
-      if (existingSurah) {
-        // Update existing surah
-        return prev.map(surah => 
-          surah.surahId === surahId 
-            ? { 
-                ...surah, 
-                isMemorized,
-                dateMemorized: isMemorized ? new Date().toISOString().split('T')[0] : undefined
-              }
-            : surah
-        );
-      } else if (isMemorized) {
-        // Add new surah if being marked as memorized
-        return [...prev, {
-          surahId,
-          isMemorized: true,
-          dateMemorized: new Date().toISOString().split('T')[0]
-        }];
+  const findJuzNumberOfSurah = (surahId: number): number | undefined => {
+    for (const juz in juzData) {
+      const juzInfo = juzData[juz as keyof typeof juzData];
+      if (Object.keys(juzInfo.verse_mapping).map(Number).includes(surahId)) {
+        return juzInfo.juz_number;
       }
-      
-      return prev;
-    });
+    }
+    return undefined;
+  };
+
+  const toggleMemorization = (surahId: number, isMemorizedCurrently: boolean) => {
+    const rawJuzData = localStorage.getItem('murajah-juz-memorization');
+    let currentJuzData: JuzMemorization[] = rawJuzData ? JSON.parse(rawJuzData) : [];
+
+    const juzNumberOfSurah = findJuzNumberOfSurah(surahId);
+    if (juzNumberOfSurah === undefined) {
+      console.error(`Could not find Juz for Surah ID: ${surahId}`);
+      return;
+    }
+
+    const existingJuzIndex = currentJuzData.findIndex(j => j.juzNumber === juzNumberOfSurah);
+
+    if (existingJuzIndex !== -1) {
+      currentJuzData = currentJuzData.map((juz, index) => {
+        if (index === existingJuzIndex) {
+          let updatedSurahs = juz.memorizedSurahs || [];
+          if (isMemorizedCurrently) {
+            if (!updatedSurahs.includes(surahId)) {
+              updatedSurahs = [...updatedSurahs, surahId];
+            }
+          } else {
+            updatedSurahs = updatedSurahs.filter(id => id !== surahId);
+          }
+          return {
+            ...juz,
+            memorizedSurahs: updatedSurahs.length > 0 ? updatedSurahs : undefined,
+            isMemorized: false, // Individual surah change implies Juz is not fully memorized
+          };
+        }
+        return juz;
+      });
+    } else if (isMemorizedCurrently) {
+      // New Juz entry because it didn't exist and a surah is being marked
+      currentJuzData.push({
+        juzNumber: juzNumberOfSurah,
+        isMemorized: false,
+        memorizedSurahs: [surahId],
+      });
+    }
+    // If !isMemorizedCurrently and no existingJuzIndex, nothing to do.
+
+    localStorage.setItem('murajah-juz-memorization', JSON.stringify(currentJuzData));
+    setJuzMemorizationData(currentJuzData);
   };
 
   const getMemorizedCount = () => {
-    return memorizedSurahs.filter(s => s.isMemorized).length;
+    let count = 0;
+    const allMemorizedSurahIds = new Set<number>();
+
+    juzMemorizationData.forEach(juz => {
+      if (juz.isMemorized) {
+        const surahsInThisJuz = juzData[juz.juzNumber.toString() as keyof typeof juzData];
+        if (surahsInThisJuz) {
+          Object.keys(surahsInThisJuz.verse_mapping).forEach(surahIdStr => {
+            allMemorizedSurahIds.add(Number(surahIdStr));
+          });
+        }
+      } else if (juz.memorizedSurahs) {
+        juz.memorizedSurahs.forEach(surahId => {
+          allMemorizedSurahIds.add(surahId);
+        });
+      }
+    });
+    return allMemorizedSurahIds.size;
   };
 
   const getSurahData = (surahId: number) => {
     return surahNames[surahId.toString() as keyof typeof surahNames];
   };
 
-  const isSurahMemorized = (surahId: number) => {
-    const surah = memorizedSurahs.find(s => s.surahId === surahId);
-    return surah?.isMemorized || false;
+  const isSurahMemorized = (surahId: number): boolean => {
+    const juzNumberOfSurah = findJuzNumberOfSurah(surahId);
+    if (juzNumberOfSurah === undefined) return false;
+
+    const juz = juzMemorizationData.find(j => j.juzNumber === juzNumberOfSurah);
+    if (!juz) return false;
+
+    if (juz.isMemorized) return true; // If full Juz is memorized
+    return juz.memorizedSurahs?.includes(surahId) || false;
   };
 
-  const getSurahMemorizationDate = (surahId: number) => {
-    const surah = memorizedSurahs.find(s => s.surahId === surahId);
-    return surah?.dateMemorized;
+  const getSurahMemorizationDate = (surahId: number): string | undefined => {
+    const juzNumberOfSurah = findJuzNumberOfSurah(surahId);
+    if (juzNumberOfSurah === undefined) return undefined;
+
+    const juz = juzMemorizationData.find(j => j.juzNumber === juzNumberOfSurah);
+    // Only return date if the whole Juz is memorized, as per requirement.
+    // Individual surah dates are not tracked in this component with the new model.
+    if (juz?.isMemorized) {
+      return juz.dateMemorized;
+    }
+    return undefined;
   };
 
   return (
