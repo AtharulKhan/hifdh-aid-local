@@ -28,21 +28,10 @@ type JuzNumbers = {
 const typedSurahNames: SurahNames = surahNamesData;
 const typedJuzNumbers: JuzNumbers = juzNumbersData;
 
-export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedChange }: { alreadyMemorized: AlreadyMemorizedData, onAlreadyMemorizedChange: (data: AlreadyMemorizedData) => void }) => {
+// Updated props: removed onAlreadyMemorizedChange
+export const AlreadyMemorizedManager = ({ alreadyMemorized }: { alreadyMemorized: AlreadyMemorizedData }) => {
   
-  const handleJuzToggle = (juzNumber: number) => {
-    const newJuz = alreadyMemorized.juz.includes(juzNumber)
-      ? alreadyMemorized.juz.filter(j => j !== juzNumber)
-      : [...alreadyMemorized.juz, juzNumber];
-    onAlreadyMemorizedChange({ ...alreadyMemorized, juz: newJuz.sort((a,b) => a - b) });
-  };
-
-  const handleSurahToggle = (surahNumber: number) => {
-    const newSurahs = alreadyMemorized.surahs.includes(surahNumber)
-      ? alreadyMemorized.surahs.filter(s => s !== surahNumber)
-      : [...alreadyMemorized.surahs, surahNumber];
-    onAlreadyMemorizedChange({ ...alreadyMemorized, surahs: newSurahs.sort((a,b) => a - b) });
-  };
+  // Removed handleJuzToggle and handleSurahToggle
 
   const memorizedSummary = React.useMemo(() => {
     const summary: { juz: number; isFullyMemorized: boolean; surahs: { id: string; name: string }[] }[] = [];
@@ -106,25 +95,27 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Already Memorized</CardTitle>
-            <CardDescription>Select the Juz or Surahs you have already memorized.</CardDescription>
+            {/* Updated CardDescription */}
+            <CardDescription>
+              This reflects what you've marked as memorized in the 'Juz' tracking tab.
+              This content will be excluded from new plans.
+            </CardDescription>
           </div>
-          {(alreadyMemorized.juz.length > 0 || alreadyMemorized.surahs.length > 0) && (
-            <Button variant="outline" size="sm" onClick={() => onAlreadyMemorizedChange({juz: [], surahs: []})}>
-              Clear
-            </Button>
-          )}
+          {/* Removed Clear button */}
         </div>
       </CardHeader>
       <CardContent>
         <div>
-          <h4 className="text-md font-semibold mb-3">Memorized Juz</h4>
+          {/* Updated h4 text */}
+          <h4 className="text-md font-semibold mb-3">Already Memorized Juz (Read-only)</h4>
           <div className="grid grid-cols-5 gap-4">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(juzNumber => (
               <div key={juzNumber} className="flex items-center space-x-2">
                 <Checkbox
                   id={`juz-${juzNumber}`}
                   checked={alreadyMemorized.juz.includes(juzNumber)}
-                  onCheckedChange={() => handleJuzToggle(juzNumber)}
+                  disabled={true} // Made checkbox disabled
+                  // onCheckedChange removed
                 />
                 <Label htmlFor={`juz-${juzNumber}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Juz {juzNumber}
@@ -135,15 +126,17 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized, onAlreadyMemorizedCh
         </div>
 
         <div className="mt-6 pt-6 border-t">
-          <h4 className="text-md font-semibold mb-3">Memorized Surahs</h4>
-          <p className="text-sm text-muted-foreground mb-4">Select individual surahs you have memorized.</p>
+          {/* Updated h4 text */}
+          <h4 className="text-md font-semibold mb-3">Already Memorized Surahs (Read-only)</h4>
+          {/* Removed descriptive p tag */}
           <div className="max-h-60 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
             {Object.entries(typedSurahNames).map(([surahId, surahData]) => (
               <div key={surahId} className="flex items-center space-x-2">
                 <Checkbox
                   id={`surah-${surahId}`}
                   checked={alreadyMemorized.surahs.includes(parseInt(surahId))}
-                  onCheckedChange={() => handleSurahToggle(parseInt(surahId))}
+                  disabled={true} // Made checkbox disabled
+                  // onCheckedChange removed
                 />
                 <Label htmlFor={`surah-${surahId}`} className="text-sm font-medium">
                   {surahId}. {surahData.name_simple}
