@@ -4,9 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { SkipForward, SkipBack, BookOpen } from "lucide-react";
+import { SkipForward, SkipBack, BookOpen, Search } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
@@ -29,11 +30,20 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
   const [hideVerses, setHideVerses] = useState(false);
   const [revelationRate, setRevelationRate] = useState([100]);
   const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
+  const [surahSearch, setSurahSearch] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const allVerses = getVersesArray();
   const currentSurahVerses = allVerses.filter(verse => verse.surah === currentSurah);
   const maxSurah = Math.max(...allVerses.map(v => v.surah));
   const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
+
+  // Filter surahs based on search
+  const filteredSurahs = Array.from({ length: maxSurah }, (_, i) => i + 1).filter((surahNum) => {
+    if (!surahSearch.trim()) return true;
+    const surahName = getSurahName(surahNum).toLowerCase();
+    const searchTerm = surahSearch.toLowerCase();
+    return surahName.includes(searchTerm) || surahNum.toString().includes(searchTerm);
+  });
 
   const handleNavigate = (verseId: number) => {
     const verse = getVerseById(verseId);
@@ -114,11 +124,24 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
           </Badge>
         </div>
 
+        {/* Search Input */}
+        <div className="mb-4 max-w-md mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 h-4 w-4" />
+            <Input
+              placeholder="Search surah by name or number..."
+              value={surahSearch}
+              onChange={(e) => setSurahSearch(e.target.value)}
+              className="pl-10 border-green-200 focus:border-green-400 focus:ring-green-200"
+            />
+          </div>
+        </div>
+
         {/* Horizontal Surah Navigation Carousel */}
         <div className="mb-6">
-          <Carousel className="w-full max-w-4xl mx-auto">
+          <Carousel className="w-full max-w-4xl mx-auto" opts={{ align: "start", loop: false }}>
             <CarouselContent className="-ml-2 md:-ml-4">
-              {Array.from({ length: maxSurah }, (_, i) => i + 1).map((surahNum) => (
+              {filteredSurahs.map((surahNum) => (
                 <CarouselItem key={surahNum} className="pl-2 md:pl-4 basis-1/6 md:basis-1/8">
                   <Button
                     variant={currentSurah === surahNum ? "default" : "outline"}
