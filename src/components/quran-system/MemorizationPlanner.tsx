@@ -13,7 +13,7 @@ export const MemorizationPlanner = () => {
     generateSchedule,
     updateDayStatus,
     alreadyMemorized,
-    setAlreadyMemorized,
+    // setAlreadyMemorized, // This was removed from the hook in a previous task
     resetPlanner,
     memorizedPagesSet,
   } = useMemorizationPlanner();
@@ -45,29 +45,36 @@ export const MemorizationPlanner = () => {
     : 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <div className="lg:col-span-1 space-y-6">
-        <PlannerSettings
-          settings={settings}
-          onSettingsChange={setSettings}
-          onGeneratePlan={generateSchedule}
-          alreadyMemorized={alreadyMemorized}
-          onAlreadyMemorizedChange={setAlreadyMemorized}
-        />
-        <PlannerActions onReset={resetPlanner} />
-      </div>
-      <div className="lg:col-span-2 space-y-6">
-        <PlannerSummary schedule={schedule} />
-        <PlannerSchedule 
-          schedule={schedule} 
-          onDayStatusChange={updateDayStatus}
-          totalProgress={totalProgress}
-          planProgress={planProgress}
-          alreadyMemorizedPages={alreadyMemorizedPages}
-          completedPagesInPlan={completedPagesInPlan}
-          totalPagesInPlan={totalPagesInPlan}
-          totalQuranPages={totalQuranPages}
-        />
+    // Main container class changed to space-y-6 for vertical flow
+    <div className="space-y-6">
+      {/* PlannerSchedule moved to the top */}
+      <PlannerSchedule
+        schedule={schedule}
+        onDayStatusChange={updateDayStatus}
+        totalProgress={totalProgress}
+        planProgress={planProgress}
+        alreadyMemorizedPages={alreadyMemorizedPages}
+        completedPagesInPlan={completedPagesInPlan}
+        totalPagesInPlan={totalPagesInPlan}
+        totalQuranPages={totalQuranPages}
+      />
+      {/* PlannerSummary moved after PlannerSchedule */}
+      <PlannerSummary schedule={schedule} />
+
+      {/* New div wrapper for settings and actions with a grid layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2 space-y-6">
+          <PlannerSettings
+            settings={settings}
+            onSettingsChange={setSettings}
+            onGeneratePlan={generateSchedule}
+            alreadyMemorized={alreadyMemorized}
+            // onAlreadyMemorizedChange prop is correctly removed as setAlreadyMemorized is no longer available
+          />
+        </div>
+        <div className="lg:col-span-1 space-y-6">
+          <PlannerActions onReset={resetPlanner} />
+        </div>
       </div>
     </div>
   );
