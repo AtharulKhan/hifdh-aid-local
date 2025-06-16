@@ -2,10 +2,9 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen } from "lucide-react"; // Removed Volume2 as it's not used in the provided snippet
-// import { Button } from "@/components/ui/button"; // Button is not directly used in renderRule, but ExpandableSection uses it.
+import { Search, BookOpen } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ExpandableSection } from "@/components/ui/ExpandableSection"; // Import ExpandableSection
+import { ExpandableSection } from "@/components/ui/ExpandableSection";
 
 // Comprehensive Tajweed data
 const tajweedData = {
@@ -109,7 +108,7 @@ const tajweedData = {
     {
       category_name_en: "Rules of Noon Saakinah and Tanween",
       category_name_ar: "أحكام النون الساكنة والتنوين",
-      description: "A Noon Saakinah (نْ) or a Tanween (ـًـــٍـــٌ) are followed by one of four rules, depending on the letter that comes after them. They share the same rules because Tanween produces an 'n' sound.",
+      description: "A Noon Saakinah (نْ) or a Tanween (ـًـــٌٍ) are followed by one of four rules, depending on the letter that comes after them. They share the same rules because Tanween produces an 'n' sound.",
       rules: [
         {
           name_en: "Al-Idh'har (The Clarification)",
@@ -506,176 +505,176 @@ export const TajweedLearning = () => {
             </Badge>
           </CardTitle>
         </CardHeader>
-        {/* Wrap CardContent with ExpandableSection */}
         <ExpandableSection initialHeight="200px">
-          <CardContent className="space-y-4 pt-0 md:pt-0"> {/* Adjusted top padding */}
+          <CardContent className="space-y-4 pt-0 md:pt-0">
             <p className="text-gray-700">{rule.description || rule.ruling_description}</p>
 
             {/* Parts Section */}
-          {rule.parts && (
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-800">Parts:</h4>
-              {rule.parts.map((part: any, partIndex: number) => (
-                <Card key={partIndex} className="bg-white/70 border-blue-200">
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-medium text-gray-800">{part.name_en}</h5>
-                      <span className="text-blue-600 font-arabic">{part.name_ar}</span>
-                    </div>
-                    <div className="text-center space-y-2">
-                      <p className="text-2xl font-arabic text-gray-800 leading-loose">{part.arabic_text}</p>
-                      <p className="text-gray-600 italic">{part.transliteration}</p>
-                    </div>
-                    <p className="text-sm text-gray-600">{part.ruling_description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Connection Rules Section */}
-          {rule.connection_rules && (
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-800">Connection Rules:</h4>
-              <Accordion type="single" collapsible className="w-full">
-                {rule.connection_rules.map((connectionRule: any, connIndex: number) => (
-                  <AccordionItem key={connIndex} value={`connection-${connIndex}`}>
-                    <AccordionTrigger className="text-left">
-                      {connectionRule.title}
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-3">
-                      <div className="space-y-2">
-                        <h6 className="font-medium text-green-700">Permissible Ways:</h6>
-                        {connectionRule.permissible_ways.map((way: any, wayIndex: number) => (
-                          <div key={wayIndex} className="bg-green-50 p-3 rounded border-l-4 border-green-300">
-                            <h6 className="font-medium text-green-800">{way.name}</h6>
-                            <p className="text-sm text-green-700">{way.description}</p>
-                          </div>
-                        ))}
+            {rule.parts && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800">Parts:</h4>
+                {rule.parts.map((part: any, partIndex: number) => (
+                  <Card key={partIndex} className="bg-white/70 border-blue-200">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h5 className="font-medium text-gray-800">{part.name_en}</h5>
+                        <span className="text-blue-600 font-arabic">{part.name_ar}</span>
                       </div>
-                      {connectionRule.impermissible_way && (
-                        <div className="space-y-2">
-                          <h6 className="font-medium text-red-700">Impermissible Way:</h6>
-                          <div className="bg-red-50 p-3 rounded border-l-4 border-red-300">
-                            <h6 className="font-medium text-red-800">{connectionRule.impermissible_way.name}</h6>
-                            <p className="text-sm text-red-700">{connectionRule.impermissible_way.description}</p>
-                          </div>
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          )}
-
-          {/* Sub Rules Section */}
-          {rule.sub_rules && (
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-800">Sub-Rules:</h4>
-              <Accordion type="single" collapsible className="w-full">
-                {rule.sub_rules.map((subRule: any, subIndex: number) => (
-                  <AccordionItem key={subIndex} value={`sub-rule-${subIndex}`}>
-                    <AccordionTrigger className="text-left">
-                      <div className="space-y-1">
-                        <div>{subRule.name_en}</div>
-                        <div className="text-blue-600 font-arabic text-sm">{subRule.name_ar}</div>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-arabic text-gray-800 leading-loose">{part.arabic_text}</p>
+                        <p className="text-gray-600 italic">{part.transliteration}</p>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-3">
-                      <p className="text-gray-700">{subRule.ruling_description}</p>
-                      {subRule.letters && (
-                        <div className="space-y-2">
-                          <h6 className="font-semibold text-gray-800">Letters:</h6>
-                          <div className="flex flex-wrap gap-2">
-                            {subRule.letters.map((letter: any, letterIndex: number) => (
-                              <Badge key={letterIndex} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                <span className="font-arabic text-lg mr-1">{letter.ar}</span>
-                                <span className="text-sm">({letter.en})</span>
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {subRule.examples && (
-                        <div className="space-y-2">
-                          <h6 className="font-semibold text-gray-800">Examples:</h6>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {subRule.examples.map((example: any, exampleIndex: number) => (
-                              <Card key={exampleIndex} className="bg-green-50 border-green-200">
-                                <CardContent className="p-3 text-center space-y-1">
-                                  <p className="text-xl font-arabic text-gray-800">{example.arabic_text}</p>
-                                  <p className="text-sm text-gray-600 italic">{example.transliteration}</p>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {subRule.note && (
-                        <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-300">
-                          <p className="text-sm text-yellow-800"><strong>Note:</strong> {subRule.note}</p>
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          )}
-
-          {/* Examples Section */}
-          {rule.examples && (
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-800">Examples:</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {rule.examples.map((example: any, exampleIndex: number) => (
-                  <Card key={exampleIndex} className="bg-green-50 border-green-200">
-                    <CardContent className="p-3 text-center space-y-1">
-                      <p className="text-xl font-arabic text-gray-800">{example.arabic_text}</p>
-                      <p className="text-sm text-gray-600 italic">{example.transliteration}</p>
+                      <p className="text-sm text-gray-600">{part.ruling_description}</p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Letters Section */}
-          {rule.letters && (
-            <div className="space-y-2">
-              <h4 className="font-semibold text-gray-800">Letters:</h4>
-              <div className="flex flex-wrap gap-2">
-                {typeof rule.letters === 'string' ? (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                    <span className="font-arabic text-lg">{rule.letters}</span>
-                  </Badge>
-                ) : (
-                  rule.letters.map((letter: any, letterIndex: number) => (
-                    <Badge key={letterIndex} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                      <span className="font-arabic text-lg mr-1">{letter.ar}</span>
-                      <span className="text-sm">({letter.en})</span>
-                    </Badge>
-                  ))
-                )}
+            {/* Connection Rules Section */}
+            {rule.connection_rules && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800">Connection Rules:</h4>
+                <Accordion type="single" collapsible className="w-full">
+                  {rule.connection_rules.map((connectionRule: any, connIndex: number) => (
+                    <AccordionItem key={connIndex} value={`connection-${connIndex}`}>
+                      <AccordionTrigger className="text-left">
+                        {connectionRule.title}
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3">
+                        <div className="space-y-2">
+                          <h6 className="font-medium text-green-700">Permissible Ways:</h6>
+                          {connectionRule.permissible_ways.map((way: any, wayIndex: number) => (
+                            <div key={wayIndex} className="bg-green-50 p-3 rounded border-l-4 border-green-300">
+                              <h6 className="font-medium text-green-800">{way.name}</h6>
+                              <p className="text-sm text-green-700">{way.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {connectionRule.impermissible_way && (
+                          <div className="space-y-2">
+                            <h6 className="font-medium text-red-700">Impermissible Way:</h6>
+                            <div className="bg-red-50 p-3 rounded border-l-4 border-red-300">
+                              <h6 className="font-medium text-red-800">{connectionRule.impermissible_way.name}</h6>
+                              <p className="text-sm text-red-700">{connectionRule.impermissible_way.description}</p>
+                            </div>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Note Section */}
-          {rule.note && (
-            <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-300">
-              <p className="text-sm text-yellow-800"><strong>Note:</strong> {rule.note}</p>
-            </div>
-          )}
+            {/* Sub Rules Section */}
+            {rule.sub_rules && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800">Sub-Rules:</h4>
+                <Accordion type="single" collapsible className="w-full">
+                  {rule.sub_rules.map((subRule: any, subIndex: number) => (
+                    <AccordionItem key={subIndex} value={`sub-rule-${subIndex}`}>
+                      <AccordionTrigger className="text-left">
+                        <div className="space-y-1">
+                          <div>{subRule.name_en}</div>
+                          <div className="text-blue-600 font-arabic text-sm">{subRule.name_ar}</div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3">
+                        <p className="text-gray-700">{subRule.ruling_description}</p>
+                        {subRule.letters && (
+                          <div className="space-y-2">
+                            <h6 className="font-semibold text-gray-800">Letters:</h6>
+                            <div className="flex flex-wrap gap-2">
+                              {subRule.letters.map((letter: any, letterIndex: number) => (
+                                <Badge key={letterIndex} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                  <span className="font-arabic text-lg mr-1">{letter.ar}</span>
+                                  <span className="text-sm">({letter.en})</span>
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {subRule.examples && (
+                          <div className="space-y-2">
+                            <h6 className="font-semibold text-gray-800">Examples:</h6>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {subRule.examples.map((example: any, exampleIndex: number) => (
+                                <Card key={exampleIndex} className="bg-green-50 border-green-200">
+                                  <CardContent className="p-3 text-center space-y-1">
+                                    <p className="text-xl font-arabic text-gray-800">{example.arabic_text}</p>
+                                    <p className="text-sm text-gray-600 italic">{example.transliteration}</p>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {subRule.note && (
+                          <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-300">
+                            <p className="text-sm text-yellow-800"><strong>Note:</strong> {subRule.note}</p>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            )}
 
-          {/* Opposite Section */}
-          {rule.opposite && (
-            <div className="bg-orange-50 p-3 rounded border-l-4 border-orange-300">
-              <p className="text-sm text-orange-800"><strong>Opposite:</strong> {rule.opposite}</p>
-            </div>
-          )}
-        </CardContent>
+            {/* Examples Section */}
+            {rule.examples && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800">Examples:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {rule.examples.map((example: any, exampleIndex: number) => (
+                    <Card key={exampleIndex} className="bg-green-50 border-green-200">
+                      <CardContent className="p-3 text-center space-y-1">
+                        <p className="text-xl font-arabic text-gray-800">{example.arabic_text}</p>
+                        <p className="text-sm text-gray-600 italic">{example.transliteration}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Letters Section */}
+            {rule.letters && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-gray-800">Letters:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {typeof rule.letters === 'string' ? (
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                      <span className="font-arabic text-lg">{rule.letters}</span>
+                    </Badge>
+                  ) : (
+                    rule.letters.map((letter: any, letterIndex: number) => (
+                      <Badge key={letterIndex} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        <span className="font-arabic text-lg mr-1">{letter.ar}</span>
+                        <span className="text-sm">({letter.en})</span>
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Note Section */}
+            {rule.note && (
+              <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-300">
+                <p className="text-sm text-yellow-800"><strong>Note:</strong> {rule.note}</p>
+              </div>
+            )}
+
+            {/* Opposite Section */}
+            {rule.opposite && (
+              <div className="bg-orange-50 p-3 rounded border-l-4 border-orange-300">
+                <p className="text-sm text-orange-800"><strong>Opposite:</strong> {rule.opposite}</p>
+              </div>
+            )}
+          </CardContent>
+        </ExpandableSection>
       </Card>
     );
   };
@@ -719,20 +718,16 @@ export const TajweedLearning = () => {
                   <div key={subCatIndex} className="space-y-4">
                     <div className="text-center space-y-2 bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
                       <h3 className="text-xl font-bold text-gray-800">{subCategory.category_name_en}</h3>
-                      <p className="text-lg text-purple-600 font-arabic">{subCategory.category_name_ar}</p>
+                      <p className="text-base text-purple-600 font-arabic">{subCategory.category_name_ar}</p>
                       {subCategory.description && (
                         <p className="text-gray-600 max-w-2xl mx-auto">{subCategory.description}</p>
                       )}
                     </div>
-
-                    {/* Sub Category Rules */}
                     {subCategory.rules && (
                       <div className="grid gap-4">
                         {subCategory.rules.map((rule: any, ruleIndex: number) => renderRule(rule, ruleIndex))}
                       </div>
                     )}
-
-                    {/* Nested Sub Categories (for Madd Far'i) */}
                     {subCategory.sub_categories && (
                       <div className="space-y-6">
                         {subCategory.sub_categories.map((nestedSubCat: any, nestedIndex: number) => (
