@@ -27,8 +27,8 @@ function App() {
           <Navigation />
           <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
               <Route path="/page-view" element={<PageView />} />
               <Route path="/test" element={<Test />} />
               <Route path="/tajweed" element={<Tajweed />} />
