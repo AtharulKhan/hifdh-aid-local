@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase TypeScript Cache Sync</title>
+</head>
+<body>
+  <h1>Firebase TypeScript Cache Sync</h1>
+  <div>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="register">Register</button>
+    <button id="login">Login</button>
+    <button id="logout">Logout</button>
+  </div>
+  <hr/>
+  <div>
+    <h2>Cache Data</h2>
+    <textarea id="cacheData" placeholder="Enter JSON cache data e.g. {&quot;theme&quot;: &quot;dark&quot;}"></textarea>
+    <button id="updateCache">Update Cache</button>
+    <button id="getCache">Get Cache</button>
+    <pre id="userData"></pre>
+    <pre id="cacheResult"></pre>
+  </div>
+  <script type="module" src="index.ts"></script>
+</body>
+</html>
