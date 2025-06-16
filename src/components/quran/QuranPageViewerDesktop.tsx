@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkipForward, SkipBack, BookOpen } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse, getTafsirForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
 import { TafsirViewer } from "./TafsirViewer";
