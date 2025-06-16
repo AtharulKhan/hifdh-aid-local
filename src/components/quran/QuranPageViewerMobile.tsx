@@ -5,9 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack, Settings } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz, getJuzInfo } from "@/data/quranData";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SkipForward, SkipBack, Settings, BookOpen } from "lucide-react";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse, getFirstVerseOfJuz, getJuzInfo, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
+import { TafsirDialog } from "./TafsirDialog";
+import { TafsirViewer } from "./TafsirViewer";
+import { PersonalNotes } from "./PersonalNotes";
 
 interface QuranPageViewerMobileProps {
   startingVerseId?: number;
@@ -353,240 +358,335 @@ export const QuranPageViewerMobile: React.FC<QuranPageViewerMobileProps> = ({ st
         </div>
       </div>
 
-      {/* Compact Controls */}
-      <Card className="p-3 bg-green-50 border-green-100">
-        <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
-              <div className="flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span className="font-medium text-sm">Display Options</span>
-              </div>
-              {isControlsExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent className="pt-3">
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-600">Verse numbers:</span>
-                  <Switch
-                    checked={showVerseNumbers}
-                    onCheckedChange={setShowVerseNumbers}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-600">Hide verses:</span>
-                  <Switch
-                    checked={hideVerses}
-                    onCheckedChange={(checked) => {
-                      setHideVerses(checked);
-                      if (!checked) {
-                        setRevelationRate([100]);
-                      } else {
-                        setRevelationRate([0]);
-                      }
-                      setCurrentPage(1);
-                    }}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-600">Tajweed:</span>
-                  <Switch
-                    checked={showTajweed}
-                    onCheckedChange={setShowTajweed}
-                    className="data-[state=checked]:bg-green-500"
-                  />
-                </div>
-              </div>
+      {/* Main Content with Tabs */}
+      <Tabs defaultValue="reader" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1">
+          <TabsTrigger value="reader" className="text-xs px-2 py-2">Reader</TabsTrigger>
+          <TabsTrigger value="tafsir-study" className="text-xs px-2 py-2">Tafsir (Scroll)</TabsTrigger>
+          <TabsTrigger value="tafsir" className="text-xs px-2 py-2">Tafsir</TabsTrigger>
+          <TabsTrigger value="notes" className="text-xs px-2 py-2">Notes</TabsTrigger>
+        </TabsList>
 
-              {/* Verse Range Slider - Only show for Surah mode */}
-              {navigationMode === 'surah' && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-green-700">Verse range to show:</span>
-                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                      {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
-                    </span>
+        <TabsContent value="reader" className="space-y-4">
+          {/* Compact Controls */}
+          <Card className="p-3 bg-green-50 border-green-100">
+            <Collapsible open={isControlsExpanded} onOpenChange={setIsControlsExpanded}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full flex items-center justify-between p-2 text-green-700 hover:bg-green-100">
+                  <div className="flex items-center space-x-2">
+                    <Settings className="h-4 w-4" />
+                    <span className="font-medium text-sm">Display Options</span>
                   </div>
-                  <Slider
-                    value={verseRange}
-                    onValueChange={(value) => {
-                      setVerseRange(value);
-                      setCurrentPage(1);
-                    }}
-                    max={totalSurahVerses}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-green-500">
-                    <span>1</span>
-                    <span>{totalSurahVerses}</span>
+                  {isControlsExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="pt-3">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-600">Verse numbers:</span>
+                      <Switch
+                        checked={showVerseNumbers}
+                        onCheckedChange={setShowVerseNumbers}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-600">Hide verses:</span>
+                      <Switch
+                        checked={hideVerses}
+                        onCheckedChange={(checked) => {
+                          setHideVerses(checked);
+                          if (!checked) {
+                            setRevelationRate([100]);
+                          } else {
+                            setRevelationRate([0]);
+                          }
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-600">Tajweed:</span>
+                      <Switch
+                        checked={showTajweed}
+                        onCheckedChange={setShowTajweed}
+                        className="data-[state=checked]:bg-green-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Verse Range Slider - Only show for Surah mode */}
+                  {navigationMode === 'surah' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-green-700">Verse range to show:</span>
+                        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                          {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
+                        </span>
+                      </div>
+                      <Slider
+                        value={verseRange}
+                        onValueChange={(value) => {
+                          setVerseRange(value);
+                          setCurrentPage(1);
+                        }}
+                        max={totalSurahVerses}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-green-500">
+                        <span>1</span>
+                        <span>{totalSurahVerses}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Max Lines Slider */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-green-700">Max lines per page:</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                        {maxLines[0] === 0 ? 'No limit' : `${maxLines[0]} lines`}
+                      </span>
+                    </div>
+                    <Slider
+                      value={maxLines}
+                      onValueChange={(value) => {
+                        setMaxLines(value);
+                        setCurrentPage(1);
+                      }}
+                      max={30}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-green-500">
+                      <span>No limit</span>
+                      <span>30 lines</span>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <QuranNavigationModal
+                      onNavigate={handleNavigate}
+                      currentVerseId={currentSurahVerses[0]?.id || 1}
+                      maxVerseId={allVerses.length}
+                    />
                   </div>
                 </div>
-              )}
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
 
-              {/* Max Lines Slider */}
+          {/* Sticky Revelation Rate Slider for Mobile */}
+          {hideVerses && (
+            <div className="sticky top-16 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-3 shadow-sm mx-2">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-green-700">Max lines per page:</span>
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                    {maxLines[0] === 0 ? 'No limit' : `${maxLines[0]} lines`}
+                  <span className="text-xs font-medium text-green-700">
+                    {maxLines[0] > 0 && totalPages > 1 ? `Page ${currentPage} Progress:` : 'Progress:'}
                   </span>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
                 </div>
                 <Slider
-                  value={maxLines}
-                  onValueChange={(value) => {
-                    setMaxLines(value);
-                    setCurrentPage(1);
-                  }}
-                  max={30}
-                  min={0}
+                  value={revelationRate}
+                  onValueChange={setRevelationRate}
+                  max={100}
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-green-500">
-                  <span>No limit</span>
-                  <span>30 lines</span>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile-Optimized Text Display */}
+          <Card className="p-4 bg-white border border-green-100 shadow-sm min-h-[400px]">
+            <div className="relative">
+              {currentSurahVerses.length > 0 ? (
+                <div 
+                  ref={containerRef}
+                  className="w-full relative"
+                >
+                  <div 
+                    className="font-arabic text-xl leading-loose text-gray-800 transition-opacity duration-300 text-right break-words"
+                    style={{ opacity: 1, lineHeight: '2.5' }}
+                  >
+                    {showTajweed ? (
+                      <span dangerouslySetInnerHTML={{ __html: displayText }} />
+                    ) : (
+                      displayText
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-center h-32">
+                  <p className="text-gray-500 text-sm">No verses to display</p>
+                </div>
+              )}
               
-              <div className="pt-2">
-                <QuranNavigationModal
-                  onNavigate={handleNavigate}
-                  currentVerseId={currentSurahVerses[0]?.id || 1}
-                  maxVerseId={allVerses.length}
-                />
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+              {hideVerses && revelationRate[0] === 0 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
+                    <p className="text-xs font-medium">Use the slider above to reveal verses</p>
+                  </div>
+                </div>
+              )}
 
-      {/* Sticky Revelation Rate Slider for Mobile */}
-      {hideVerses && (
-        <div className="sticky top-16 z-10 bg-white/95 backdrop-blur-sm border border-green-200 rounded-lg p-3 shadow-sm mx-2">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-green-700">
-                {maxLines[0] > 0 && totalPages > 1 ? `Page ${currentPage} Progress:` : 'Progress:'}
-              </span>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
+              {/* Mobile Pagination Controls */}
+              {maxLines[0] > 0 && totalPages > 1 && (
+                <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
+                  {/* Previous/Next Buttons */}
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPreviousPage}
+                      disabled={currentPage <= 1}
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                      Prev
+                    </Button>
+                    <span className="text-xs text-gray-600 px-1">
+                      {currentPage}/{totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextPage}
+                      disabled={!hasNextPage}
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
+                    >
+                      Next
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-            <Slider
-              value={revelationRate}
-              onValueChange={setRevelationRate}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
+          </Card>
 
-      {/* Mobile-Optimized Text Display */}
-      <Card className="p-4 bg-white border border-green-100 shadow-sm min-h-[400px]">
-        <div className="relative">
-          {currentSurahVerses.length > 0 ? (
-            <div 
-              ref={containerRef}
-              className="w-full relative"
+          {/* Mobile Navigation */}
+          <div className="flex items-center justify-between space-x-2">
+            <Button
+              variant="outline"
+              onClick={goToPreviousSurah}
+              disabled={currentSurah <= 1}
+              className="flex items-center space-x-1 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50 flex-1"
             >
-              <div 
-                className="font-arabic text-xl leading-loose text-gray-800 transition-opacity duration-300 text-right break-words"
-                style={{ opacity: 1, lineHeight: '2.5' }}
-              >
-                {showTajweed ? (
-                  <span dangerouslySetInnerHTML={{ __html: displayText }} />
-                ) : (
-                  displayText
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-32">
-              <p className="text-gray-500 text-sm">No verses to display</p>
-            </div>
-          )}
-          
-          {hideVerses && revelationRate[0] === 0 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-center">
-                <p className="text-xs font-medium">Use the slider above to reveal verses</p>
-              </div>
-            </div>
-          )}
+              <ChevronLeft className="h-4 w-4" />
+              <span className="text-xs">Previous</span>
+            </Button>
 
-          {/* Mobile Pagination Controls */}
-          {maxLines[0] > 0 && totalPages > 1 && (
-            <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
-              {/* Previous/Next Buttons */}
-              <div className="flex items-center space-x-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPreviousPage}
-                  disabled={currentPage <= 1}
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                  Prev
-                </Button>
-                <span className="text-xs text-gray-600 px-1">
-                  {currentPage}/{totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNextPage}
-                  disabled={!hasNextPage}
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1"
-                >
-                  Next
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
+            <div className="text-center px-2">
+              <span className="text-xs text-green-600">
+                {currentSurah} / {maxSurah}
+              </span>
             </div>
-          )}
-        </div>
-      </Card>
 
-      {/* Mobile Navigation */}
-      <div className="flex items-center justify-between space-x-2">
-        <Button
-          variant="outline"
-          onClick={goToPreviousSurah}
-          disabled={currentSurah <= 1}
-          className="flex items-center space-x-1 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50 flex-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span className="text-xs">Previous</span>
-        </Button>
+            <Button
+              variant="outline"
+              onClick={goToNextSurah}
+              disabled={currentSurah >= maxSurah}
+              className="flex items-center space-x-1 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50 flex-1"
+            >
+              <span className="text-xs">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </TabsContent>
 
-        <div className="text-center px-2">
-          <span className="text-xs text-green-600">
-            {currentSurah} / {maxSurah}
-          </span>
-        </div>
+        <TabsContent value="tafsir-study" className="space-y-4">
+          {/* Tafsir Study Mode Content */}
+          <Card className="p-4">
+            <h3 className="text-lg font-semibold text-green-700 mb-4">Tafsir (Scrollable)</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {currentSurahVerses.map(verse => {
+                const tafsirIbnKathir = getTafsirIbnKathirForVerse(verse.surah, verse.ayah);
+                const tafsirMaarif = getTafsirMaarifForVerse(verse.surah, verse.ayah);
+                return (
+                  <div key={verse.id} className="border border-green-100 rounded-lg p-3 bg-green-25">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge variant="outline" className="border-green-300 text-green-600 text-xs">
+                        {verse.surah}:{verse.ayah}
+                      </Badge>
+                      <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                    </div>
+                    <p className="font-arabic text-lg leading-loose text-gray-800 text-right mb-3">
+                      {showTajweed ? getTajweedText(verse) : verse.text}
+                    </p>
+                    
+                    {/* Tafsir Section */}
+                    {(tafsirIbnKathir || tafsirMaarif) && (
+                      <Card className="mt-3 border-amber-200">
+                        <div className="p-2 bg-amber-50 border-b border-amber-200">
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="h-3 w-3 text-amber-600" />
+                            <h4 className="font-medium text-amber-700 text-xs">
+                              Commentary
+                            </h4>
+                          </div>
+                        </div>
+                        
+                        <Tabs defaultValue="ibn-kathir" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2 bg-amber-25 rounded-none h-8">
+                            <TabsTrigger value="ibn-kathir" className="text-[10px] data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Ibn Kathir
+                            </TabsTrigger>
+                            <TabsTrigger value="maarif-ul-quran" className="text-[10px] data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Maarif-ul-Qur'an
+                            </TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="ibn-kathir" className="mt-0">
+                            <ScrollArea className="h-[150px] p-3">
+                              {tafsirIbnKathir ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-xs" dangerouslySetInnerHTML={{
+                                  __html: tafsirIbnKathir.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-xs">No Ibn Kathir commentary available for this verse.</p>
+                              )}
+                            </ScrollArea>
+                          </TabsContent>
 
-        <Button
-          variant="outline"
-          onClick={goToNextSurah}
-          disabled={currentSurah >= maxSurah}
-          className="flex items-center space-x-1 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50 bg-green-50 flex-1"
-        >
-          <span className="text-xs">Next</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+                          <TabsContent value="maarif-ul-quran" className="mt-0">
+                            <ScrollArea className="h-[150px] p-3">
+                              {tafsirMaarif ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-xs" dangerouslySetInnerHTML={{
+                                  __html: tafsirMaarif.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-xs">No Maarif-ul-Qur'an commentary available for this verse.</p>
+                              )}
+                            </ScrollArea>
+                          </TabsContent>
+                        </Tabs>
+                      </Card>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tafsir" className="space-y-4">
+          <TafsirViewer startingVerseId={currentSurahVerses[0]?.id || 1} />
+        </TabsContent>
+
+        <TabsContent value="notes" className="space-y-4">
+          <PersonalNotes surahNumber={currentSurah} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
