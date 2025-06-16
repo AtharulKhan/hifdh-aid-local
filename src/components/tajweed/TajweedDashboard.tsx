@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BookText, ArrowRight, BookOpen, ClipboardCheck } from "lucide-react";
 import { TajweedLearning } from "./TajweedLearning";
 import { TajweedTest } from "./TajweedTest";
+import { ExpandableSection } from "@/components/ui/ExpandableSection";
 
 export const TajweedDashboard = () => {
   return (
@@ -36,11 +37,15 @@ export const TajweedDashboard = () => {
         </TabsList>
 
         <TabsContent value="learn">
-          <TajweedLearning />
+          <ExpandableSection initialHeight="200px" title="Tajweed Learning Content">
+            <TajweedLearning />
+          </ExpandableSection>
         </TabsContent>
 
         <TabsContent value="test">
-          <TajweedTest />
+          <ExpandableSection initialHeight="200px" title="Tajweed Test Content">
+            <TajweedTest />
+          </ExpandableSection>
         </TabsContent>
       </Tabs>
     </div>
