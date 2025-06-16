@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SkipForward, SkipBack } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData } from "@/data/quranData";
+import { SkipForward, SkipBack, BookOpen } from "lucide-react";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
 import { TafsirViewer } from "./TafsirViewer";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface QuranPageViewerDesktopProps {
   startingVerseId?: number;
@@ -299,23 +300,70 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({ 
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-green-700 mb-4">Study Mode</h3>
             <div className="grid grid-cols-1 gap-6">
-              {currentSurahVerses.map((verse) => (
-                <div key={verse.id} className="border border-green-100 rounded-lg p-4 bg-green-25">
-                  <div className="flex items-start justify-between mb-3">
-                    <Badge variant="outline" className="border-green-300 text-green-600">
-                      {verse.surah}:{verse.ayah}
-                    </Badge>
-                    <TafsirDialog 
-                      surah={verse.surah} 
-                      ayah={verse.ayah} 
-                      verseKey={verse.verse_key}
-                    />
+              {currentSurahVerses.map((verse) => {
+                const tafsir = getTafsirForVerse(verse.surah, verse.ayah);
+                
+                return (
+                  <div key={verse.id} className="border border-green-100 rounded-lg p-4 bg-green-25">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge variant="outline" className="border-green-300 text-green-600">
+                        {verse.surah}:{verse.ayah}
+                      </Badge>
+                      <TafsirDialog 
+                        surah={verse.surah} 
+                        ayah={verse.ayah} 
+                        verseKey={verse.verse_key}
+                      />
+                    </div>
+                    <p className="font-arabic text-xl leading-loose text-gray-800 text-right mb-3">
+                      {showTajweed ? getTajweedText(verse) : verse.text}
+                    </p>
+                    
+                    {/* Tafsir Section */}
+                    {tafsir && (
+                      <Card className="mt-4 border-amber-200">
+                        <div className="p-3 bg-amber-50 border-b border-amber-200">
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="h-4 w-4 text-amber-600" />
+                            <h4 className="font-medium text-amber-700 text-sm">
+                              Commentary
+                            </h4>
+                          </div>
+                        </div>
+                        
+                        <Tabs defaultValue="ibn-kathir" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2 bg-amber-25 rounded-none">
+                            <TabsTrigger value="ibn-kathir" className="text-xs data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Ibn Kathir
+                            </TabsTrigger>
+                            <TabsTrigger value="maarif-ul-quran" className="text-xs data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Maarif-ul-Qur'an
+                            </TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="ibn-kathir" className="mt-0">
+                            <ScrollArea className="h-[200px] p-4">
+                              <div 
+                                className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm"
+                                dangerouslySetInnerHTML={{ __html: tafsir.text }}
+                              />
+                            </ScrollArea>
+                          </TabsContent>
+
+                          <TabsContent value="maarif-ul-quran" className="mt-0">
+                            <ScrollArea className="h-[200px] p-4">
+                              <div 
+                                className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm"
+                                dangerouslySetInnerHTML={{ __html: tafsir.text }}
+                              />
+                            </ScrollArea>
+                          </TabsContent>
+                        </Tabs>
+                      </Card>
+                    )}
                   </div>
-                  <p className="font-arabic text-xl leading-loose text-gray-800 text-right mb-3">
-                    {showTajweed ? getTajweedText(verse) : verse.text}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </TabsContent>
