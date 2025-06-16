@@ -3,6 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Target, BookOpen, Headphones } from "lucide-react";
+import { ExpandableSection } from "@/components/ui/ExpandableSection"; // Import ExpandableSection
 
 export const MemorizationSystem = () => {
   return (
@@ -18,10 +19,11 @@ export const MemorizationSystem = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Core Principles */}
-          <div className="bg-white/70 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+        <ExpandableSection initialHeight="200px">
+          <CardContent className="space-y-6 pt-0 md:pt-0"> {/* Adjusted padding */}
+            {/* Core Principles */}
+            <div className="bg-white/70 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
               <Target className="h-4 w-4" />
               Core Principles
             </h3>
@@ -112,10 +114,11 @@ export const MemorizationSystem = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Preparation */}
-          <div className="bg-white/70 rounded-lg p-4">
-            <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+        <ExpandableSection initialHeight="200px">
+          <CardContent className="space-y-6 pt-0 md:pt-0"> {/* Adjusted padding */}
+            {/* Preparation */}
+            <div className="bg-white/70 rounded-lg p-4">
+              <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
               <Headphones className="h-4 w-4" />
               Preparation (Night Before)
             </h3>

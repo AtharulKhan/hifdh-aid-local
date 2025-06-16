@@ -2,9 +2,10 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, Volume2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, BookOpen } from "lucide-react"; // Removed Volume2 as it's not used in the provided snippet
+// import { Button } from "@/components/ui/button"; // Button is not directly used in renderRule, but ExpandableSection uses it.
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ExpandableSection } from "@/components/ui/ExpandableSection"; // Import ExpandableSection
 
 // Comprehensive Tajweed data
 const tajweedData = {
@@ -505,10 +506,12 @@ export const TajweedLearning = () => {
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-gray-700">{rule.description || rule.ruling_description}</p>
-          
-          {/* Parts Section */}
+        {/* Wrap CardContent with ExpandableSection */}
+        <ExpandableSection initialHeight="200px">
+          <CardContent className="space-y-4 pt-0 md:pt-0"> {/* Adjusted top padding */}
+            <p className="text-gray-700">{rule.description || rule.ruling_description}</p>
+
+            {/* Parts Section */}
           {rule.parts && (
             <div className="space-y-3">
               <h4 className="font-semibold text-gray-800">Parts:</h4>
