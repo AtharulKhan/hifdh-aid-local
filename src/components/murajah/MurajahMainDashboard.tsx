@@ -23,6 +23,7 @@ import {
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json"; // Import juzData
+import { PracticeVerseCard } from './PracticeVerseCard'; // Import PracticeVerseCard
 
 // Define a type for juzDataJson to avoid 'any' type if possible
 interface JuzVerseMapping {
@@ -606,9 +607,14 @@ export const MurajahMainDashboard = () => {
                 <div className="space-y-2">
                   {todaysReviewCycles.map((cycle, index) => (
                     <div key={index} className={`p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
-                      <div className="flex items-center gap-2">
-                        {cycle.icon}
-                        <span className="font-medium">{cycle.title}</span>
+                      {/* Wrapped title and content in a div for better layout control */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {cycle.icon}
+                          <span className="font-medium">{cycle.title}</span>
+                        </div>
+                        {/* Added p tag for cycle.content */}
+                        <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
                       </div>
                       {cycle.completed ? (
                         <CheckCircle className="h-5 w-5 text-green-600" />
@@ -739,18 +745,9 @@ export const MurajahMainDashboard = () => {
         <CardContent>
           {randomVerses.length > 0 ? (
             <div className="space-y-4">
+              {/* Updated to use PracticeVerseCard */}
               {randomVerses.map((verse) => (
-                <div key={verse.id} className="p-4 rounded-lg bg-gray-50 border">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge variant="secondary">
-                      Surah {verse.surah}, Ayah {verse.ayah}
-                    </Badge>
-                    <span className="text-sm text-gray-500">Verse {verse.verse_key}</span>
-                  </div>
-                  <p className="text-right text-lg leading-relaxed font-arabic" dir="rtl">
-                    {verse.text}
-                  </p>
-                </div>
+                <PracticeVerseCard key={verse.id} startVerse={verse} />
               ))}
             </div>
           ) : (
