@@ -6,11 +6,12 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkipForward, SkipBack, BookOpen } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
 import { TafsirViewer } from "./TafsirViewer";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 interface QuranPageViewerDesktopProps {
   startingVerseId?: number;
 }
@@ -118,11 +119,10 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
 
       {/* Main Content */}
       <Tabs defaultValue="reader" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="reader">Reader</TabsTrigger>
-          <TabsTrigger value="study">Study Mode</TabsTrigger>
-          <TabsTrigger value="listen">Tafsir (Scrollable)</TabsTrigger>
-          <TabsTrigger value="tafsir">Tafsir</TabsTrigger>
+          <TabsTrigger value="tafsir-study">Tafsir (Study Mode)</TabsTrigger>
+          <TabsTrigger value="tafsir">Tafsir (Focused)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reader" className="space-y-6">
@@ -221,13 +221,14 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
           <QuranNavigationModal onNavigate={handleNavigate} currentVerseId={currentSurahVerses[0]?.id || 1} maxVerseId={allVerses.length} />
         </TabsContent>
 
-        <TabsContent value="study" className="space-y-6">
-          {/* Study Mode Content */}
+        <TabsContent value="tafsir-study" className="space-y-6">
+          {/* Tafsir Study Mode Content */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold text-green-700 mb-4">Study Mode</h3>
+            <h3 className="text-lg font-semibold text-green-700 mb-4">Tafsir (Study Mode)</h3>
             <div className="grid grid-cols-1 gap-6">
               {currentSurahVerses.map(verse => {
-              const tafsir = getTafsirForVerse(verse.surah, verse.ayah);
+              const tafsirIbnKathir = getTafsirIbnKathirForVerse(verse.surah, verse.ayah);
+              const tafsirMaarif = getTafsirMaarifForVerse(verse.surah, verse.ayah);
               return <div key={verse.id} className="border border-green-100 rounded-lg p-4 bg-green-25">
                     <div className="flex items-start justify-between mb-3">
                       <Badge variant="outline" className="border-green-300 text-green-600">
@@ -240,7 +241,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                     </p>
                     
                     {/* Tafsir Section */}
-                    {tafsir && <Card className="mt-4 border-amber-200">
+                    {(tafsirIbnKathir || tafsirMaarif) && <Card className="mt-4 border-amber-200">
                         <div className="p-3 bg-amber-50 border-b border-amber-200">
                           <div className="flex items-center space-x-2">
                             <BookOpen className="h-4 w-4 text-amber-600" />
@@ -262,17 +263,25 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                           
                           <TabsContent value="ibn-kathir" className="mt-0">
                             <ScrollArea className="h-[200px] p-4">
-                              <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
-                          __html: tafsir.text
-                        }} />
+                              {tafsirIbnKathir ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                  __html: tafsirIbnKathir.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-sm">No Ibn Kathir commentary available for this verse.</p>
+                              )}
                             </ScrollArea>
                           </TabsContent>
 
                           <TabsContent value="maarif-ul-quran" className="mt-0">
                             <ScrollArea className="h-[200px] p-4">
-                              <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
-                          __html: tafsir.text
-                        }} />
+                              {tafsirMaarif ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                  __html: tafsirMaarif.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-sm">No Maarif-ul-Qur'an commentary available for this verse.</p>
+                              )}
                             </ScrollArea>
                           </TabsContent>
                         </Tabs>
@@ -280,13 +289,6 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                   </div>;
             })}
             </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="listen" className="space-y-6">
-          <Card className="p-6 text-center">
-            <h3 className="text-lg font-semibold text-green-700 mb-4">Audio Player</h3>
-            <p className="text-gray-600">Audio functionality coming soon...</p>
           </Card>
         </TabsContent>
 
