@@ -8,7 +8,6 @@ import { BookOpen, Check, Hash } from "lucide-react";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDataSync } from "@/hooks/useDataSync";
 import { supabase } from "@/integrations/supabase/client";
 
 interface JuzMemorization {
@@ -23,7 +22,6 @@ interface JuzMemorization {
 export const JuzMemorizationTracker = () => {
   const [memorizedJuz, setMemorizedJuz] = useState<JuzMemorization[]>([]);
   const { user } = useAuth();
-  const { loadDataFromSupabase } = useDataSync();
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -32,13 +30,6 @@ export const JuzMemorizationTracker = () => {
       setMemorizedJuz(JSON.parse(savedJuz));
     }
   }, []);
-
-  // Load data from Supabase when user logs in
-  useEffect(() => {
-    if (user) {
-      loadDataFromSupabase();
-    }
-  }, [user]);
 
   // Save to localStorage and Supabase whenever memorizedJuz change
   useEffect(() => {
