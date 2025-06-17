@@ -123,8 +123,13 @@ export const useDataSync = () => {
 
       toast({
         title: "Data pulled from cloud",
-        description: "Your cloud data has been pulled to local storage.",
+        description: "Your cloud data has been pulled to local storage. Page will refresh.",
       });
+
+      // Refresh the page to show the updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
 
     } catch (error) {
       console.error('Error loading data from Supabase:', error);
