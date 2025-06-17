@@ -7,15 +7,18 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Cloud } from 'lucide-react';
+import { User, LogOut, Cloud, Upload, Download, Trash2 } from 'lucide-react';
 import { useDataSync } from '@/hooks/useDataSync';
 import { useToast } from '@/hooks/use-toast';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
-  const { syncLocalDataToSupabase } = useDataSync();
+  const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData } = useDataSync();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
@@ -26,8 +29,16 @@ export const UserMenu = () => {
     });
   };
 
-  const handleSyncData = async () => {
+  const handlePushData = async () => {
     await syncLocalDataToSupabase();
+  };
+
+  const handlePullData = async () => {
+    await loadDataFromSupabase();
+  };
+
+  const handleClearData = async () => {
+    await clearSupabaseData();
   };
 
   if (!user) return null;
@@ -45,10 +56,27 @@ export const UserMenu = () => {
           <p className="text-xs text-gray-500">Signed in</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSyncData}>
-          <Cloud className="mr-2 h-4 w-4" />
-          Sync Data
-        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Cloud className="mr-2 h-4 w-4" />
+            Sync Data
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={handlePushData}>
+              <Upload className="mr-2 h-4 w-4" />
+              Push to Cloud
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handlePullData}>
+              <Download className="mr-2 h-4 w-4" />
+              Pull from Cloud
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleClearData} className="text-red-600">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear Cloud Data
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

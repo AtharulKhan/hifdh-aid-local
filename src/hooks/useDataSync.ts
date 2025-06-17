@@ -71,15 +71,15 @@ export const useDataSync = () => {
       }
 
       toast({
-        title: "Data synced successfully",
-        description: "Your local data has been synced to the cloud.",
+        title: "Data pushed to cloud",
+        description: "Your local data has been pushed to the cloud.",
       });
 
     } catch (error) {
       console.error('Error syncing data:', error);
       toast({
-        title: "Sync error",
-        description: "There was an error syncing your data. Please try again.",
+        title: "Push error",
+        description: "There was an error pushing your data. Please try again.",
         variant: "destructive"
       });
     }
@@ -89,6 +89,8 @@ export const useDataSync = () => {
     if (!user) return;
 
     try {
+      console.log('Loading data from Supabase...');
+
       // Load juz memorization
       const { data: juzData } = await supabase
         .from('juz_memorization')
@@ -119,13 +121,71 @@ export const useDataSync = () => {
 
       console.log('Data loaded from Supabase');
 
+      toast({
+        title: "Data pulled from cloud",
+        description: "Your cloud data has been pulled to local storage.",
+      });
+
     } catch (error) {
       console.error('Error loading data from Supabase:', error);
+      toast({
+        title: "Pull error",
+        description: "There was an error pulling your data. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const clearSupabaseData = async () => {
+    if (!user) return;
+
+    try {
+      console.log('Clearing data from Supabase...');
+
+      // Clear juz memorization
+      await supabase
+        .from('juz_memorization')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Clear journal entries
+      await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Clear memorization planner settings
+      await supabase
+        .from('memorization_planner_settings')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Clear memorization planner schedule
+      await supabase
+        .from('memorization_planner_schedule')
+        .delete()
+        .eq('user_id', user.id);
+
+      console.log('Cleared all data from Supabase');
+
+      toast({
+        title: "Cloud data cleared",
+        description: "All your data has been cleared from the cloud.",
+      });
+
+    } catch (error) {
+      console.error('Error clearing data from Supabase:', error);
+      toast({
+        title: "Clear error",
+        description: "There was an error clearing your data. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   return {
     syncLocalDataToSupabase,
-    loadDataFromSupabase
+    loadDataFromSupabase,
+    clearSupabaseData
   };
 };
