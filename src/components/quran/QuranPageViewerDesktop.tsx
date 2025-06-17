@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { SkipForward, SkipBack, BookOpen, Search } from "lucide-react";
-import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse, getTranslationForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
 import { TafsirViewer } from "./TafsirViewer";
@@ -27,6 +27,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
   });
   const [showTajweed, setShowTajweed] = useState(false);
   const [showVerseNumbers, setShowVerseNumbers] = useState(true);
+  const [showTranslation, setShowTranslation] = useState(false);
   const [hideVerses, setHideVerses] = useState(false);
   const [revelationRate, setRevelationRate] = useState([100]);
   const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
@@ -103,11 +104,25 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
   const getCombinedText = (): string => {
     return currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1]).map(verse => getDisplayText(verse)).join(' ');
   };
+
+  const getCombinedTranslation = (): string => {
+    return currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1])
+      .map(verse => getTranslationForVerse(verse.surah, verse.ayah))
+      .filter(translation => translation)
+      .join(' ');
+  };
+
   const sliderProgress = revelationRate[0] / 100;
   const words = getCombinedText().split(' ');
   const wordsToShow = Math.ceil(words.length * sliderProgress);
   const visibleText = words.slice(0, wordsToShow).join(' ');
   const displayText = hideVerses ? visibleText : getCombinedText();
+
+  const translationText = getCombinedTranslation();
+  const translationWords = translationText.split(' ');
+  const translationWordsToShow = Math.ceil(translationWords.length * sliderProgress);
+  const visibleTranslation = translationWords.slice(0, translationWordsToShow).join(' ');
+  const displayTranslation = hideVerses ? visibleTranslation : translationText;
 
   return <div className="space-y-6">
       {/* Header with Surah Info */}
@@ -229,6 +244,11 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                 </div>
                 
                 <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Translation:</span>
+                  <Switch checked={showTranslation} onCheckedChange={setShowTranslation} className="data-[state=checked]:bg-green-500" />
+                </div>
+                
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">Tajweed:</span>
                   <Switch checked={showTajweed} onCheckedChange={setShowTajweed} className="data-[state=checked]:bg-green-500" />
                 </div>
@@ -260,7 +280,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
           <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
             <div className="relative">
               {currentSurahVerses.length > 0 ? <div ref={containerRef} className="w-full relative">
-                  <div className="font-arabic text-3xl leading-relaxed text-gray-800 transition-opacity duration-300 text-right" style={{
+                  <div className="font-arabic text-3xl leading-relaxed text-gray-800 transition-opacity duration-300 text-right mb-2" style={{
                 opacity: 1,
                 lineHeight: '3'
               }}>
@@ -268,10 +288,20 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                   __html: displayText
                 }} /> : displayText}
                   </div>
+                  
+                  {/* Translation Display */}
+                  {showTranslation && displayTranslation && (
+                    <div className="mt-4">
+                      <p className="text-right text-gray-700 text-lg leading-relaxed italic">
+                        {displayTranslation}
+                      </p>
+                    </div>
+                  )}
                 </div> : <div className="flex items-center justify-center h-64">
                   <p className="text-gray-500">No verses to display</p>
                 </div>}
               
+              {/* Hide verses overlay */}
               {hideVerses && revelationRate[0] === 0 && <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-center">
                     <p className="font-medium">Use the slider above to reveal verses</p>
