@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, RotateCcw, PlayCircle, BookOpen, Target, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, RotateCcw, PlayCircle, BookOpen, Target, TrendingUp, CheckCircle2, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -242,6 +242,40 @@ export const MurajahMainDashboard = () => {
       });
     }
 
+    // Add Listening cycle
+    const listeningCarryOver = carryOvers.find(c => c.type === 'Listening');
+    if (listeningCarryOver) {
+      cycles.push(listeningCarryOver);
+    } else {
+      cycles.push({
+        type: 'Listening',
+        title: `Listening (${settings.listeningJuz} Juz)`,
+        content: `Listen to ${settings.listeningJuz} Juz`,
+        startDate: date,
+        completed: false,
+        icon: <Headphones className="h-4 w-4" />,
+        color: 'bg-blue-50 border-blue-200',
+        id: `listening-${date}`
+      });
+    }
+
+    // Add Reading cycle
+    const readingCarryOver = carryOvers.find(c => c.type === 'Reading');
+    if (readingCarryOver) {
+      cycles.push(readingCarryOver);
+    } else {
+      cycles.push({
+        type: 'Reading',
+        title: `Reading (${settings.readingJuz} Juz)`,
+        content: `Read ${settings.readingJuz} Juz`,
+        startDate: date,
+        completed: false,
+        icon: <BookOpen className="h-4 w-4" />,
+        color: 'bg-yellow-50 border-yellow-200',
+        id: `reading-${date}`
+      });
+    }
+
     // Load completion status
     const completions = loadTodaysCompletions();
     return cycles.map(cycle => ({
@@ -274,9 +308,23 @@ export const MurajahMainDashboard = () => {
         const dayData = allCompletions.find((d: DailyCompletion) => d.date === checkDateStr);
         if (dayData) {
           Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
-            if (!completed && !carryOvers.some(c => c.type === cycleId.split('-')[0].toUpperCase())) {
-              // Create basic carry-over cycle
-              const cycleType = cycleId.split('-')[0].toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+            if (!completed && !carryOvers.some(c => c.type === cycleId.split('-')[0])) {
+              // Create basic carry-over cycle with proper type casting
+              const cyclePrefix = cycleId.split('-')[0];
+              let cycleType: 'RMV' | 'OMV' | 'Listening' | 'Reading';
+              
+              if (cyclePrefix === 'rmv') {
+                cycleType = 'RMV';
+              } else if (cyclePrefix === 'omv') {
+                cycleType = 'OMV';
+              } else if (cyclePrefix === 'listening') {
+                cycleType = 'Listening';
+              } else if (cyclePrefix === 'reading') {
+                cycleType = 'Reading';
+              } else {
+                return; // Skip unknown types
+              }
+
               carryOvers.push({
                 type: cycleType,
                 title: `${cycleType} - Carry-over`,
