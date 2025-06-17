@@ -101,28 +101,8 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
     }
     return text;
   };
-  const getCombinedText = (): string => {
-    return currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1]).map(verse => getDisplayText(verse)).join(' ');
-  };
 
-  const getCombinedTranslation = (): string => {
-    return currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1])
-      .map(verse => getTranslationForVerse(verse.surah, verse.ayah))
-      .filter(translation => translation)
-      .join(' ');
-  };
-
-  const sliderProgress = revelationRate[0] / 100;
-  const words = getCombinedText().split(' ');
-  const wordsToShow = Math.ceil(words.length * sliderProgress);
-  const visibleText = words.slice(0, wordsToShow).join(' ');
-  const displayText = hideVerses ? visibleText : getCombinedText();
-
-  const translationText = getCombinedTranslation();
-  const translationWords = translationText.split(' ');
-  const translationWordsToShow = Math.ceil(translationWords.length * sliderProgress);
-  const visibleTranslation = translationWords.slice(0, translationWordsToShow).join(' ');
-  const displayTranslation = hideVerses ? visibleTranslation : translationText;
+  const versesToDisplay = currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1]);
 
   return <div className="space-y-6">
       {/* Header with Surah Info */}
@@ -279,27 +259,38 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
           {/* Text Display */}
           <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
             <div className="relative">
-              {currentSurahVerses.length > 0 ? <div ref={containerRef} className="w-full relative">
-                  <div className="font-arabic text-3xl leading-relaxed text-gray-800 transition-opacity duration-300 text-right mb-2" style={{
-                opacity: 1,
-                lineHeight: '3'
-              }}>
-                    {showTajweed ? <span dangerouslySetInnerHTML={{
-                  __html: displayText
-                }} /> : displayText}
-                  </div>
-                  
-                  {/* Translation Display */}
-                  {showTranslation && displayTranslation && (
-                    <div className="mt-4">
-                      <p className="text-right text-gray-700 text-lg leading-relaxed italic">
-                        {displayTranslation}
-                      </p>
-                    </div>
-                  )}
-                </div> : <div className="flex items-center justify-center h-64">
+              {versesToDisplay.length > 0 ? 
+                <div ref={containerRef} className="w-full relative">
+                  {versesToDisplay.map((verse, index) => {
+                    const isVisible = !hideVerses || index < Math.ceil(versesToDisplay.length * (revelationRate[0] / 100));
+                    const verseText = getDisplayText(verse);
+                    const translation = getTranslationForVerse(verse.surah, verse.ayah);
+                    
+                    return (
+                      <div key={verse.id} className={`mb-6 ${!isVisible ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+                        <div className="font-arabic text-3xl leading-relaxed text-gray-800 text-right mb-2" style={{ lineHeight: '3' }}>
+                          {showTajweed ? (
+                            <span dangerouslySetInnerHTML={{ __html: verseText }} />
+                          ) : (
+                            verseText
+                          )}
+                        </div>
+                        
+                        {/* Translation Display */}
+                        {showTranslation && translation && (
+                          <div className="text-right text-gray-600 text-lg leading-relaxed italic mb-2">
+                            {translation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+               : 
+                <div className="flex items-center justify-center h-64">
                   <p className="text-gray-500">No verses to display</p>
-                </div>}
+                </div>
+              }
               
               {/* Hide verses overlay */}
               {hideVerses && revelationRate[0] === 0 && <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
