@@ -12,11 +12,14 @@ import {
   BookText,
   RotateCcw,
   Book,
-  BarChart3
+  BarChart3,
+  LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserMenu } from "./auth/UserMenu";
 
 const navItems = [
   { path: "/", icon: BarChart3, label: "Dashboard" },
@@ -32,6 +35,12 @@ export const Navigation = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, loading } = useAuth();
+
+  // Don't show navigation on auth page
+  if (location.pathname === '/auth') {
+    return null;
+  }
 
   // Mobile Navigation
   if (isMobile) {
@@ -42,17 +51,31 @@ export const Navigation = () => {
           <h1 className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
             Quran Hifz Aid
           </h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
+          <div className="flex items-center gap-2">
+            {!loading && (
+              user ? (
+                <UserMenu />
+              ) : (
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+              )
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Menu Overlay */}
@@ -144,6 +167,44 @@ export const Navigation = () => {
               </span>
             </Link>
           ))}
+        </div>
+        
+        {/* Desktop Auth Section */}
+        <div className="mt-auto p-2 border-t border-gray-100">
+          {!loading && (
+            !isMinimized ? (
+              user ? (
+                <div className="flex items-center justify-between p-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700 truncate">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-gray-500">Signed in</p>
+                  </div>
+                  <UserMenu />
+                </div>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" className="w-full flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <div className="flex justify-center">
+                {user ? (
+                  <UserMenu />
+                ) : (
+                  <Link to="/auth">
+                    <Button variant="ghost" size="icon">
+                      <LogIn className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )
+          )}
         </div>
       </div>
     </nav>

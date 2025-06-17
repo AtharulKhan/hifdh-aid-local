@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { BookOpen, Check, Hash } from "lucide-react";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDataSync } from "@/hooks/useDataSync";
+import { supabase } from "@/integrations/supabase/client";
 
 interface JuzMemorization {
   juzNumber: number;
@@ -19,6 +22,8 @@ interface JuzMemorization {
 
 export const JuzMemorizationTracker = () => {
   const [memorizedJuz, setMemorizedJuz] = useState<JuzMemorization[]>([]);
+  const { user } = useAuth();
+  const { loadDataFromSupabase } = useDataSync();
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -28,10 +33,44 @@ export const JuzMemorizationTracker = () => {
     }
   }, []);
 
-  // Save to localStorage whenever memorizedJuz change
+  // Load data from Supabase when user logs in
+  useEffect(() => {
+    if (user) {
+      loadDataFromSupabase();
+    }
+  }, [user]);
+
+  // Save to localStorage and Supabase whenever memorizedJuz change
   useEffect(() => {
     localStorage.setItem('murajah-juz-memorization', JSON.stringify(memorizedJuz));
-  }, [memorizedJuz]);
+    
+    // Also save to Supabase if user is logged in
+    if (user && memorizedJuz.length > 0) {
+      syncToSupabase();
+    }
+  }, [memorizedJuz, user]);
+
+  const syncToSupabase = async () => {
+    if (!user) return;
+
+    try {
+      for (const juz of memorizedJuz) {
+        await supabase
+          .from('juz_memorization')
+          .upsert({
+            user_id: user.id,
+            juz_number: juz.juzNumber,
+            is_memorized: juz.isMemorized,
+            date_memorized: juz.dateMemorized,
+            start_page: juz.startPage,
+            end_page: juz.endPage,
+            memorized_surahs: juz.memorizedSurahs
+          });
+      }
+    } catch (error) {
+      console.error('Error syncing to Supabase:', error);
+    }
+  };
 
   const toggleMemorization = (juzNumber: number, isMemorized: boolean) => {
     setMemorizedJuz(prev => {

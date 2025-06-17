@@ -9,7 +9,174 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      journal_entries: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      juz_memorization: {
+        Row: {
+          created_at: string | null
+          date_memorized: string | null
+          end_page: number | null
+          id: string
+          is_memorized: boolean
+          juz_number: number
+          memorized_surahs: number[] | null
+          start_page: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_memorized?: string | null
+          end_page?: number | null
+          id?: string
+          is_memorized?: boolean
+          juz_number: number
+          memorized_surahs?: number[] | null
+          start_page?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_memorized?: string | null
+          end_page?: number | null
+          id?: string
+          is_memorized?: boolean
+          juz_number?: number
+          memorized_surahs?: number[] | null
+          start_page?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      memorization_planner_schedule: {
+        Row: {
+          completed: boolean
+          created_at: string | null
+          date: string
+          end_line: number
+          id: string
+          page: number
+          start_line: number
+          surah: string
+          task: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string | null
+          date: string
+          end_line: number
+          id?: string
+          page: number
+          start_line: number
+          surah: string
+          task: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string | null
+          date?: string
+          end_line?: number
+          id?: string
+          page?: number
+          start_line?: number
+          surah?: string
+          task?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      memorization_planner_settings: {
+        Row: {
+          created_at: string | null
+          days_of_week: string[]
+          id: string
+          juz_order: string
+          lines_per_day: number
+          start_date: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days_of_week?: string[]
+          id?: string
+          juz_order?: string
+          lines_per_day?: number
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days_of_week?: string[]
+          id?: string
+          juz_order?: string
+          lines_per_day?: number
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
