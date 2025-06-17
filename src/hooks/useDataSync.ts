@@ -19,12 +19,50 @@ export const useDataSync = () => {
     try {
       console.log('Starting data sync to Supabase...');
 
-      // Sync memorization entries
-      const memorizationEntries = localStorage.getItem('murajah-memorization-entries');
-      if (memorizationEntries) {
-        const entries = JSON.parse(memorizationEntries);
-        // Note: These would need to be converted to the juz_memorization table format
-        console.log('Found memorization entries:', entries.length);
+      // Sync memorization planner settings
+      const plannerSettings = localStorage.getItem('memorizationPlannerSettings');
+      if (plannerSettings) {
+        const settings = JSON.parse(plannerSettings);
+        
+        await supabase
+          .from('memorization_planner_settings')
+          .upsert({
+            user_id: user.id,
+            lines_per_day: settings.linesPerDay,
+            days_of_week: settings.daysOfWeek,
+            juz_order: settings.juzOrder,
+            start_date: settings.startDate
+          });
+        console.log('Synced memorization planner settings');
+      }
+
+      // Sync memorization planner schedule
+      const plannerSchedule = localStorage.getItem('memorizationPlannerSchedule');
+      if (plannerSchedule) {
+        const schedule = JSON.parse(plannerSchedule);
+        
+        // Clear existing schedule for this user first
+        await supabase
+          .from('memorization_planner_schedule')
+          .delete()
+          .eq('user_id', user.id);
+        
+        // Insert new schedule items
+        for (const item of schedule) {
+          await supabase
+            .from('memorization_planner_schedule')
+            .insert({
+              user_id: user.id,
+              date: item.date,
+              task: item.task,
+              completed: item.completed,
+              page: item.page,
+              start_line: item.startLine,
+              end_line: item.endLine,
+              surah: item.surah
+            });
+        }
+        console.log('Synced memorization planner schedule');
       }
 
       // Sync juz memorization
@@ -49,9 +87,10 @@ export const useDataSync = () => {
       }
 
       // Sync journal entries
-      const journalEntries = localStorage.getItem('journal-entries');
+      const journalEntries = localStorage.getItem('journal-storage');
       if (journalEntries) {
-        const entries = JSON.parse(journalEntries);
+        const parsedData = JSON.parse(journalEntries);
+        const entries = parsedData.state?.journals || [];
         
         for (const entry of entries) {
           await supabase
@@ -63,11 +102,20 @@ export const useDataSync = () => {
               description: entry.description,
               content: entry.content,
               tags: entry.tags,
-              created_at: entry.created_at,
-              updated_at: entry.updated_at
+              created_at: entry.createdAt,
+              updated_at: entry.updatedAt
             });
         }
         console.log('Synced journal entries');
+      }
+
+      // Sync Quran notes (handle multiple note keys)
+      const allLocalStorageKeys = Object.keys(localStorage);
+      const quranNoteKeys = allLocalStorageKeys.filter(key => key.startsWith('quran-notes-'));
+      
+      if (quranNoteKeys.length > 0) {
+        // We'll need to create a new table for Quran notes since it's not in the existing schema
+        console.log('Found Quran notes but no table exists yet. Consider creating a quran_notes table.');
       }
 
       toast({
@@ -90,6 +138,42 @@ export const useDataSync = () => {
 
     try {
       console.log('Loading data from Supabase...');
+
+      // Load memorization planner settings
+      const { data: settingsData } = await supabase
+        .from('memorization_planner_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (settingsData) {
+        const formattedSettings = {
+          linesPerDay: settingsData.lines_per_day,
+          daysOfWeek: settingsData.days_of_week,
+          juzOrder: settingsData.juz_order,
+          startDate: settingsData.start_date
+        };
+        localStorage.setItem('memorizationPlannerSettings', JSON.stringify(formattedSettings));
+      }
+
+      // Load memorization planner schedule
+      const { data: scheduleData } = await supabase
+        .from('memorization_planner_schedule')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (scheduleData && scheduleData.length > 0) {
+        const formattedSchedule = scheduleData.map(item => ({
+          date: item.date,
+          task: item.task,
+          completed: item.completed,
+          page: item.page,
+          startLine: item.start_line,
+          endLine: item.end_line,
+          surah: item.surah
+        }));
+        localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(formattedSchedule));
+      }
 
       // Load juz memorization
       const { data: juzData } = await supabase
@@ -116,7 +200,21 @@ export const useDataSync = () => {
         .eq('user_id', user.id);
 
       if (journalData && journalData.length > 0) {
-        localStorage.setItem('journal-entries', JSON.stringify(journalData));
+        const formattedJournalData = {
+          state: {
+            journals: journalData.map(entry => ({
+              id: entry.id,
+              title: entry.title,
+              description: entry.description,
+              content: entry.content,
+              tags: entry.tags,
+              createdAt: entry.created_at,
+              updatedAt: entry.updated_at
+            }))
+          },
+          version: 0
+        };
+        localStorage.setItem('journal-storage', JSON.stringify(formattedJournalData));
       }
 
       console.log('Data loaded from Supabase');
