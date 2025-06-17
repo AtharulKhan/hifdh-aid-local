@@ -95,14 +95,14 @@ export const PracticeVerseCard: React.FC<PracticeVerseCardProps> = ({ startVerse
         />
       </div>
       
-      <p className="text-right text-xl leading-loose font-arabic mb-4" dir="rtl">
+      <p className="text-right text-xl leading-loose font-arabic mb-2" dir="rtl">
         {currentlyDisplayedVerse.text}
       </p>
       
       {/* Translation Display */}
       {showTranslation && translation && (
-        <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
-          <p className="text-gray-700 text-sm leading-relaxed italic">
+        <div className="mb-4">
+          <p className="text-right text-gray-700 text-sm leading-relaxed italic">
             {translation}
           </p>
         </div>
