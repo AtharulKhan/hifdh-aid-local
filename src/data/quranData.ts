@@ -5,6 +5,7 @@ import surahNamesJson from './surah-names.json';
 import juzNumbersJson from './juz-numbers.json';
 import tafsirIbnKathirJson from './tafsir-ibn-kathir.json';
 import tafsirMaarifJson from './tafsir-maarif.json';
+import quranTranslationJson from './quran-translation.json';
 
 export interface QuranVerse {
   id: number;
@@ -46,6 +47,10 @@ export interface TafsirData {
   text: string;
 }
 
+export interface TranslationData {
+  t: string;
+}
+
 // Load Quran data from JSON
 export const quranData: Record<string, QuranVerse> = quranJson;
 
@@ -57,6 +62,9 @@ export const surahNamesData: Record<string, SurahInfo> = surahNamesJson;
 
 // Load Juz numbers data from JSON
 export const juzNumbersData: Record<string, JuzInfo> = juzNumbersJson;
+
+// Load Translation data from JSON
+export const quranTranslationData: Record<string, TranslationData> = quranTranslationJson;
 
 // Load Tafsir data from JSON with proper type handling
 export const tafsirIbnKathirData: Record<string, TafsirData> = Object.fromEntries(
@@ -90,6 +98,13 @@ export const getSurahName = (surahNumber: number): string => {
     return `${surahInfo.name_arabic} (${surahInfo.name_simple})`;
   }
   return `Surah ${surahNumber}`;
+};
+
+// Helper function to get translation for a verse
+export const getTranslationForVerse = (surah: number, ayah: number): string | undefined => {
+  const verseKey = `${surah}:${ayah}`;
+  const translation = quranTranslationData[verseKey];
+  return translation?.t;
 };
 
 // Helper function to get juz info
