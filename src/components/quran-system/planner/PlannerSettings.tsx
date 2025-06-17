@@ -19,6 +19,7 @@ import { DayOfWeek, PlannerSettingsData, AlreadyMemorizedData } from '@/hooks/us
 import { AlreadyMemorizedManager } from './AlreadyMemorizedManager';
 import { useToast } from '@/components/ui/use-toast';
 import { CustomJuzOrder } from './CustomJuzOrder';
+import { CustomSurahOrder } from './CustomSurahOrder';
 
 const days: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -26,8 +27,11 @@ const formSchema = z.object({
   linesPerDay: z.coerce.number().min(1, 'Must be at least 1 line per day.'),
   daysOfWeek: z.array(z.string()).min(1, 'Select at least one day.'),
   juzOrder: z.enum(['sequential', 'reverse', 'custom']),
+  surahOrder: z.enum(['sequential', 'reverse', 'custom']),
+  orderType: z.enum(['juz', 'surah']),
   startDate: z.date(),
   customJuzOrder: z.array(z.number()).optional(),
+  customSurahOrder: z.array(z.number()).optional(),
 });
 
 export const PlannerSettings = ({
@@ -36,8 +40,18 @@ export const PlannerSettings = ({
   onGeneratePlan,
   alreadyMemorized,
 }: {
-  settings: PlannerSettingsData & { customJuzOrder?: number[] };
-  onSettingsChange: (settings: PlannerSettingsData & { customJuzOrder?: number[] }) => void;
+  settings: PlannerSettingsData & { 
+    customJuzOrder?: number[];
+    customSurahOrder?: number[];
+    surahOrder?: 'sequential' | 'reverse' | 'custom';
+    orderType?: 'juz' | 'surah';
+  };
+  onSettingsChange: (settings: PlannerSettingsData & { 
+    customJuzOrder?: number[];
+    customSurahOrder?: number[];
+    surahOrder?: 'sequential' | 'reverse' | 'custom';
+    orderType?: 'juz' | 'surah';
+  }) => void;
   onGeneratePlan: () => void;
   alreadyMemorized: AlreadyMemorizedData;
 }) => {
@@ -45,25 +59,36 @@ export const PlannerSettings = ({
   const [customJuzOrder, setCustomJuzOrder] = useState<number[]>(
     settings.customJuzOrder || Array.from({ length: 30 }, (_, i) => i + 1)
   );
+  const [customSurahOrder, setCustomSurahOrder] = useState<number[]>(
+    settings.customSurahOrder || Array.from({ length: 114 }, (_, i) => i + 1)
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...settings,
+      orderType: settings.orderType || 'juz',
+      surahOrder: settings.surahOrder || 'sequential',
       startDate: parseISO(settings.startDate),
       customJuzOrder,
+      customSurahOrder,
     },
   });
 
   const watchedJuzOrder = form.watch('juzOrder');
+  const watchedSurahOrder = form.watch('surahOrder');
+  const watchedOrderType = form.watch('orderType');
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onSettingsChange({
       linesPerDay: values.linesPerDay,
       daysOfWeek: values.daysOfWeek as DayOfWeek[],
       juzOrder: values.juzOrder,
+      surahOrder: values.surahOrder,
+      orderType: values.orderType,
       startDate: values.startDate.toISOString(),
       customJuzOrder: values.juzOrder === 'custom' ? customJuzOrder : undefined,
+      customSurahOrder: values.surahOrder === 'custom' ? customSurahOrder : undefined,
     });
     onGeneratePlan();
     toast({
@@ -133,10 +158,10 @@ export const PlannerSettings = ({
 
             <FormField
               control={form.control}
-              name="juzOrder"
+              name="orderType"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Juz Order</FormLabel>
+                  <FormLabel>Order By</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -144,21 +169,15 @@ export const PlannerSettings = ({
                       className="flex flex-col space-y-2"
                     >
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="sequential" id="sequential" />
-                        <FormLabel htmlFor="sequential" className="font-normal">
-                          Sequential (1-30)
+                        <RadioGroupItem value="juz" id="juz" />
+                        <FormLabel htmlFor="juz" className="font-normal">
+                          Juz Order
                         </FormLabel>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="reverse" id="reverse" />
-                        <FormLabel htmlFor="reverse" className="font-normal">
-                          Reverse (30-1)
-                        </FormLabel>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="custom" id="custom" />
-                        <FormLabel htmlFor="custom" className="font-normal">
-                          Custom Order
+                        <RadioGroupItem value="surah" id="surah" />
+                        <FormLabel htmlFor="surah" className="font-normal">
+                          Surah Order
                         </FormLabel>
                       </div>
                     </RadioGroup>
@@ -168,7 +187,85 @@ export const PlannerSettings = ({
               )}
             />
 
-            {watchedJuzOrder === 'custom' && (
+            {watchedOrderType === 'juz' && (
+              <FormField
+                control={form.control}
+                name="juzOrder"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Juz Order</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="sequential" id="juz-sequential" />
+                          <FormLabel htmlFor="juz-sequential" className="font-normal">
+                            Sequential (1-30)
+                          </FormLabel>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="reverse" id="juz-reverse" />
+                          <FormLabel htmlFor="juz-reverse" className="font-normal">
+                            Reverse (30-1)
+                          </FormLabel>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="custom" id="juz-custom" />
+                          <FormLabel htmlFor="juz-custom" className="font-normal">
+                            Custom Juz Order
+                          </FormLabel>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {watchedOrderType === 'surah' && (
+              <FormField
+                control={form.control}
+                name="surahOrder"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Surah Order</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="sequential" id="surah-sequential" />
+                          <FormLabel htmlFor="surah-sequential" className="font-normal">
+                            Sequential (1-114)
+                          </FormLabel>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="reverse" id="surah-reverse" />
+                          <FormLabel htmlFor="surah-reverse" className="font-normal">
+                            Reverse (114-1)
+                          </FormLabel>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="custom" id="surah-custom" />
+                          <FormLabel htmlFor="surah-custom" className="font-normal">
+                            Custom Surah Order
+                          </FormLabel>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {watchedOrderType === 'juz' && watchedJuzOrder === 'custom' && (
               <div className="space-y-4">
                 <FormLabel>Custom Juz Order</FormLabel>
                 <FormDescription>
@@ -177,6 +274,20 @@ export const PlannerSettings = ({
                 <CustomJuzOrder
                   juzOrder={customJuzOrder}
                   onOrderChange={setCustomJuzOrder}
+                  alreadyMemorized={alreadyMemorized}
+                />
+              </div>
+            )}
+
+            {watchedOrderType === 'surah' && watchedSurahOrder === 'custom' && (
+              <div className="space-y-4">
+                <FormLabel>Custom Surah Order</FormLabel>
+                <FormDescription>
+                  Drag and drop to reorder the Surahs according to your preference. Surahs that you've already memorized will be excluded from the schedule.
+                </FormDescription>
+                <CustomSurahOrder
+                  surahOrder={customSurahOrder}
+                  onOrderChange={setCustomSurahOrder}
                   alreadyMemorized={alreadyMemorized}
                 />
               </div>

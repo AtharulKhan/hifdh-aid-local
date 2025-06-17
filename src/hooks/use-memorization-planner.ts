@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
 import { addDays, getDay, parseISO } from 'date-fns';
@@ -34,8 +33,11 @@ export interface PlannerSettingsData {
   linesPerDay: number;
   daysOfWeek: DayOfWeek[];
   juzOrder: 'sequential' | 'reverse' | 'custom';
+  surahOrder?: 'sequential' | 'reverse' | 'custom';
+  orderType?: 'juz' | 'surah';
   startDate: string; // ISO string
   customJuzOrder?: number[];
+  customSurahOrder?: number[];
 }
 
 export interface ScheduleItem {
@@ -52,8 +54,11 @@ const defaultSettings: PlannerSettingsData = {
   linesPerDay: 15,
   daysOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
   juzOrder: 'sequential',
+  surahOrder: 'sequential',
+  orderType: 'juz',
   startDate: new Date().toISOString(),
   customJuzOrder: Array.from({ length: 30 }, (_, i) => i + 1),
+  customSurahOrder: Array.from({ length: 114 }, (_, i) => i + 1),
 };
 
 export const useMemorizationPlanner = () => {
@@ -62,7 +67,7 @@ export const useMemorizationPlanner = () => {
     return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
   });
 
-  const [refreshKey, setRefreshKey] = useState<number>(0); // Added refreshKey state
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   // Derive alreadyMemorized from 'murajah-juz-memorization'
   const alreadyMemorized = useMemo((): AlreadyMemorizedData => {
@@ -89,7 +94,7 @@ export const useMemorizationPlanner = () => {
       }
     }
     return derived;
-  }, [refreshKey]); // Added refreshKey to dependency array
+  }, [refreshKey]);
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
     const saved = localStorage.getItem('memorizationPlannerSchedule');
@@ -143,32 +148,59 @@ export const useMemorizationPlanner = () => {
   }, [alreadyMemorized]);
 
   const generateSchedule = useCallback(() => {
-    setRefreshKey(prev => prev + 1); // Update refreshKey at the beginning
+    setRefreshKey(prev => prev + 1);
     const newSchedule: ScheduleItem[] = [];
     
     let allQuranPages: {page: number, juz: number}[] = [];
     
-    // Determine juz order based on settings
-    let orderedJuzNumbers: number[];
-    if (settings.juzOrder === 'custom' && settings.customJuzOrder) {
-      orderedJuzNumbers = settings.customJuzOrder;
-    } else if (settings.juzOrder === 'reverse') {
-      orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => 30 - i);
-    } else {
-      orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => i + 1);
-    }
+    if (settings.orderType === 'surah') {
+      // Handle surah-based ordering
+      let orderedSurahNumbers: number[];
+      if (settings.surahOrder === 'custom' && settings.customSurahOrder) {
+        orderedSurahNumbers = settings.customSurahOrder;
+      } else if (settings.surahOrder === 'reverse') {
+        orderedSurahNumbers = Array.from({ length: 114 }, (_, i) => 114 - i);
+      } else {
+        orderedSurahNumbers = Array.from({ length: 114 }, (_, i) => i + 1);
+      }
 
-    // Build pages array based on the ordered Juz
-    orderedJuzNumbers.forEach(juzNumber => {
-      const juzInfo = juzPageMapData.find(j => j.juz === juzNumber);
-      if (juzInfo) {
-        for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
-          if (!allQuranPages.some(p => p.page === i)) {
-            allQuranPages.push({page: i, juz: juzInfo.juz});
+      // Build pages array based on ordered surahs
+      orderedSurahNumbers.forEach(surahNumber => {
+        const surahName = typedSurahNames[surahNumber]?.name_simple;
+        if (surahName) {
+          const surahPagesData = surahJuzPageMapData.filter(item => item.surahName === surahName);
+          surahPagesData.forEach(entry => {
+            for (let i = entry.startPage; i <= entry.endPage; i++) {
+              if (!allQuranPages.some(p => p.page === i)) {
+                allQuranPages.push({page: i, juz: entry.juz});
+              }
+            }
+          });
+        }
+      });
+    } else {
+      // Handle juz-based ordering (existing logic)
+      let orderedJuzNumbers: number[];
+      if (settings.juzOrder === 'custom' && settings.customJuzOrder) {
+        orderedJuzNumbers = settings.customJuzOrder;
+      } else if (settings.juzOrder === 'reverse') {
+        orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => 30 - i);
+      } else {
+        orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => i + 1);
+      }
+
+      // Build pages array based on the ordered Juz
+      orderedJuzNumbers.forEach(juzNumber => {
+        const juzInfo = juzPageMapData.find(j => j.juz === juzNumber);
+        if (juzInfo) {
+          for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
+            if (!allQuranPages.some(p => p.page === i)) {
+              allQuranPages.push({page: i, juz: juzInfo.juz});
+            }
           }
         }
-      }
-    });
+      });
+    }
     
     const pagesToMemorize = allQuranPages.filter(p => !memorizedPagesSet.has(p.page));
 
@@ -211,8 +243,8 @@ export const useMemorizationPlanner = () => {
     }
 
     setSchedule(newSchedule);
-  }, [settings, memorizedPagesSet, alreadyMemorized]); // Added alreadyMemorized to dependency array for generateSchedule
-  
+  }, [settings, memorizedPagesSet, alreadyMemorized]);
+
   const updateDayStatus = (date: string, completed: boolean) => {
     setSchedule(prevSchedule =>
       prevSchedule.map(item =>
@@ -220,6 +252,6 @@ export const useMemorizationPlanner = () => {
       )
     );
   };
-  
+
   return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, resetPlanner, memorizedPagesSet };
 };
