@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -312,6 +313,7 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
               {currentSurahVerses.map(verse => {
               const tafsirIbnKathir = getTafsirIbnKathirForVerse(verse.surah, verse.ayah);
               const tafsirMaarif = getTafsirMaarifForVerse(verse.surah, verse.ayah);
+              const translation = getTranslationForVerse(verse.surah, verse.ayah);
               return <div key={verse.id} className="border border-green-100 rounded-lg p-4 bg-green-25">
                     <div className="flex items-start justify-between mb-3">
                       <Badge variant="outline" className="border-green-300 text-green-600">
@@ -322,6 +324,13 @@ export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
                     <p className="font-arabic text-xl leading-loose text-gray-800 text-right mb-3">
                       {showTajweed ? getTajweedText(verse) : verse.text}
                     </p>
+                    
+                    {/* Translation Display */}
+                    {translation && (
+                      <div className="text-right text-gray-600 text-lg leading-relaxed italic mb-3">
+                        {translation}
+                      </div>
+                    )}
                     
                     {/* Tafsir Section */}
                     {(tafsirIbnKathir || tafsirMaarif) && <Card className="mt-4 border-amber-200">

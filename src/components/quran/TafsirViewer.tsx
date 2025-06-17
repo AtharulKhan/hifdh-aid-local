@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import { getVersesArray, getSurahName, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse } from "@/data/quranData";
+import { getVersesArray, getSurahName, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse, getTranslationForVerse } from "@/data/quranData";
 import { PersonalNotes } from "./PersonalNotes";
 
 interface TafsirViewerProps {
@@ -24,6 +25,7 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
   const currentVerse = allVerses[currentVerseIndex];
   const currentTafsirIbnKathir = getTafsirIbnKathirForVerse(currentVerse.surah, currentVerse.ayah);
   const currentTafsirMaarif = getTafsirMaarifForVerse(currentVerse.surah, currentVerse.ayah);
+  const currentTranslation = getTranslationForVerse(currentVerse.surah, currentVerse.ayah);
 
   const goToNextVerse = () => {
     if (currentVerseIndex < allVerses.length - 1) {
@@ -94,6 +96,13 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
             <p className="font-arabic text-2xl leading-loose text-gray-800 mb-4">
               {currentVerse.text}
             </p>
+            
+            {/* Translation Display */}
+            {currentTranslation && (
+              <div className="text-center text-gray-600 text-lg leading-relaxed italic mb-4">
+                {currentTranslation}
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
@@ -216,3 +225,4 @@ export const TafsirViewer: React.FC<TafsirViewerProps> = ({ startingVerseId = 1 
     </div>
   );
 };
+
