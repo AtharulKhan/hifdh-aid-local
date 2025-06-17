@@ -280,9 +280,62 @@ export const useDataSync = () => {
     }
   };
 
+  const clearLocalData = () => {
+    try {
+      console.log('Clearing all local data...');
+
+      // Clear memorization planner settings
+      localStorage.removeItem('memorizationPlannerSettings');
+      
+      // Clear memorization planner schedule
+      localStorage.removeItem('memorizationPlannerSchedule');
+      
+      // Clear juz memorization data
+      localStorage.removeItem('murajah-juz-memorization');
+      
+      // Clear journal entries
+      localStorage.removeItem('journal-storage');
+      
+      // Clear Quran notes (handle multiple note keys)
+      const allLocalStorageKeys = Object.keys(localStorage);
+      const quranNoteKeys = allLocalStorageKeys.filter(key => key.startsWith('quran-notes-'));
+      quranNoteKeys.forEach(key => localStorage.removeItem(key));
+      
+      // Clear any other app-related data
+      const appDataKeys = allLocalStorageKeys.filter(key => 
+        key.startsWith('memorization') || 
+        key.startsWith('murajah') || 
+        key.startsWith('journal') ||
+        key.startsWith('quran')
+      );
+      appDataKeys.forEach(key => localStorage.removeItem(key));
+
+      console.log('Cleared all local data');
+
+      toast({
+        title: "Local data cleared",
+        description: "All your local data has been cleared. Page will refresh.",
+      });
+
+      // Refresh the page to show the cleared state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error clearing local data:', error);
+      toast({
+        title: "Clear error",
+        description: "There was an error clearing your local data. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     syncLocalDataToSupabase,
     loadDataFromSupabase,
-    clearSupabaseData
+    clearSupabaseData,
+    clearLocalData
   };
 };

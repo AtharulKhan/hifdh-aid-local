@@ -12,13 +12,13 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Cloud, Upload, Download, Trash2 } from 'lucide-react';
+import { User, LogOut, Cloud, Upload, Download, Trash2, HardDrive } from 'lucide-react';
 import { useDataSync } from '@/hooks/useDataSync';
 import { useToast } from '@/hooks/use-toast';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
-  const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData } = useDataSync();
+  const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData, clearLocalData } = useDataSync();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
@@ -37,8 +37,12 @@ export const UserMenu = () => {
     await loadDataFromSupabase();
   };
 
-  const handleClearData = async () => {
+  const handleClearCloudData = async () => {
     await clearSupabaseData();
+  };
+
+  const handleClearLocalData = () => {
+    clearLocalData();
   };
 
   if (!user) return null;
@@ -71,9 +75,13 @@ export const UserMenu = () => {
               Pull from Cloud
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleClearData} className="text-red-600">
+            <DropdownMenuItem onClick={handleClearCloudData} className="text-red-600">
               <Trash2 className="mr-2 h-4 w-4" />
               Clear Cloud Data
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleClearLocalData} className="text-red-600">
+              <HardDrive className="mr-2 h-4 w-4" />
+              Clear Local Data
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
