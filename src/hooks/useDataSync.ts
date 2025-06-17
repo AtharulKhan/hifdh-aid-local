@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -245,15 +244,15 @@ export const useDataSync = () => {
     try {
       console.log('Clearing data from Supabase...');
 
-      // Clear juz memorization
-      await supabase
-        .from('juz_memorization')
-        .delete()
-        .eq('user_id', user.id);
-
       // Clear journal entries
       await supabase
         .from('journal_entries')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Clear juz memorization
+      await supabase
+        .from('juz_memorization')
         .delete()
         .eq('user_id', user.id);
 
