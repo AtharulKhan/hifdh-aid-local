@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,11 @@ interface CustomJuzOrderProps {
 export const CustomJuzOrder = ({ juzOrder, onOrderChange, alreadyMemorized }: CustomJuzOrderProps) => {
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+
+  // Save to localStorage whenever juzOrder changes
+  useEffect(() => {
+    localStorage.setItem('customJuzOrder', JSON.stringify(juzOrder));
+  }, [juzOrder]);
 
   const handleDragStart = (e: React.DragEvent, juzNumber: number) => {
     setDraggedItem(juzNumber);

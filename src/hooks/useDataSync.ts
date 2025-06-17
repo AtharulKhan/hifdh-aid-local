@@ -30,6 +30,36 @@ export const useDataSync = () => {
         console.log('Synced memorization planner settings');
       }
 
+      // Sync custom Juz order
+      const customJuzOrder = localStorage.getItem('customJuzOrder');
+      if (customJuzOrder) {
+        const juzOrder = JSON.parse(customJuzOrder);
+        
+        await supabase
+          .from('custom_orders')
+          .upsert({
+            user_id: user.id,
+            order_type: 'juz',
+            custom_order: juzOrder
+          });
+        console.log('Synced custom Juz order');
+      }
+
+      // Sync custom Surah order
+      const customSurahOrder = localStorage.getItem('customSurahOrder');
+      if (customSurahOrder) {
+        const surahOrder = JSON.parse(customSurahOrder);
+        
+        await supabase
+          .from('custom_orders')
+          .upsert({
+            user_id: user.id,
+            order_type: 'surah', 
+            custom_order: surahOrder
+          });
+        console.log('Synced custom Surah order');
+      }
+
       // Sync memorization planner schedule
       const plannerSchedule = localStorage.getItem('memorizationPlannerSchedule');
       if (plannerSchedule) {
@@ -150,6 +180,23 @@ export const useDataSync = () => {
         localStorage.setItem('memorizationPlannerSettings', JSON.stringify(formattedSettings));
       }
 
+      // Load custom orders
+      const { data: customOrdersData } = await supabase
+        .from('custom_orders')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (customOrdersData && customOrdersData.length > 0) {
+        customOrdersData.forEach(order => {
+          if (order.order_type === 'juz') {
+            localStorage.setItem('customJuzOrder', JSON.stringify(order.custom_order));
+          } else if (order.order_type === 'surah') {
+            localStorage.setItem('customSurahOrder', JSON.stringify(order.custom_order));
+          }
+        });
+        console.log('Synced custom orders from cloud');
+      }
+
       // Load memorization planner schedule
       const { data: scheduleData } = await supabase
         .from('memorization_planner_schedule')
@@ -163,7 +210,7 @@ export const useDataSync = () => {
           completed: item.completed,
           page: item.page,
           startLine: item.start_line,
-          endLine: item.end_line,
+          endLine: item.endLine,
           surah: item.surah
         }));
         localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(formattedSchedule));
@@ -239,6 +286,12 @@ export const useDataSync = () => {
     try {
       console.log('Clearing data from Supabase...');
 
+      // Clear custom orders
+      await supabase
+        .from('custom_orders')
+        .delete()
+        .eq('user_id', user.id);
+
       // Clear journal entries
       await supabase
         .from('journal_entries')
@@ -295,6 +348,10 @@ export const useDataSync = () => {
       
       // Clear journal entries
       localStorage.removeItem('journal-storage');
+      
+      // Clear custom orders
+      localStorage.removeItem('customJuzOrder');
+      localStorage.removeItem('customSurahOrder');
       
       // Clear Quran notes (handle multiple note keys)
       const allLocalStorageKeys = Object.keys(localStorage);
