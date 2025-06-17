@@ -7,12 +7,7 @@ export const useDataSync = () => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Sync localStorage data to Supabase when user logs in
-  useEffect(() => {
-    if (user && session) {
-      syncLocalDataToSupabase();
-    }
-  }, [user, session]);
+  // Removed automatic sync - data will only be synced manually
 
   const syncLocalDataToSupabase = async () => {
     try {
