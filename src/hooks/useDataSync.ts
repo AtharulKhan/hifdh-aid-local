@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -210,7 +211,7 @@ export const useDataSync = () => {
           completed: item.completed,
           page: item.page,
           startLine: item.start_line,
-          endLine: item.endLine,
+          endLine: item.end_line,
           surah: item.surah
         }));
         localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(formattedSchedule));
