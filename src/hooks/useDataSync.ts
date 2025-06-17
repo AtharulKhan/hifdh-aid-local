@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +23,6 @@ export const useDataSync = () => {
       const plannerSettings = localStorage.getItem('memorizationPlannerSettings');
       if (plannerSettings) {
         const settings = JSON.parse(plannerSettings);
-        console.log('Syncing memorization planner settings:', settings);
         
         await supabase
           .from('memorization_planner_settings')
@@ -40,7 +40,6 @@ export const useDataSync = () => {
       const plannerSchedule = localStorage.getItem('memorizationPlannerSchedule');
       if (plannerSchedule) {
         const schedule = JSON.parse(plannerSchedule);
-        console.log('Syncing memorization planner schedule:', schedule.length, 'items');
         
         // Clear existing schedule for this user first
         await supabase
@@ -70,7 +69,6 @@ export const useDataSync = () => {
       const juzMemorization = localStorage.getItem('murajah-juz-memorization');
       if (juzMemorization) {
         const juzData = JSON.parse(juzMemorization);
-        console.log('Syncing juz memorization:', juzData.length, 'items');
         
         for (const juz of juzData) {
           await supabase
@@ -90,44 +88,25 @@ export const useDataSync = () => {
 
       // Sync journal entries
       const journalEntries = localStorage.getItem('journal-storage');
-      console.log('Journal storage key found:', !!journalEntries);
       if (journalEntries) {
-        try {
-          const parsedData = JSON.parse(journalEntries);
-          console.log('Parsed journal data structure:', Object.keys(parsedData));
-          
-          const entries = parsedData.state?.journals || [];
-          console.log('Found journal entries:', entries.length);
-          
-          if (entries.length > 0) {
-            // Clear existing journal entries for this user first
-            await supabase
-              .from('journal_entries')
-              .delete()
-              .eq('user_id', user.id);
-            
-            for (const entry of entries) {
-              console.log('Syncing journal entry:', entry.id, entry.title);
-              await supabase
-                .from('journal_entries')
-                .insert({
-                  id: entry.id,
-                  user_id: user.id,
-                  title: entry.title,
-                  description: entry.description,
-                  content: entry.content,
-                  tags: entry.tags,
-                  created_at: entry.createdAt,
-                  updated_at: entry.updatedAt
-                });
-            }
-            console.log('Synced', entries.length, 'journal entries');
-          }
-        } catch (journalError) {
-          console.error('Error parsing journal data:', journalError);
+        const parsedData = JSON.parse(journalEntries);
+        const entries = parsedData.state?.journals || [];
+        
+        for (const entry of entries) {
+          await supabase
+            .from('journal_entries')
+            .upsert({
+              id: entry.id,
+              user_id: user.id,
+              title: entry.title,
+              description: entry.description,
+              content: entry.content,
+              tags: entry.tags,
+              created_at: entry.createdAt,
+              updated_at: entry.updatedAt
+            });
         }
-      } else {
-        console.log('No journal entries found in localStorage');
+        console.log('Synced journal entries');
       }
 
       // Sync Quran notes (handle multiple note keys)
@@ -135,7 +114,6 @@ export const useDataSync = () => {
       const quranNoteKeys = allLocalStorageKeys.filter(key => key.startsWith('quran-notes-'));
       
       if (quranNoteKeys.length > 0) {
-        console.log('Found Quran notes keys:', quranNoteKeys);
         // We'll need to create a new table for Quran notes since it's not in the existing schema
         console.log('Found Quran notes but no table exists yet. Consider creating a quran_notes table.');
       }
