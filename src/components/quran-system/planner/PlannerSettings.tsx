@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,20 +11,23 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, GripVertical } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { DayOfWeek, PlannerSettingsData, AlreadyMemorizedData } from '@/hooks/use-memorization-planner';
 import { AlreadyMemorizedManager } from './AlreadyMemorizedManager';
 import { useToast } from '@/components/ui/use-toast';
+import { CustomJuzOrder } from './CustomJuzOrder';
 
 const days: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const formSchema = z.object({
   linesPerDay: z.coerce.number().min(1, 'Must be at least 1 line per day.'),
   daysOfWeek: z.array(z.string()).min(1, 'Select at least one day.'),
-  juzOrder: z.enum(['sequential', 'reverse']),
+  juzOrder: z.enum(['sequential', 'reverse', 'custom']),
   startDate: z.date(),
+  customJuzOrder: z.array(z.number()).optional(),
 });
 
 export const PlannerSettings = ({
@@ -33,19 +36,26 @@ export const PlannerSettings = ({
   onGeneratePlan,
   alreadyMemorized,
 }: {
-  settings: PlannerSettingsData;
-  onSettingsChange: (settings: PlannerSettingsData) => void;
+  settings: PlannerSettingsData & { customJuzOrder?: number[] };
+  onSettingsChange: (settings: PlannerSettingsData & { customJuzOrder?: number[] }) => void;
   onGeneratePlan: () => void;
   alreadyMemorized: AlreadyMemorizedData;
 }) => {
   const { toast } = useToast();
+  const [customJuzOrder, setCustomJuzOrder] = useState<number[]>(
+    settings.customJuzOrder || Array.from({ length: 30 }, (_, i) => i + 1)
+  );
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...settings,
       startDate: parseISO(settings.startDate),
+      customJuzOrder,
     },
   });
+
+  const watchedJuzOrder = form.watch('juzOrder');
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onSettingsChange({
@@ -53,6 +63,7 @@ export const PlannerSettings = ({
       daysOfWeek: values.daysOfWeek as DayOfWeek[],
       juzOrder: values.juzOrder,
       startDate: values.startDate.toISOString(),
+      customJuzOrder: values.juzOrder === 'custom' ? customJuzOrder : undefined,
     });
     onGeneratePlan();
     toast({
@@ -124,21 +135,52 @@ export const PlannerSettings = ({
               control={form.control}
               name="juzOrder"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel>Juz Order</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Select order" /></SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="sequential">Sequential (1-30)</SelectItem>
-                      <SelectItem value="reverse">Reverse (30-1)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="sequential" id="sequential" />
+                        <FormLabel htmlFor="sequential" className="font-normal">
+                          Sequential (1-30)
+                        </FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="reverse" id="reverse" />
+                        <FormLabel htmlFor="reverse" className="font-normal">
+                          Reverse (30-1)
+                        </FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="custom" />
+                        <FormLabel htmlFor="custom" className="font-normal">
+                          Custom Order
+                        </FormLabel>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {watchedJuzOrder === 'custom' && (
+              <div className="space-y-4">
+                <FormLabel>Custom Juz Order</FormLabel>
+                <FormDescription>
+                  Drag and drop to reorder the Juz according to your preference. Juz that you've already memorized will be excluded from the schedule.
+                </FormDescription>
+                <CustomJuzOrder
+                  juzOrder={customJuzOrder}
+                  onOrderChange={setCustomJuzOrder}
+                  alreadyMemorized={alreadyMemorized}
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}

@@ -33,8 +33,9 @@ interface JuzMemorization {
 export interface PlannerSettingsData {
   linesPerDay: number;
   daysOfWeek: DayOfWeek[];
-  juzOrder: 'sequential' | 'reverse';
+  juzOrder: 'sequential' | 'reverse' | 'custom';
   startDate: string; // ISO string
+  customJuzOrder?: number[];
 }
 
 export interface ScheduleItem {
@@ -52,6 +53,7 @@ const defaultSettings: PlannerSettingsData = {
   daysOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
   juzOrder: 'sequential',
   startDate: new Date().toISOString(),
+  customJuzOrder: Array.from({ length: 30 }, (_, i) => i + 1),
 };
 
 export const useMemorizationPlanner = () => {
@@ -98,18 +100,14 @@ export const useMemorizationPlanner = () => {
     localStorage.setItem('memorizationPlannerSettings', JSON.stringify(settings));
   }, [settings]);
 
-  // Removed useEffect for saving alreadyMemorized separately
-
   useEffect(() => {
     localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(schedule));
   }, [schedule]);
 
   const resetPlanner = useCallback(() => {
     localStorage.removeItem('memorizationPlannerSettings');
-    // localStorage.removeItem('memorizationPlannerAlreadyMemorized'); // Removed
     localStorage.removeItem('memorizationPlannerSchedule');
     setSettings(defaultSettings);
-    // setAlreadyMemorized(defaultAlreadyMemorized); // Removed, as it's derived
     setSchedule([]);
   }, []);
 
@@ -149,17 +147,28 @@ export const useMemorizationPlanner = () => {
     const newSchedule: ScheduleItem[] = [];
     
     let allQuranPages: {page: number, juz: number}[] = [];
-    juzPageMapData.forEach(juzInfo => {
-      for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
-        if (!allQuranPages.some(p => p.page === i)) {
-          allQuranPages.push({page: i, juz: juzInfo.juz});
+    
+    // Determine juz order based on settings
+    let orderedJuzNumbers: number[];
+    if (settings.juzOrder === 'custom' && settings.customJuzOrder) {
+      orderedJuzNumbers = settings.customJuzOrder;
+    } else if (settings.juzOrder === 'reverse') {
+      orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => 30 - i);
+    } else {
+      orderedJuzNumbers = Array.from({ length: 30 }, (_, i) => i + 1);
+    }
+
+    // Build pages array based on the ordered Juz
+    orderedJuzNumbers.forEach(juzNumber => {
+      const juzInfo = juzPageMapData.find(j => j.juz === juzNumber);
+      if (juzInfo) {
+        for (let i = juzInfo.startPage; i <= juzInfo.endPage; i++) {
+          if (!allQuranPages.some(p => p.page === i)) {
+            allQuranPages.push({page: i, juz: juzInfo.juz});
+          }
         }
       }
     });
-
-    if (settings.juzOrder === 'reverse') {
-      allQuranPages.reverse();
-    }
     
     const pagesToMemorize = allQuranPages.filter(p => !memorizedPagesSet.has(p.page));
 
@@ -212,5 +221,5 @@ export const useMemorizationPlanner = () => {
     );
   };
   
-  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, resetPlanner, memorizedPagesSet }; // Removed setAlreadyMemorized
+  return { settings, setSettings, schedule, generateSchedule, updateDayStatus, alreadyMemorized, resetPlanner, memorizedPagesSet };
 };
