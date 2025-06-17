@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,20 +8,16 @@ export const useDataSync = () => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // No automatic sync - everything is manual only
+  // Sync localStorage data to Supabase when user logs in
+  useEffect(() => {
+    if (user && session) {
+      syncLocalDataToSupabase();
+    }
+  }, [user, session]);
 
   const syncLocalDataToSupabase = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to sync your data to the cloud.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
-      console.log('Starting manual data sync to Supabase...');
+      console.log('Starting data sync to Supabase...');
 
       // Sync memorization entries
       const memorizationEntries = localStorage.getItem('murajah-memorization-entries');
@@ -89,14 +86,7 @@ export const useDataSync = () => {
   };
 
   const loadDataFromSupabase = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to pull your data from the cloud.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!user) return;
 
     try {
       console.log('Loading data from Supabase...');
@@ -152,14 +142,7 @@ export const useDataSync = () => {
   };
 
   const clearSupabaseData = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to clear your cloud data.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!user) return;
 
     try {
       console.log('Clearing data from Supabase...');
