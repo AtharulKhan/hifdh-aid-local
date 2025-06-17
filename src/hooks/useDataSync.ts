@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,14 +7,18 @@ export const useDataSync = () => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Remove automatic sync on login - make it manual only
-  // useEffect(() => {
-  //   if (user && session) {
-  //     syncLocalDataToSupabase();
-  //   }
-  // }, [user, session]);
+  // No automatic sync - everything is manual only
 
   const syncLocalDataToSupabase = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to sync your data to the cloud.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       console.log('Starting manual data sync to Supabase...');
 
@@ -86,7 +89,14 @@ export const useDataSync = () => {
   };
 
   const loadDataFromSupabase = async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to pull your data from the cloud.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       console.log('Loading data from Supabase...');
@@ -142,7 +152,14 @@ export const useDataSync = () => {
   };
 
   const clearSupabaseData = async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to clear your cloud data.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       console.log('Clearing data from Supabase...');
