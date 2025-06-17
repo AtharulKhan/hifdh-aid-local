@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,17 @@ interface CustomSurahOrderProps {
 export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }: CustomSurahOrderProps) => {
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+
+  // Save to localStorage whenever the order changes
+  useEffect(() => {
+    console.log('Saving custom Surah order to localStorage:', surahOrder);
+    localStorage.setItem('customSurahOrder', JSON.stringify(surahOrder));
+  }, [surahOrder]);
+
+  const handleOrderChangeWithSave = (newOrder: number[]) => {
+    onOrderChange(newOrder);
+    // The useEffect above will handle saving to localStorage
+  };
 
   const handleDragStart = (e: React.DragEvent, surahNumber: number) => {
     setDraggedItem(surahNumber);
@@ -42,7 +53,7 @@ export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }
     newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, draggedItem);
 
-    onOrderChange(newOrder);
+    handleOrderChangeWithSave(newOrder);
     setDraggedItem(null);
   };
 
@@ -51,12 +62,14 @@ export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }
   };
 
   const resetToSequential = () => {
-    onOrderChange(Array.from({ length: 114 }, (_, i) => i + 1));
+    const newOrder = Array.from({ length: 114 }, (_, i) => i + 1);
+    handleOrderChangeWithSave(newOrder);
     setSelectedItems(new Set());
   };
 
   const resetToReverse = () => {
-    onOrderChange(Array.from({ length: 114 }, (_, i) => 114 - i));
+    const newOrder = Array.from({ length: 114 }, (_, i) => 114 - i);
+    handleOrderChangeWithSave(newOrder);
     setSelectedItems(new Set());
   };
 
@@ -84,7 +97,7 @@ export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }
 
   const handleDeleteSelected = () => {
     const newOrder = surahOrder.filter(surah => !selectedItems.has(surah));
-    onOrderChange(newOrder);
+    handleOrderChangeWithSave(newOrder);
     setSelectedItems(new Set());
   };
 
@@ -105,7 +118,7 @@ export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }
           [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
         }
       });
-      onOrderChange(newOrder);
+      handleOrderChangeWithSave(newOrder);
     }
   };
 
@@ -126,7 +139,7 @@ export const CustomSurahOrder = ({ surahOrder, onOrderChange, alreadyMemorized }
           [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
         }
       });
-      onOrderChange(newOrder);
+      handleOrderChangeWithSave(newOrder);
     }
   };
 

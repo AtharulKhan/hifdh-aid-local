@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -56,12 +56,31 @@ export const PlannerSettings = ({
   alreadyMemorized: AlreadyMemorizedData;
 }) => {
   const { toast } = useToast();
-  const [customJuzOrder, setCustomJuzOrder] = useState<number[]>(
-    settings.customJuzOrder || Array.from({ length: 30 }, (_, i) => i + 1)
-  );
-  const [customSurahOrder, setCustomSurahOrder] = useState<number[]>(
-    settings.customSurahOrder || Array.from({ length: 114 }, (_, i) => i + 1)
-  );
+  
+  // Load custom orders from localStorage on component mount
+  const [customJuzOrder, setCustomJuzOrder] = useState<number[]>(() => {
+    const savedJuzOrder = localStorage.getItem('customJuzOrder');
+    if (savedJuzOrder) {
+      try {
+        return JSON.parse(savedJuzOrder);
+      } catch (error) {
+        console.error('Error parsing customJuzOrder from localStorage:', error);
+      }
+    }
+    return settings.customJuzOrder || Array.from({ length: 30 }, (_, i) => i + 1);
+  });
+
+  const [customSurahOrder, setCustomSurahOrder] = useState<number[]>(() => {
+    const savedSurahOrder = localStorage.getItem('customSurahOrder');
+    if (savedSurahOrder) {
+      try {
+        return JSON.parse(savedSurahOrder);
+      } catch (error) {
+        console.error('Error parsing customSurahOrder from localStorage:', error);
+      }
+    }
+    return settings.customSurahOrder || Array.from({ length: 114 }, (_, i) => i + 1);
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
