@@ -8,16 +8,16 @@ export const useDataSync = () => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Sync localStorage data to Supabase when user logs in
-  useEffect(() => {
-    if (user && session) {
-      syncLocalDataToSupabase();
-    }
-  }, [user, session]);
+  // Remove automatic sync on login - make it manual only
+  // useEffect(() => {
+  //   if (user && session) {
+  //     syncLocalDataToSupabase();
+  //   }
+  // }, [user, session]);
 
   const syncLocalDataToSupabase = async () => {
     try {
-      console.log('Starting data sync to Supabase...');
+      console.log('Starting manual data sync to Supabase...');
 
       // Sync memorization entries
       const memorizationEntries = localStorage.getItem('murajah-memorization-entries');
