@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -658,17 +657,15 @@ export const MurajahMainDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Today's Memorization
+                Today's Goal
               </CardTitle>
             </CardHeader>
             <CardContent>
               {todaysMemorizationTask ? (
                 <div className="space-y-4">
-                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <p className="font-medium">{todaysMemorizationTask.task}</p>
-                    <p className="text-sm text-gray-600">
-                      {format(parseISO(todaysMemorizationTask.date), "EEEE, MMM d, yyyy")}
-                    </p>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="font-bold">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
+                    <p className="text-muted-foreground">{todaysMemorizationTask.task}</p>
                   </div>
                   
                   {upcomingMemorizationTasks.length > 0 && (
