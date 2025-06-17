@@ -119,6 +119,7 @@ export const MurajahMainDashboard = () => {
     const savedSchedule = localStorage.getItem('memorizationPlannerSchedule');
     
     console.log('Saved juz:', savedJuz);
+    console.log('Saved schedule:', savedSchedule);
     
     let currentJuzMemorization: JuzMemorization[] = [];
     if (savedJuz) {
@@ -137,6 +138,7 @@ export const MurajahMainDashboard = () => {
     if (savedSchedule) {
       try {
         const scheduleData = JSON.parse(savedSchedule);
+        console.log('Parsed schedule data:', scheduleData);
         setMemorizationSchedule(Array.isArray(scheduleData) ? scheduleData : []);
       } catch (error) {
         console.error('Error parsing memorization schedule:', error);
@@ -166,7 +168,26 @@ export const MurajahMainDashboard = () => {
     if (!savedData) return {};
     
     try {
-      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const parsedData = JSON.parse(savedData);
+      console.log('Loading completions data:', parsedData, 'Type:', typeof parsedData);
+      
+      // Handle both array format (DailyCompletion[]) and object format
+      let allCompletions: DailyCompletion[] = [];
+      
+      if (Array.isArray(parsedData)) {
+        allCompletions = parsedData;
+      } else if (typeof parsedData === 'object' && parsedData !== null) {
+        // Convert old object format to array format
+        Object.entries(parsedData).forEach(([date, completions]) => {
+          if (typeof completions === 'object' && completions !== null) {
+            allCompletions.push({
+              date,
+              completions: completions as { [cycleId: string]: boolean }
+            });
+          }
+        });
+      }
+      
       const todaysData = allCompletions.find(d => d.date === today);
       return todaysData?.completions || {};
     } catch (error) {
@@ -292,8 +313,28 @@ export const MurajahMainDashboard = () => {
   const getCarryOverCycles = (currentDateStr: string, currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings): ReviewCycle[] => {
     const savedData = localStorage.getItem('murajah-daily-completions');
     if (!savedData) return [];
+    
     try {
-      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const parsedData = JSON.parse(savedData);
+      console.log('Getting carry-over cycles with data:', parsedData);
+      
+      // Handle both array format (DailyCompletion[]) and object format
+      let allCompletions: DailyCompletion[] = [];
+      
+      if (Array.isArray(parsedData)) {
+        allCompletions = parsedData;
+      } else if (typeof parsedData === 'object' && parsedData !== null) {
+        // Convert old object format to array format
+        Object.entries(parsedData).forEach(([date, completions]) => {
+          if (typeof completions === 'object' && completions !== null) {
+            allCompletions.push({
+              date,
+              completions: completions as { [cycleId: string]: boolean }
+            });
+          }
+        });
+      }
+      
       const carryOvers: ReviewCycle[] = [];
       const currentDateObj = new Date(currentDateStr);
 
@@ -372,22 +413,23 @@ export const MurajahMainDashboard = () => {
     }
 
     try {
-      const data = JSON.parse(completions);
-      console.log('Calculating streaks with data:', data, 'Type:', typeof data);
+      const parsedData = JSON.parse(completions);
+      console.log('Calculating streaks with data:', parsedData, 'Type:', typeof parsedData);
       
       let streak = 0;
       const today = new Date();
       
       let completionsData: { [date: string]: { [cycleId: string]: boolean } } = {};
       
-      if (Array.isArray(data)) {
-        data.forEach((item: DailyCompletion) => {
+      // Handle both array format (DailyCompletion[]) and object format
+      if (Array.isArray(parsedData)) {
+        parsedData.forEach((item: DailyCompletion) => {
           if (item.date && item.completions) {
             completionsData[item.date] = item.completions;
           }
         });
-      } else if (typeof data === 'object') {
-        completionsData = data;
+      } else if (typeof parsedData === 'object' && parsedData !== null) {
+        completionsData = parsedData;
       }
       
       for (let i = 0; i < 365; i++) {
@@ -523,6 +565,9 @@ export const MurajahMainDashboard = () => {
   const todaysMemorizationTask = memorizationSchedule.find(item => 
     isToday(parseISO(item.date)) && !item.completed
   );
+  
+  console.log('Todays memorization task:', todaysMemorizationTask);
+  console.log('All memorization schedule:', memorizationSchedule);
   
   const upcomingMemorizationTasks = React.useMemo(() => {
     const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
