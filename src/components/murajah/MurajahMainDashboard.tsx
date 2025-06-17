@@ -217,7 +217,7 @@ export const MurajahMainDashboard = () => {
 
   const calculateOMV = (juzWithCompleteMemorization: JuzMemorization[], currentSettings: ReviewSettings, date: string): string => {
     if (juzWithCompleteMemorization.length === 0) return 'No Juz fully memorized for OMV.';
-
+    
     const memorizationUnits: string[] = juzWithCompleteMemorization.map(juzMem => {
         const juzInfo = juzData[juzMem.juzNumber.toString() as keyof typeof juzData];
         let displayText = `Juz ${juzMem.juzNumber}`;
@@ -562,16 +562,18 @@ export const MurajahMainDashboard = () => {
 
   const totalQuranProgress = (totalJuzMemorized / 30) * 100;
   
-  const todaysMemorizationTask = memorizationSchedule.find(item => 
-    isToday(parseISO(item.date)) && !item.completed
-  );
+  // Updated logic to match PlannerSummary - find first uncompleted task
+  const todaysMemorizationTask = React.useMemo(() => {
+    const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
+    return uncompletedTasks[0]; // First uncompleted task, regardless of date
+  }, [memorizationSchedule]);
   
   console.log('Todays memorization task:', todaysMemorizationTask);
   console.log('All memorization schedule:', memorizationSchedule);
   
   const upcomingMemorizationTasks = React.useMemo(() => {
     const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
-    return uncompletedTasks.slice(1, 6);
+    return uncompletedTasks.slice(1, 6); // Next 5 tasks after the first one
   }, [memorizationSchedule]);
   
   const weeklyMemorizationTasks = memorizationSchedule.filter(item => {
