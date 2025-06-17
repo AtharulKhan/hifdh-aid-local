@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +32,25 @@ const typedJuzNumbers: JuzNumbers = juzNumbersData;
 // Updated props: removed onAlreadyMemorizedChange
 export const AlreadyMemorizedManager = ({ alreadyMemorized }: { alreadyMemorized: AlreadyMemorizedData }) => {
   
-  // Removed handleJuzToggle and handleSurahToggle
+  // Helper function to check if a surah is memorized (either individually or as part of a memorized Juz)
+  const isSurahMemorized = React.useMemo(() => {
+    return (surahNumber: number): boolean => {
+      // First check if it's individually memorized
+      if (alreadyMemorized.surahs.includes(surahNumber)) {
+        return true;
+      }
+      
+      // Then check if it's part of a fully memorized Juz
+      for (const juzNumber of alreadyMemorized.juz) {
+        const juzData = typedJuzNumbers[juzNumber];
+        if (juzData && juzData.verse_mapping[surahNumber]) {
+          return true;
+        }
+      }
+      
+      return false;
+    };
+  }, [alreadyMemorized]);
 
   const memorizedSummary = React.useMemo(() => {
     const summary: { juz: number; isFullyMemorized: boolean; surahs: { id: string; name: string }[] }[] = [];
@@ -134,7 +153,7 @@ export const AlreadyMemorizedManager = ({ alreadyMemorized }: { alreadyMemorized
               <div key={surahId} className="flex items-center space-x-2">
                 <Checkbox
                   id={`surah-${surahId}`}
-                  checked={alreadyMemorized.surahs.includes(parseInt(surahId))}
+                  checked={isSurahMemorized(parseInt(surahId))}
                   disabled={true} // Made checkbox disabled
                   // onCheckedChange removed
                 />
