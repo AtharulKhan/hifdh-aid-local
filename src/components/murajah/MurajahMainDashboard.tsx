@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -740,6 +739,75 @@ export const MurajahMainDashboard = () => {
     }));
   };
 
+  const saveTodaysCompletions = (completions: { [cycleId: string]: boolean }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    
+    let allCompletions: DailyCompletion[] = [];
+    
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        
+        if (Array.isArray(parsedData)) {
+          allCompletions = parsedData;
+        } else if (typeof parsedData === 'object' && parsedData !== null) {
+          Object.entries(parsedData).forEach(([date, completions]) => {
+            if (typeof completions === 'object' && completions !== null) {
+              allCompletions.push({
+                date,
+                completions: completions as { [cycleId: string]: boolean }
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing saved completions:', error);
+      }
+    }
+
+    const todayIndex = allCompletions.findIndex(d => d.date === today);
+    if (todayIndex >= 0) {
+      allCompletions[todayIndex].completions = completions;
+    } else {
+      allCompletions.push({ date: today, completions });
+    }
+
+    localStorage.setItem('murajah-daily-completions', JSON.stringify(allCompletions));
+    
+    // Refresh data to update UI
+    loadDashboardData();
+    calculateStreaks();
+  };
+
+  const toggleCycleCompletion = (cycleId: string) => {
+    const updatedCycles = todaysReviewCycles.map(cycle => 
+      cycle.id === cycleId ? { ...cycle, completed: !cycle.completed } : cycle
+    );
+    setTodaysReviewCycles(updatedCycles);
+
+    // Save to localStorage
+    const completions = updatedCycles.reduce((acc, cycle) => {
+      acc[cycle.id] = cycle.completed;
+      return acc;
+    }, {} as { [cycleId: string]: boolean });
+    
+    saveTodaysCompletions(completions);
+  };
+
+  const toggleMemorizationTaskCompletion = () => {
+    if (!todaysMemorizationTask) return;
+
+    const updatedSchedule = memorizationSchedule.map(item =>
+      item.date === todaysMemorizationTask.date
+        ? { ...item, completed: !item.completed }
+        : item
+    );
+    
+    setMemorizationSchedule(updatedSchedule);
+    localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(updatedSchedule));
+  };
+
   // Calculate statistics
   const totalJuzMemorized = juzMemorization.filter(j => j.isMemorized).length;
 
@@ -883,16 +951,30 @@ export const MurajahMainDashboard = () => {
                   <div key={index} className={`p-2 sm:p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        {cycle.icon}
+                        {cycle.completed ? (
+                          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                        ) : (
+                          cycle.icon
+                        )}
                         <span className="font-medium text-sm sm:text-base">{cycle.title}</span>
                       </div>
                       <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
                     </div>
-                    {cycle.completed ? (
-                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-                    ) : (
-                      <Badge variant="outline" className="text-xs">Pending</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {cycle.completed ? (
+                        <Badge variant="default" className="text-xs">Completed</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Pending</Badge>
+                      )}
+                      <Button
+                        variant={cycle.completed ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleCycleCompletion(cycle.id)}
+                        className="text-xs"
+                      >
+                        {cycle.completed ? "Undo" : "Complete"}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -913,9 +995,33 @@ export const MurajahMainDashboard = () => {
           <CardContent className="pt-0">
             {todaysMemorizationTask ? (
               <div className="space-y-4">
-                <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
-                  <p className="font-bold text-sm sm:text-base">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
-                  <p className="text-muted-foreground text-xs sm:text-sm">{todaysMemorizationTask.task}</p>
+                <div className={`p-2 sm:p-3 rounded-lg ${todaysMemorizationTask.completed ? 'bg-green-50 border border-green-200' : 'bg-muted/50'} flex items-center justify-between`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {todaysMemorizationTask.completed ? (
+                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                      ) : (
+                        <Target className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                      )}
+                      <p className="font-bold text-sm sm:text-base">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
+                    </div>
+                    <p className="text-muted-foreground text-xs sm:text-sm ml-6">{todaysMemorizationTask.task}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {todaysMemorizationTask.completed ? (
+                      <Badge variant="default" className="text-xs">Completed</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">Pending</Badge>
+                    )}
+                    <Button
+                      variant={todaysMemorizationTask.completed ? "default" : "outline"}
+                      size="sm"
+                      onClick={toggleMemorizationTaskCompletion}
+                      className="text-xs"
+                    >
+                      {todaysMemorizationTask.completed ? "Undo" : "Complete"}
+                    </Button>
+                  </div>
                 </div>
                 
                 {upcomingMemorizationTasks.length > 0 && (
