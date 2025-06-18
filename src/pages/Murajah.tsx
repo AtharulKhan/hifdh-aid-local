@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -242,10 +243,22 @@ const Murajah = () => {
         </TabsContent>
 
         <TabsContent value="hifdh-settings" className="space-y-6">
-          <div className="space-y-6">
-            <JuzMemorizationTracker />
-            <ReviewSettings />
-          </div>
+          <Tabs defaultValue="hifdh-progress" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="hifdh-progress">
+                Hifdh Progress
+              </TabsTrigger>
+              <TabsTrigger value="review-settings">
+                Review Cycle Settings
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="hifdh-progress">
+              <JuzMemorizationTracker />
+            </TabsContent>
+            <TabsContent value="review-settings">
+              <ReviewSettings />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="import-export" className="space-y-6">
