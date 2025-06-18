@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,14 +12,16 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Cloud, Upload, Download, Trash2, HardDrive } from 'lucide-react';
+import { User, LogOut, Cloud, Upload, Download, Trash2, HardDrive, Webhook } from 'lucide-react';
 import { useDataSync } from '@/hooks/useDataSync';
 import { useToast } from '@/hooks/use-toast';
+import { WebhookExportDialog } from './WebhookExportDialog';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
   const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData, clearLocalData } = useDataSync();
   const { toast } = useToast();
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,49 +50,61 @@ export const UserMenu = () => {
   if (!user) return null;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <User className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <div className="p-2">
-          <p className="text-sm font-medium">{user.email}</p>
-          <p className="text-xs text-gray-500">Signed in</p>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Cloud className="mr-2 h-4 w-4" />
-            Sync Data
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={handlePushData}>
-              <Upload className="mr-2 h-4 w-4" />
-              Push to Cloud
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handlePullData}>
-              <Download className="mr-2 h-4 w-4" />
-              Pull from Cloud
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleClearCloudData} className="text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Cloud Data
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleClearLocalData} className="text-red-600">
-              <HardDrive className="mr-2 h-4 w-4" />
-              Clear Local Data
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <User className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="p-2">
+            <p className="text-sm font-medium">{user.email}</p>
+            <p className="text-xs text-gray-500">Signed in</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Cloud className="mr-2 h-4 w-4" />
+              Sync Data
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={handlePushData}>
+                <Upload className="mr-2 h-4 w-4" />
+                Push to Cloud
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePullData}>
+                <Download className="mr-2 h-4 w-4" />
+                Pull from Cloud
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setWebhookDialogOpen(true)}>
+                <Webhook className="mr-2 h-4 w-4" />
+                Export to Webhook
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleClearCloudData} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear Cloud Data
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleClearLocalData} className="text-red-600">
+                <HardDrive className="mr-2 h-4 w-4" />
+                Clear Local Data
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <WebhookExportDialog 
+        open={webhookDialogOpen} 
+        onOpenChange={setWebhookDialogOpen} 
+      />
+    </>
   );
 };
