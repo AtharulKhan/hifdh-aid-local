@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,9 +12,20 @@ import { MurajahLog } from "@/components/murajah/MurajahLog";
 import { MurajahMainDashboard } from "@/components/murajah/MurajahMainDashboard";
 import { MemorizationPlanner } from "@/components/quran-system/MemorizationPlanner";
 import { ImportExport } from "@/components/murajah/ImportExport";
+import { useSearchParams } from "react-router-dom";
 
 const Murajah = () => {
   const [helpOpen, setHelpOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
@@ -192,7 +204,7 @@ const Murajah = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto md:h-10">
           <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Dashboard
