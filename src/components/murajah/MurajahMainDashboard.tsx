@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -788,26 +789,26 @@ export const MurajahMainDashboard = () => {
   const unlockedAchievements = achievements.filter(a => a.unlocked);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Welcome Header */}
       <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-l-green-400">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
                 Assalamu Alaikum! Welcome to your Dashboard
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm sm:text-base">
                 {format(new Date(), "EEEE, MMMM do, yyyy")}
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600 flex items-center gap-1">
-                  <Flame className="h-6 w-6" />
+                <div className="text-xl sm:text-2xl font-bold text-green-600 flex items-center gap-1">
+                  <Flame className="h-5 w-5 sm:h-6 sm:w-6" />
                   {currentStreak}
                 </div>
-                <div className="text-sm text-gray-600">Day Streak</div>
+                <div className="text-xs sm:text-sm text-gray-600">Day Streak</div>
               </div>
             </div>
           </div>
@@ -815,50 +816,50 @@ export const MurajahMainDashboard = () => {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <Book className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">{totalJuzMemorized}</p>
-                <p className="text-sm text-gray-600">Juz Memorized</p>
+              <Book className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold">{totalJuzMemorized}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Juz Memorized</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{totalSurahsMemorized}</p>
-                <p className="text-sm text-gray-600">Surahs Memorized</p>
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold">{totalSurahsMemorized}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Surahs Memorized</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              <div>
-                <p className="text-2xl font-bold">{Math.round(totalQuranProgress)}%</p>
-                <p className="text-sm text-gray-600">Quran Progress</p>
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold">{Math.round(totalQuranProgress)}%</p>
+                <p className="text-xs sm:text-sm text-gray-600">Quran Progress</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-600" />
-              <div>
-                <p className="text-2xl font-bold">{unlockedAchievements.length}</p>
-                <p className="text-sm text-gray-600">Achievements</p>
+              <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold">{unlockedAchievements.length}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Achievements</p>
               </div>
             </div>
           </CardContent>
@@ -866,63 +867,63 @@ export const MurajahMainDashboard = () => {
       </div>
 
       {/* Today's Activities and Goal - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Today's Muraja'ah */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
               Today's Muraja'ah
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {todaysReviewCycles.length > 0 ? (
               <div className="space-y-2">
                 {todaysReviewCycles.map((cycle, index) => (
-                  <div key={index} className={`p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
+                  <div key={index} className={`p-2 sm:p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {cycle.icon}
-                        <span className="font-medium">{cycle.title}</span>
+                        <span className="font-medium text-sm sm:text-base">{cycle.title}</span>
                       </div>
                       <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
                     </div>
                     {cycle.completed ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
                     ) : (
-                      <Badge variant="outline">Pending</Badge>
+                      <Badge variant="outline" className="text-xs">Pending</Badge>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">Set up your memorization data in the Juz tab to see review cycles</p>
+              <p className="text-gray-500 text-sm">Set up your memorization data in the Juz tab to see review cycles</p>
             )}
           </CardContent>
         </Card>
 
         {/* Today's Goal */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Target className="h-4 w-4 sm:h-5 sm:w-5" />
               Today's Goal
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {todaysMemorizationTask ? (
               <div className="space-y-4">
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="font-bold">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
-                  <p className="text-muted-foreground">{todaysMemorizationTask.task}</p>
+                <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+                  <p className="font-bold text-sm sm:text-base">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">{todaysMemorizationTask.task}</p>
                 </div>
                 
                 {upcomingMemorizationTasks.length > 0 && (
                   <div>
-                    <h5 className="font-medium mb-2 text-sm text-gray-700">Upcoming Tasks</h5>
+                    <h5 className="font-medium mb-2 text-xs sm:text-sm text-gray-700">Upcoming Tasks</h5>
                     <div className="space-y-2">
                       {upcomingMemorizationTasks.map(item => (
-                        <div key={item.date} className="text-sm p-2 rounded-md bg-muted/50">
+                        <div key={item.date} className="text-xs sm:text-sm p-2 rounded-md bg-muted/50">
                           <strong>{format(parseISO(item.date), 'EEE, MMM d')}:</strong> {item.task}
                         </div>
                       ))}
@@ -931,7 +932,7 @@ export const MurajahMainDashboard = () => {
                 )}
               </div>
             ) : (
-              <p className="text-gray-500">Create a memorization plan in the Memorization Planner tab to see today's task</p>
+              <p className="text-gray-500 text-sm">Create a memorization plan in the Memorization Planner tab to see today's task</p>
             )}
           </CardContent>
         </Card>
@@ -939,38 +940,39 @@ export const MurajahMainDashboard = () => {
 
       {/* Random Verse Practice */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Shuffle className="h-5 w-5" />
-              Random Verse Practice
+              <Shuffle className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-base sm:text-lg">Random Verse Practice</span>
             </div>
             <div className="flex gap-2">
               <Button 
                 onClick={() => setShowRandomVerseSettings(!showRandomVerseSettings)} 
                 variant="outline" 
                 size="sm"
+                className="text-xs sm:text-sm"
               >
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Settings
               </Button>
-              <Button onClick={generateRandomVerses} variant="outline" size="sm">
-                <Shuffle className="h-4 w-4 mr-2" />
+              <Button onClick={generateRandomVerses} variant="outline" size="sm" className="text-xs sm:text-sm">
+                <Shuffle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Regenerate
               </Button>
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {/* Settings Panel */}
           {showRandomVerseSettings && (
-            <Card className="mb-4 p-4 bg-gray-50 border-gray-200">
+            <Card className="mb-4 p-3 sm:p-4 bg-gray-50 border-gray-200">
               <div className="space-y-4">
-                <h3 className="font-semibold text-gray-800">Practice Settings</h3>
+                <h3 className="font-semibold text-gray-800 text-sm sm:text-base">Practice Settings</h3>
                 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Content Source</label>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Content Source</label>
                     <Select 
                       value={randomVerseSettings.contentSource} 
                       onValueChange={(value: ContentSource) => 
@@ -988,7 +990,7 @@ export const MurajahMainDashboard = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Portion</label>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Portion</label>
                     <Select 
                       value={randomVerseSettings.juzPortion} 
                       onValueChange={(value: JuzPortion) => 
@@ -1009,19 +1011,19 @@ export const MurajahMainDashboard = () => {
 
                   {randomVerseSettings.contentSource === 'juz' && (
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-700">Select Juz to Practice</label>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                        <label className="text-xs sm:text-sm font-medium text-gray-700">Select Juz to Practice</label>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={selectAllMemorizedJuz}>
+                          <Button variant="outline" size="sm" onClick={selectAllMemorizedJuz} className="text-xs">
                             Select All
                           </Button>
-                          <Button variant="outline" size="sm" onClick={deselectAllJuz}>
+                          <Button variant="outline" size="sm" onClick={deselectAllJuz} className="text-xs">
                             Deselect All
                           </Button>
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                         {getMemorizedJuzNumbers().map(juzNumber => (
                           <div key={juzNumber} className="flex items-center space-x-2">
                             <Switch
@@ -1031,7 +1033,7 @@ export const MurajahMainDashboard = () => {
                             />
                             <label 
                               htmlFor={`juz-${juzNumber}`} 
-                              className="text-sm cursor-pointer"
+                              className="text-xs sm:text-sm cursor-pointer"
                             >
                               Juz {juzNumber}
                             </label>
@@ -1040,7 +1042,7 @@ export const MurajahMainDashboard = () => {
                       </div>
                       
                       {randomVerseSettings.selectedJuzNumbers.length === 0 && (
-                        <p className="text-sm text-amber-600 mt-2">
+                        <p className="text-xs sm:text-sm text-amber-600 mt-2">
                           No Juz selected. Will use default practice verses.
                         </p>
                       )}
@@ -1049,19 +1051,19 @@ export const MurajahMainDashboard = () => {
 
                   {randomVerseSettings.contentSource === 'surah' && (
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-700">Select Surahs to Practice</label>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                        <label className="text-xs sm:text-sm font-medium text-gray-700">Select Surahs to Practice</label>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={selectAllMemorizedSurahs}>
+                          <Button variant="outline" size="sm" onClick={selectAllMemorizedSurahs} className="text-xs">
                             Select All
                           </Button>
-                          <Button variant="outline" size="sm" onClick={deselectAllSurahs}>
+                          <Button variant="outline" size="sm" onClick={deselectAllSurahs} className="text-xs">
                             Deselect All
                           </Button>
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                         {getMemorizedSurahs().map(surahNumber => {
                           const surahInfo = surahNames[surahNumber.toString() as keyof typeof surahNames];
                           const surahName = surahInfo ? surahInfo.name_simple : `Surah ${surahNumber}`;
@@ -1074,7 +1076,7 @@ export const MurajahMainDashboard = () => {
                               />
                               <label 
                                 htmlFor={`surah-${surahNumber}`} 
-                                className="text-sm cursor-pointer"
+                                className="text-xs sm:text-sm cursor-pointer truncate"
                               >
                                 {surahName}
                               </label>
@@ -1084,7 +1086,7 @@ export const MurajahMainDashboard = () => {
                       </div>
                       
                       {randomVerseSettings.selectedSurahs.length === 0 && (
-                        <p className="text-sm text-amber-600 mt-2">
+                        <p className="text-xs sm:text-sm text-amber-600 mt-2">
                           No Surahs selected. Will use default practice verses.
                         </p>
                       )}
@@ -1102,22 +1104,22 @@ export const MurajahMainDashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No verses available for practice</p>
+            <p className="text-gray-500 text-sm">No verses available for practice</p>
           )}
         </CardContent>
       </Card>
 
       {/* Weekly Overview and Achievements - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weekly Overview */}
         <Card>
-          <CardHeader>
-            <CardTitle>This Week's Progress</CardTitle>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">This Week's Progress</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between text-sm mb-1">
+                <div className="flex justify-between text-xs sm:text-sm mb-1">
                   <span>Muraja'ah Cycles</span>
                   <span>{weeklyReviewCycles.filter(c => c.completed).length}/{weeklyReviewCycles.length}</span>
                 </div>
@@ -1128,7 +1130,7 @@ export const MurajahMainDashboard = () => {
               </div>
               
               <div>
-                <div className="flex justify-between text-sm mb-1">
+                <div className="flex justify-between text-xs sm:text-sm mb-1">
                   <span>Memorization Tasks</span>
                   <span>{weeklyMemorizationTasks.filter(t => t.completed).length}/{weeklyMemorizationTasks.length}</span>
                 </div>
@@ -1143,27 +1145,27 @@ export const MurajahMainDashboard = () => {
 
         {/* Recent Achievements */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Award className="h-4 w-4 sm:h-5 sm:w-5" />
               Recent Achievements
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {unlockedAchievements.length > 0 ? (
               <div className="space-y-2">
                 {unlockedAchievements.slice(0, 3).map((achievement) => (
-                  <div key={achievement.id} className="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
-                    <div className="text-yellow-600">{achievement.icon}</div>
-                    <div>
-                      <p className="font-medium text-sm">{achievement.title}</p>
-                      <p className="text-xs text-gray-600">{achievement.description}</p>
+                  <div key={achievement.id} className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
+                    <div className="text-yellow-600 flex-shrink-0">{achievement.icon}</div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-xs sm:text-sm">{achievement.title}</p>
+                      <p className="text-xs text-gray-600 truncate">{achievement.description}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">Start memorizing to unlock achievements!</p>
+              <p className="text-gray-500 text-sm">Start memorizing to unlock achievements!</p>
             )}
           </CardContent>
         </Card>
