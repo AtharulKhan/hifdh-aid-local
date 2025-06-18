@@ -32,7 +32,7 @@ function App() {
           <AudioProvider>
             <div className="flex min-h-screen bg-background w-full">
               <Navigation />
-              <main className={`flex-1 ${isMobile ? 'pt-16' : 'ml-0'}`}>
+              <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Navigate to="/" replace />} />
