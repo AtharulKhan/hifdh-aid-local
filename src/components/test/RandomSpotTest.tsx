@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings, ArrowRight } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
+import { VerseWithFlag } from "@/components/weak-spots/VerseWithFlag";
 
 interface RandomSpotTestProps {
   onBack: () => void;
@@ -462,7 +463,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
             )}
           </div>
 
-          {/* Answer Section */}
+          {/* Answer Section with Flags */}
           {showAnswer && (
             <div className="space-y-3 md:space-y-4 border-t pt-3 md:pt-4">
               {currentVerses.map((verse, index) => (
@@ -471,9 +472,13 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                     <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs md:text-sm break-words">
                       Verse {index + 1}: {verse.verse_key}
                     </Badge>
-                    <div className="font-arabic text-lg md:text-2xl text-right leading-loose text-gray-800 break-words">
-                      {verse.text}
-                    </div>
+                    <VerseWithFlag
+                      surahNumber={verse.surah}
+                      ayahNumber={verse.ayah}
+                      verseText={verse.text}
+                      flagSize="sm"
+                      dir="rtl"
+                    />
                   </div>
                 </div>
               ))}
