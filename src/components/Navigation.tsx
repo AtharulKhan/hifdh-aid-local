@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare, Heart
@@ -68,8 +67,18 @@ export const Navigation = () => {
 
   const handleHifdhStory = () => {
     const subject = encodeURIComponent("My Hifdh Story");
+    const body = encodeURIComponent(`Name: 
+
+Age: 
+
+How Much Did You Memorize: 
+
+Your Story: 
+
+
+`);
     const email = "mohammedkhangrowth@gmail.com";
-    window.open(`mailto:${email}?subject=${subject}`, '_blank');
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   };
 
   // Mobile Navigation
