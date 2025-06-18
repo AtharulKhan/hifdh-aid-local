@@ -38,8 +38,8 @@ const Dashboard = () => {
               Help
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] mx-4 my-8 animate-scale-in flex flex-col">
-            <DialogHeader className="flex-shrink-0 pb-4 border-b">
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[85vh] mx-4 my-8 animate-scale-in flex flex-col p-0">
+            <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
               <DialogTitle className="text-xl font-bold text-green-600 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
                 Dashboard Guide
@@ -49,8 +49,8 @@ const Dashboard = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <ScrollArea className="flex-1 px-1">
-              <div className="space-y-6 text-left py-4">
+            <ScrollArea className="flex-1 h-full">
+              <div className="space-y-6 text-left p-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-3 text-gray-800">What is this page for?</h3>
                   <p className="text-gray-600 leading-relaxed">
@@ -123,6 +123,28 @@ const Dashboard = () => {
                   <p className="text-emerald-700 text-sm mt-1">
                     Consistency is key in Hifdh. Try to complete all your daily cycles to maintain strong memorization retention.
                   </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800">Additional Features</h3>
+                  <div className="space-y-2 text-gray-600">
+                    <p className="flex items-start gap-2">
+                      <span className="font-medium text-green-600 flex-shrink-0">•</span>
+                      View detailed statistics of your memorization progress
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="font-medium text-green-600 flex-shrink-0">•</span>
+                      Set custom review intervals based on your learning pace
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="font-medium text-green-600 flex-shrink-0">•</span>
+                      Track weak spots and areas that need more attention
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="font-medium text-green-600 flex-shrink-0">•</span>
+                      Export your progress data for backup or sharing with teachers
+                    </p>
+                  </div>
                 </div>
               </div>
             </ScrollArea>
