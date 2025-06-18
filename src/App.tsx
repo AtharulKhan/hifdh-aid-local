@@ -21,6 +21,13 @@ import Dashboard from "./pages/Dashboard";
 import { AuthPage } from "./components/auth/AuthPage";
 import WeakSpotsHub from "./pages/WeakSpotsHub";
 import ConsolidationView from "./pages/ConsolidationView";
+import { usePageTracking } from "./hooks/usePageTracking";
+
+// RouteTracker component to track page views
+const RouteTracker = () => {
+  usePageTracking();
+  return null;
+};
 
 function App() {
   const isMobile = useIsMobile();
@@ -33,6 +40,7 @@ function App() {
             <div className="flex min-h-screen bg-background w-full">
               <Navigation />
               <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
+                <RouteTracker />
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Navigate to="/" replace />} />
