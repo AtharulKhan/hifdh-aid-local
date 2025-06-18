@@ -1,9 +1,14 @@
+
 import React from "react";
 import { QuranViewer } from "@/components/quran/QuranViewer";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 const Index = () => {
   const isMobile = useIsMobile();
-  return <div className="min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
+  
+  return (
+    <div className="min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
       <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-green-200 w-full max-w-full">
         
       </header>
@@ -13,6 +18,10 @@ const Index = () => {
           <QuranViewer startingVerseId={1} />
         </div>
       </main>
-    </div>;
+      
+      <PWAInstallPrompt />
+    </div>
+  );
 };
+
 export default Index;

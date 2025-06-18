@@ -5,9 +5,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hifdh Aid App</title>
-    <meta name="description" content="Lovable Generated Project" />
+    <meta name="description" content="Intelligent spaced repetition system for Quran memorization. Track your progress and get automated daily review cycles." />
     <meta name="author" content="Lovable" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Hifdh Aid" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Hifdh Aid" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Hifdh Aid App" />
+    <meta property="og:description" content="Intelligent spaced repetition system for Quran memorization" />
     <meta property="og:image" content="/og-image.png" />
+    <meta property="og:type" content="website" />
     
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -36,5 +56,20 @@
     <div id="root"></div>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
