@@ -621,7 +621,14 @@ export const MurajahMainDashboard = () => {
         // Default behavior - use all memorized Surahs
         const memorizedSurahIds = new Set<number>();
         juzMemorization.forEach(juzEntry => {
-          if (juzEntry.memorizedSurahs) {
+          if (juzEntry.isMemorized) {
+            const juzInfo = juzData[juzEntry.juzNumber.toString() as keyof typeof juzData];
+            if (juzInfo) {
+              Object.keys(juzInfo.verse_mapping).forEach(surahIdStr => {
+                memorizedSurahIds.add(Number(surahIdStr));
+              });
+            }
+          } else if (juzEntry.memorizedSurahs) {
             juzEntry.memorizedSurahs.forEach(surahId => {
               memorizedSurahIds.add(surahId);
             });
@@ -858,136 +865,76 @@ export const MurajahMainDashboard = () => {
         </Card>
       </div>
 
+      {/* Today's Activities and Goal - Side by Side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Activities */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Today's Muraja'ah
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {todaysReviewCycles.length > 0 ? (
-                <div className="space-y-2">
-                  {todaysReviewCycles.map((cycle, index) => (
-                    <div key={index} className={`p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {cycle.icon}
-                          <span className="font-medium">{cycle.title}</span>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
+        {/* Today's Muraja'ah */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Today's Muraja'ah
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todaysReviewCycles.length > 0 ? (
+              <div className="space-y-2">
+                {todaysReviewCycles.map((cycle, index) => (
+                  <div key={index} className={`p-3 rounded-lg ${cycle.color} flex items-center justify-between`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {cycle.icon}
+                        <span className="font-medium">{cycle.title}</span>
                       </div>
-                      {cycle.completed ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <Badge variant="outline">Pending</Badge>
-                      )}
+                      <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Set up your memorization data in the Juz tab to see review cycles</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Today's Goal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {todaysMemorizationTask ? (
-                <div className="space-y-4">
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <p className="font-bold">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
-                    <p className="text-muted-foreground">{todaysMemorizationTask.task}</p>
+                    {cycle.completed ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Badge variant="outline">Pending</Badge>
+                    )}
                   </div>
-                  
-                  {upcomingMemorizationTasks.length > 0 && (
-                    <div>
-                      <h5 className="font-medium mb-2 text-sm text-gray-700">Upcoming Tasks</h5>
-                      <div className="space-y-2">
-                        {upcomingMemorizationTasks.map(item => (
-                          <div key={item.date} className="text-sm p-2 rounded-md bg-muted/50">
-                            <strong>{format(parseISO(item.date), 'EEE, MMM d')}:</strong> {item.task}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-500">Create a memorization plan in the Memorization Planner tab to see today's task</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">Set up your memorization data in the Juz tab to see review cycles</p>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Weekly Overview */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>This Week's Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* Today's Goal */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Today's Goal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todaysMemorizationTask ? (
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Muraja'ah Cycles</span>
-                    <span>{weeklyReviewCycles.filter(c => c.completed).length}/{weeklyReviewCycles.length}</span>
-                  </div>
-                  <Progress 
-                    value={weeklyReviewCycles.length > 0 ? (weeklyReviewCycles.filter(c => c.completed).length / weeklyReviewCycles.length) * 100 : 0} 
-                    className="w-full" 
-                  />
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="font-bold">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
+                  <p className="text-muted-foreground">{todaysMemorizationTask.task}</p>
                 </div>
                 
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Memorization Tasks</span>
-                    <span>{weeklyMemorizationTasks.filter(t => t.completed).length}/{weeklyMemorizationTasks.length}</span>
-                  </div>
-                  <Progress 
-                    value={weeklyMemorizationTasks.length > 0 ? (weeklyMemorizationTasks.filter(t => t.completed).length / weeklyMemorizationTasks.length) * 100 : 0} 
-                    className="w-full" 
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Recent Achievements
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {unlockedAchievements.length > 0 ? (
-                <div className="space-y-2">
-                  {unlockedAchievements.slice(0, 3).map((achievement) => (
-                    <div key={achievement.id} className="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
-                      <div className="text-yellow-600">{achievement.icon}</div>
-                      <div>
-                        <p className="font-medium text-sm">{achievement.title}</p>
-                        <p className="text-xs text-gray-600">{achievement.description}</p>
-                      </div>
+                {upcomingMemorizationTasks.length > 0 && (
+                  <div>
+                    <h5 className="font-medium mb-2 text-sm text-gray-700">Upcoming Tasks</h5>
+                    <div className="space-y-2">
+                      {upcomingMemorizationTasks.map(item => (
+                        <div key={item.date} className="text-sm p-2 rounded-md bg-muted/50">
+                          <strong>{format(parseISO(item.date), 'EEE, MMM d')}:</strong> {item.task}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Start memorizing to unlock achievements!</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500">Create a memorization plan in the Memorization Planner tab to see today's task</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Random Verse Practice */}
@@ -1159,6 +1106,68 @@ export const MurajahMainDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Weekly Overview and Achievements - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Weekly Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>This Week's Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Muraja'ah Cycles</span>
+                  <span>{weeklyReviewCycles.filter(c => c.completed).length}/{weeklyReviewCycles.length}</span>
+                </div>
+                <Progress 
+                  value={weeklyReviewCycles.length > 0 ? (weeklyReviewCycles.filter(c => c.completed).length / weeklyReviewCycles.length) * 100 : 0} 
+                  className="w-full" 
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Memorization Tasks</span>
+                  <span>{weeklyMemorizationTasks.filter(t => t.completed).length}/{weeklyMemorizationTasks.length}</span>
+                </div>
+                <Progress 
+                  value={weeklyMemorizationTasks.length > 0 ? (weeklyMemorizationTasks.filter(t => t.completed).length / weeklyMemorizationTasks.length) * 100 : 0} 
+                  className="w-full" 
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Achievements */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              Recent Achievements
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {unlockedAchievements.length > 0 ? (
+              <div className="space-y-2">
+                {unlockedAchievements.slice(0, 3).map((achievement) => (
+                  <div key={achievement.id} className="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
+                    <div className="text-yellow-600">{achievement.icon}</div>
+                    <div>
+                      <p className="font-medium text-sm">{achievement.title}</p>
+                      <p className="text-xs text-gray-600">{achievement.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">Start memorizing to unlock achievements!</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
