@@ -18,6 +18,8 @@ import Murajah from "./pages/Murajah";
 import QuranSystem from "./pages/QuranSystem";
 import Dashboard from "./pages/Dashboard";
 import { AuthPage } from "./components/auth/AuthPage";
+import WeakSpotsHub from "./pages/WeakSpotsHub";
+import ConsolidationView from "./pages/ConsolidationView";
 
 function App() {
   const isMobile = useIsMobile();
@@ -44,6 +46,8 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/help" element={<Help />} />
                 <Route path="/index" element={<Index />} />
+                <Route path="/weak-spots" element={<WeakSpotsHub />} />
+                <Route path="/consolidation-view/:surah_number/:ayah_number" element={<ConsolidationView />} />
               </Routes>
             </main>
           </div>

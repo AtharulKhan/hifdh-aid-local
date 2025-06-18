@@ -1,7 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { Flag } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -9,6 +12,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight, Chevrons
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getJuzForVerse } from "@/data/quranData";
 import { QuranNavigationModal } from "./QuranNavigationModal";
 import { TafsirDialog } from "./TafsirDialog";
+import { FlaggedVerseIdentifier } from "@/types/features";
 
 interface QuranViewerProps {
   startingVerseId?: number;
@@ -17,6 +21,8 @@ interface QuranViewerProps {
 export const QuranViewer: React.FC<QuranViewerProps> = ({
   startingVerseId = 1
 }) => {
+  const { user } = useAuth();
+  const [flaggedVerses, setFlaggedVerses] = useState<FlaggedVerseIdentifier[]>([]);
   const [currentVerseId, setCurrentVerseId] = useState(startingVerseId);
   const [viewMode, setViewMode] = useState<'hidden' | 'partial' | 'full'>('hidden');
   const [showTajweed, setShowTajweed] = useState(false);
@@ -37,6 +43,55 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
     }
     return 1;
   });
+
+  useEffect(() => {
+    const fetchFlaggedVerses = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('weak_spots')
+          .select('surah_number, ayah_number')
+          .eq('user_id', user.id)
+          .eq('status', 'weak');
+        if (error) {
+          console.error('Error fetching flagged verses:', error);
+        } else {
+          setFlaggedVerses(data || []);
+        }
+      }
+    };
+    fetchFlaggedVerses();
+  }, [user]);
+
+  const isVerseFlagged = (surah: number, ayah: number): boolean => {
+    return flaggedVerses.some(spot => spot.surah_number === surah && spot.ayah_number === ayah);
+  };
+
+  const toggleFlagVerse = async (surah: number, ayah: number): Promise<void> => {
+    if (!user) return;
+
+    if (isVerseFlagged(surah, ayah)) {
+      // Delete the verse
+      const { error } = await supabase
+        .from('weak_spots')
+        .delete()
+        .match({ user_id: user.id, surah_number: surah, ayah_number: ayah });
+      if (error) {
+        console.error('Error unflagging verse:', error);
+      } else {
+        setFlaggedVerses(prev => prev.filter(spot => !(spot.surah_number === surah && spot.ayah_number === ayah)));
+      }
+    } else {
+      // Insert a new record
+      const { error } = await supabase
+        .from('weak_spots')
+        .insert([{ user_id: user.id, surah_number: surah, ayah_number: ayah, status: 'weak' }]);
+      if (error) {
+        console.error('Error flagging verse:', error);
+      } else {
+        setFlaggedVerses(prev => [...prev, { surah_number: surah, ayah_number: ayah }]);
+      }
+    }
+  };
 
   // Get current verses to display - now shows verses in the selected range within the current surah
   const getCurrentVerses = (): QuranVerse[] => {
@@ -382,6 +437,19 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                       <Badge variant="outline" className="border-green-200 text-green-600">
                         {verse.verse_key}
                       </Badge>
+                      {user && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleFlagVerse(verse.surah, verse.ayah)}
+                          className="text-gray-500 hover:text-red-500"
+                        >
+                          <Flag
+                            className="h-5 w-5"
+                            fill={isVerseFlagged(verse.surah, verse.ayah) ? 'red' : 'none'}
+                          />
+                        </Button>
+                      )}
                     </div>
                     
                     {/* Individual Verse Revelation Slider */}
@@ -511,6 +579,19 @@ export const QuranViewer: React.FC<QuranViewerProps> = ({
                         <Badge variant="outline" className="border-green-200 text-green-600">
                           {verse.verse_key}
                         </Badge>
+                        {user && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleFlagVerse(verse.surah, verse.ayah)}
+                            className="text-gray-500 hover:text-red-500"
+                          >
+                            <Flag
+                              className="h-5 w-5"
+                              fill={isVerseFlagged(verse.surah, verse.ayah) ? 'red' : 'none'}
+                            />
+                          </Button>
+                        )}
                       </div>
                       
                       {/* Individual Verse Revelation Slider */}
