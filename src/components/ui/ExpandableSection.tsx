@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
         )}
       </div>
 
-      <div className="px-4 pb-1 pt-0 flex justify-center">
+      <div className="px-4 pb-4 pt-2 flex justify-center">
         <Button
           variant="ghost"
           size="sm"
@@ -58,3 +59,4 @@ export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
     </div>
   );
 };
+
