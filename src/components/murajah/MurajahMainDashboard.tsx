@@ -25,7 +25,7 @@ import {
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json";
-import { surahNamesData } from '@/data/quranData';
+import surahNames from "@/data/surah-names.json";
 import { PracticeVerseCard } from './PracticeVerseCard';
 
 // Use the actual data structures from quranData
@@ -668,7 +668,14 @@ export const MurajahMainDashboard = () => {
   const getMemorizedSurahs = () => {
     const memorizedSurahs = new Set<number>();
     juzMemorization.forEach(juzEntry => {
-      if (juzEntry.memorizedSurahs) {
+      if (juzEntry.isMemorized) {
+        const juzInfo = juzData[juzEntry.juzNumber.toString() as keyof typeof juzData];
+        if (juzInfo) {
+          Object.keys(juzInfo.verse_mapping).forEach(surahIdStr => {
+            memorizedSurahs.add(Number(surahIdStr));
+          });
+        }
+      } else if (juzEntry.memorizedSurahs) {
         juzEntry.memorizedSurahs.forEach(surahId => {
           memorizedSurahs.add(surahId);
         });
@@ -1109,7 +1116,8 @@ export const MurajahMainDashboard = () => {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                         {getMemorizedSurahs().map(surahNumber => {
-                          const surahName = surahNamesData[surahNumber] || `Surah ${surahNumber}`;
+                          const surahInfo = surahNames[surahNumber.toString() as keyof typeof surahNames];
+                          const surahName = surahInfo ? surahInfo.name_simple : `Surah ${surahNumber}`;
                           return (
                             <div key={surahNumber} className="flex items-center space-x-2">
                               <Switch
