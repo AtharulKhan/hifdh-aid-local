@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap
+import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -59,6 +59,12 @@ export const Navigation = () => {
   if (location.pathname === '/auth') {
     return null;
   }
+
+  const handleFeatureRequest = () => {
+    const subject = encodeURIComponent("Hifdh Aid App Feature or Bug");
+    const email = "mohammedkhangrowth@gmail.com";
+    window.open(`mailto:${email}?subject=${subject}`, '_blank');
+  };
 
   // Mobile Navigation
   if (isMobile) {
@@ -126,6 +132,33 @@ export const Navigation = () => {
                     </Link>)}
                 </div>
               )}
+            </div>
+
+            {/* Mobile Auth Section */}
+            <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+              {!loading && (user ? <div className="flex items-center justify-between p-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-gray-500">Signed in</p>
+                      </div>
+                      <UserMenu />
+                    </div> : <Link to="/auth">
+                      <Button variant="outline" className="w-full flex items-center gap-2">
+                        <LogIn className="h-4 w-4" />
+                        Login
+                      </Button>
+                    </Link>)}
+              
+              {/* Mobile Feature Request */}
+              <button
+                onClick={handleFeatureRequest}
+                className="flex items-center space-x-3 px-4 py-2 w-full rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-sm">Request Feature / Report Bug</span>
+              </button>
             </div>
           </div>
         </nav>
@@ -205,6 +238,30 @@ export const Navigation = () => {
                     </Button>
                   </Link>}
               </div>)}
+          
+          {/* Desktop Feature Request */}
+          <div className="mt-2">
+            {!isMinimized ? (
+              <button
+                onClick={handleFeatureRequest}
+                className="flex items-center space-x-2 px-3 py-2 w-full rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-xs">Request Feature / Report Bug</span>
+              </button>
+            ) : (
+              <div className="flex justify-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handleFeatureRequest}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>;
