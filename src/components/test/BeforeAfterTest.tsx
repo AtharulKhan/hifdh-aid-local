@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Settings } from "lucide-react";
 import { getVersesArray, getVerseById, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
 import { MemorizationEntry } from "@/components/murajah/MemorizationTracker";
+import { VerseWithFlag } from "@/components/weak-spots/VerseWithFlag";
 
 interface BeforeAfterTestProps {
   onBack: () => void;
@@ -247,15 +247,20 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack, memori
             </p>
           </div>
 
-          {/* Current Verse */}
+          {/* Current Verse with Flag */}
           <div className="bg-green-50 p-3 md:p-4 rounded-lg border border-green-200">
             <div className="text-center space-y-3">
               <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs md:text-sm">
                 Given Verse: {currentVerse.verse_key} - {getSurahName(currentVerse.surah)}
               </Badge>
-              <div className="font-arabic text-lg md:text-2xl text-right leading-loose text-gray-800 break-words">
-                {currentVerse.text}
-              </div>
+              <VerseWithFlag
+                surahNumber={currentVerse.surah}
+                ayahNumber={currentVerse.ayah}
+                verseText={currentVerse.text}
+                className="text-center"
+                flagSize="md"
+                dir="rtl"
+              />
             </div>
           </div>
 
@@ -297,30 +302,38 @@ export const BeforeAfterTest: React.FC<BeforeAfterTestProps> = ({ onBack, memori
             )}
           </div>
 
-          {/* Answer Section */}
+          {/* Answer Section with Flags */}
           {showAnswer && (
             <div className="space-y-4 border-t pt-4">
-              {/* Before Verse */}
+              {/* Before Verse with Flag */}
               <div className="bg-yellow-50 p-3 md:p-4 rounded-lg border border-yellow-200">
                 <div className="space-y-2">
                   <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs md:text-sm">
                     Before: {beforeVerse.verse_key}
                   </Badge>
-                  <div className="font-arabic text-base md:text-xl text-right leading-loose text-gray-800 break-words">
-                    {beforeVerse.text}
-                  </div>
+                  <VerseWithFlag
+                    surahNumber={beforeVerse.surah}
+                    ayahNumber={beforeVerse.ayah}
+                    verseText={beforeVerse.text}
+                    flagSize="sm"
+                    dir="rtl"
+                  />
                 </div>
               </div>
 
-              {/* After Verse */}
+              {/* After Verse with Flag */}
               <div className="bg-purple-50 p-3 md:p-4 rounded-lg border border-purple-200">
                 <div className="space-y-2">
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs md:text-sm">
                     After: {afterVerse.verse_key}
                   </Badge>
-                  <div className="font-arabic text-base md:text-xl text-right leading-loose text-gray-800 break-words">
-                    {afterVerse.text}
-                  </div>
+                  <VerseWithFlag
+                    surahNumber={afterVerse.surah}
+                    ayahNumber={afterVerse.ayah}
+                    verseText={afterVerse.text}
+                    flagSize="sm"
+                    dir="rtl"
+                  />
                 </div>
               </div>
             </div>
