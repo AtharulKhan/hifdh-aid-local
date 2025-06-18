@@ -29,7 +29,14 @@ export const JuzMemorizationTracker = () => {
   useEffect(() => {
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
     if (savedJuz) {
-      setMemorizedJuz(JSON.parse(savedJuz));
+      try {
+        const parsedJuz = JSON.parse(savedJuz);
+        setMemorizedJuz(parsedJuz);
+        // Ensure memorization planner data is updated on load
+        updateMemorizationPlannerData(parsedJuz);
+      } catch (error) {
+        console.error('Error parsing saved juz data:', error);
+      }
     }
   }, []);
 
@@ -65,10 +72,12 @@ export const JuzMemorizationTracker = () => {
       surahs: Array.from(memorizedSurahIds)
     };
     
+    console.log('Updating memorization planner data:', plannerData);
     localStorage.setItem('memorizationPlannerAlreadyMemorized', JSON.stringify(plannerData));
   };
 
   useEffect(() => {
+    console.log('Memorized Juz updated:', memorizedJuz);
     localStorage.setItem('murajah-juz-memorization', JSON.stringify(memorizedJuz));
     
     // Update memorization planner data format
@@ -102,11 +111,12 @@ export const JuzMemorizationTracker = () => {
   };
 
   const toggleMemorization = (juzNumber: number, isMemorized: boolean) => {
+    console.log(`Toggling Juz ${juzNumber} to ${isMemorized ? 'memorized' : 'not memorized'}`);
     setMemorizedJuz(prev => {
       const existingJuz = prev.find(j => j.juzNumber === juzNumber);
       
       if (existingJuz) {
-        return prev.map(juz => 
+        const updated = prev.map(juz => 
           juz.juzNumber === juzNumber 
             ? { 
                 ...juz, 
@@ -116,12 +126,17 @@ export const JuzMemorizationTracker = () => {
               }
             : juz
         );
+        console.log('Updated juz list:', updated);
+        return updated;
       } else if (isMemorized) {
-        return [...prev, {
+        const newJuz = {
           juzNumber,
           isMemorized: true,
           dateMemorized: new Date().toISOString().split('T')[0]
-        }];
+        };
+        const updated = [...prev, newJuz];
+        console.log('Added new juz:', newJuz, 'Updated list:', updated);
+        return updated;
       }
       
       return prev;
@@ -129,11 +144,12 @@ export const JuzMemorizationTracker = () => {
   };
 
   const toggleSurahMemorization = (juzNumber: number, surahId: number, isMemorized: boolean) => {
+    console.log(`Toggling Surah ${surahId} in Juz ${juzNumber} to ${isMemorized ? 'memorized' : 'not memorized'}`);
     setMemorizedJuz(prev => {
       const existingJuz = prev.find(j => j.juzNumber === juzNumber);
       
       if (existingJuz) {
-        return prev.map(juz => {
+        const updated = prev.map(juz => {
           if (juz.juzNumber === juzNumber) {
             const currentSurahs = juz.memorizedSurahs || [];
             let newSurahs: number[];
@@ -152,12 +168,17 @@ export const JuzMemorizationTracker = () => {
           }
           return juz;
         });
+        console.log('Updated juz list after surah toggle:', updated);
+        return updated;
       } else if (isMemorized) {
-        return [...prev, {
+        const newJuz = {
           juzNumber,
           isMemorized: false,
           memorizedSurahs: [surahId]
-        }];
+        };
+        const updated = [...prev, newJuz];
+        console.log('Added new juz for surah:', newJuz, 'Updated list:', updated);
+        return updated;
       }
       
       return prev;
