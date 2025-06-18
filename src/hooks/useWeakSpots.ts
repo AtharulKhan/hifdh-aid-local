@@ -49,6 +49,7 @@ export const useWeakSpots = () => {
 
           return {
             ...spot,
+            status: spot.status as 'weak' | 'mastered', // Type assertion to fix TypeScript error
             verse_key: verseKey,
             text_snippet: textSnippet,
             surah_name: getSurahName(spot.surah_number),
