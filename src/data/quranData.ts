@@ -160,3 +160,19 @@ export const getTafsirMaarifForVerse = (surah: number, ayah: number): TafsirData
 export const getTafsirForVerse = (surah: number, ayah: number): TafsirData | undefined => {
   return getTafsirIbnKathirForVerse(surah, ayah);
 };
+
+/**
+ * Retrieves a specific Quran verse by Surah and Ayah number.
+ * @param surahNumber The Surah number (1-114).
+ * @param ayahNumber The Ayah number within the Surah.
+ * @param allVersesInput Optional pre-fetched array of all Quran verses to optimize lookups.
+ * @returns The QuranVerse object if found, otherwise undefined.
+ */
+export const getVerseBySurahAyah = (
+  surahNumber: number,
+  ayahNumber: number,
+  allVersesInput?: QuranVerse[]
+): QuranVerse | undefined => {
+  const versesToSearch = allVersesInput || getVersesArray();
+  return versesToSearch.find(v => v.surah === surahNumber && v.ayah === ayahNumber);
+};

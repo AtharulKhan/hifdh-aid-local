@@ -204,6 +204,43 @@ export type Database = {
         }
         Relationships: []
       }
+      weak_spots: {
+        Row: {
+          id: string
+          user_id: string
+          surah_number: number
+          ayah_number: number
+          status: 'weak' | 'mastered'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          surah_number: number
+          ayah_number: number
+          status?: 'weak' | 'mastered'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          surah_number?: number
+          ayah_number?: number
+          status?: 'weak' | 'mastered'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weak_spots_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

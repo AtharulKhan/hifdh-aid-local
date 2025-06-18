@@ -13,7 +13,8 @@ import {
   RotateCcw,
   Book,
   BarChart3,
-  LogIn
+  LogIn,
+  ListChecks // Added for Weak Spots
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -27,7 +28,8 @@ const navItems = [
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
-  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" }
+  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" },
+  { path: "/weak-spots", icon: ListChecks, label: "Weak Spots" }
 ];
 
 export const Navigation = () => {
