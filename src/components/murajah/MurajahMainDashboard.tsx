@@ -951,11 +951,11 @@ export const MurajahMainDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/murajah')}
+                onClick={() => navigate('/murajah?tab=review')}
                 className="text-xs flex items-center gap-1"
               >
                 <ExternalLink className="h-3 w-3" />
-                View All
+                Today's Muraja'ah
               </Button>
             </CardTitle>
           </CardHeader>
@@ -1010,11 +1010,11 @@ export const MurajahMainDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/quran-system')}
+                onClick={() => navigate('/murajah?tab=planner')}
                 className="text-xs flex items-center gap-1"
               >
                 <ExternalLink className="h-3 w-3" />
-                Go to Planner
+                Memorization Planner
               </Button>
             </CardTitle>
           </CardHeader>
