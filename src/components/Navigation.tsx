@@ -152,7 +152,7 @@ export const Navigation = () => {
   }
 
   // Desktop Navigation
-  return <nav className={cn("transition-all duration-300 ease-in-out hidden md:flex fixed top-0 left-0 h-screen z-40", "bg-white/95 backdrop-blur-xl border-r border-gray-100 shadow-sm animate-fadeIn", isMinimized ? "w-16" : "w-64")}>
+  return <nav className={cn("transition-all duration-300 ease-in-out hidden md:flex h-screen z-40", "bg-white/95 backdrop-blur-xl border-r border-gray-100 shadow-sm animate-fadeIn", isMinimized ? "w-16" : "w-64")}>
       <div className="w-full flex flex-col">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h1 className={cn("text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent transition-opacity duration-300", isMinimized ? "opacity-0 hidden" : "opacity-100")}>Qur'an Hifdh Aid</h1>
