@@ -1,12 +1,14 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks // Added for Weak Spots
+import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserMenu } from "./auth/UserMenu";
+
 const navItems = [{
   path: "/",
   icon: BarChart3,
@@ -20,14 +22,6 @@ const navItems = [{
   icon: ClipboardCheck,
   label: "Memorization Test"
 }, {
-  path: "/tajweed",
-  icon: BookText,
-  label: "Tajweed Refresher"
-}, {
-  path: "/quran-system",
-  icon: Book,
-  label: "Qur'an System"
-}, {
   path: "/weak-spots",
   icon: ListChecks,
   label: "Weak Spots"
@@ -36,15 +30,30 @@ const navItems = [{
   icon: RotateCcw,
   label: "Schedule & Settings"
 }];
+
+const learnItems = [{
+  path: "/tajweed",
+  icon: BookText,
+  label: "Tajweed Refresher"
+}, {
+  path: "/quran-system",
+  icon: Book,
+  label: "Qur'an System"
+}];
+
 export const Navigation = () => {
   const location = useLocation();
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLearnExpanded, setIsLearnExpanded] = useState(false);
   const isMobile = useIsMobile();
   const {
     user,
     loading
   } = useAuth();
+
+  // Check if any learn item is active
+  const isLearnActive = learnItems.some(item => location.pathname === item.path);
 
   // Don't show navigation on auth page
   if (location.pathname === '/auth') {
@@ -91,6 +100,33 @@ export const Navigation = () => {
                 <Icon className="h-5 w-5" />
                 <span className="font-medium">{label}</span>
               </Link>)}
+            
+            {/* Mobile Learn Section */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setIsLearnExpanded(!isLearnExpanded)}
+                className={cn("flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50", isLearnActive ? "bg-green-500 text-white shadow-lg shadow-green-500/20" : "text-gray-600 hover:text-gray-800")}
+              >
+                <div className="flex items-center space-x-3">
+                  <GraduationCap className="h-5 w-5" />
+                  <span className="font-medium">Learn</span>
+                </div>
+                {isLearnExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+              
+              {isLearnExpanded && (
+                <div className="ml-4 space-y-1">
+                  {learnItems.map(({
+                  path,
+                  icon: Icon,
+                  label
+                }) => <Link key={path} to={path} onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200", "hover:bg-gray-50", location.pathname === path ? "bg-green-400 text-white" : "text-gray-600 hover:text-gray-800")}>
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm font-medium">{label}</span>
+                    </Link>)}
+                </div>
+              )}
+            </div>
           </div>
         </nav>
       </>;
@@ -116,6 +152,35 @@ export const Navigation = () => {
                 {label}
               </span>
             </Link>)}
+          
+          {/* Desktop Learn Section */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setIsLearnExpanded(!isLearnExpanded)}
+              className={cn("flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50 hover:scale-105", isLearnActive ? "bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600" : "text-gray-600 hover:text-gray-800")}
+            >
+              <div className="flex items-center space-x-3">
+                <GraduationCap className="h-5 w-5 flex-shrink-0" />
+                <span className={cn("font-medium transition-opacity duration-300", isMinimized ? "opacity-0 hidden" : "opacity-100")}>
+                  Learn
+                </span>
+              </div>
+              {!isMinimized && (isLearnExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+            </button>
+            
+            {isLearnExpanded && !isMinimized && (
+              <div className="ml-4 space-y-1">
+                {learnItems.map(({
+                path,
+                icon: Icon,
+                label
+              }) => <Link key={path} to={path} className={cn("flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200", "hover:bg-gray-50", location.pathname === path ? "bg-green-400 text-white" : "text-gray-600 hover:text-gray-800")}>
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </Link>)}
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Desktop Auth Section */}
