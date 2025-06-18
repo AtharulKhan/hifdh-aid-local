@@ -20,7 +20,8 @@ import {
   TrendingUp,
   Award,
   Target,
-  Settings
+  Settings,
+  Undo
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
@@ -845,6 +846,13 @@ export const MurajahMainDashboard = () => {
     const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
     return uncompletedTasks.slice(1, 6); // Next 5 tasks after the first one
   }, [memorizationSchedule]);
+
+  // Get the next task after the current one for display when current is completed
+  const nextMemorizationTask = React.useMemo(() => {
+    if (!todaysMemorizationTask?.completed) return null;
+    const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
+    return uncompletedTasks[0] || null; // First uncompleted task after current
+  }, [memorizationSchedule, todaysMemorizationTask]);
   
   const weeklyMemorizationTasks = memorizationSchedule.filter(item => {
     const date = parseISO(item.date);
@@ -972,7 +980,14 @@ export const MurajahMainDashboard = () => {
                         onClick={() => toggleCycleCompletion(cycle.id)}
                         className="text-xs"
                       >
-                        {cycle.completed ? "Undo" : "Complete"}
+                        {cycle.completed ? (
+                          <>
+                            <Undo className="h-3 w-3 mr-1" />
+                            Undo
+                          </>
+                        ) : (
+                          "Complete"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -1019,12 +1034,33 @@ export const MurajahMainDashboard = () => {
                       onClick={toggleMemorizationTaskCompletion}
                       className="text-xs"
                     >
-                      {todaysMemorizationTask.completed ? "Undo" : "Complete"}
+                      {todaysMemororizationTask.completed ? (
+                        <>
+                          <Undo className="h-3 w-3 mr-1" />
+                          Undo
+                        </>
+                      ) : (
+                        "Complete"
+                      )}
                     </Button>
                   </div>
                 </div>
+
+                {/* Show next task when current is completed */}
+                {todaysMemorizationTask.completed && nextMemorizationTask && (
+                  <div className="p-2 sm:p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Target className="h-4 w-4 text-blue-600" />
+                      <h5 className="font-medium text-sm text-blue-800">Next Up</h5>
+                    </div>
+                    <div className="ml-6">
+                      <p className="font-medium text-xs sm:text-sm">{format(parseISO(nextMemorizationTask.date), "EEE, MMM d")}</p>
+                      <p className="text-xs sm:text-sm text-blue-700">{nextMemorizationTask.task}</p>
+                    </div>
+                  </div>
+                )}
                 
-                {upcomingMemorizationTasks.length > 0 && (
+                {!todaysMemorizationTask.completed && upcomingMemorizationTasks.length > 0 && (
                   <div>
                     <h5 className="font-medium mb-2 text-xs sm:text-sm text-gray-700">Upcoming Tasks</h5>
                     <div className="space-y-2">
