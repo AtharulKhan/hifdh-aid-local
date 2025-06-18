@@ -4,6 +4,7 @@ import { Navigation } from "./components/Navigation";
 import { Toaster } from "./components/ui/toaster";
 import { AudioProvider } from "./contexts/AudioContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { WeakSpotsProvider } from "./contexts/WeakSpotsContext";
 import { useIsMobile } from "./hooks/use-mobile";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
@@ -27,32 +28,34 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AudioProvider>
-          <div className="flex min-h-screen bg-background w-full">
-            <Navigation />
-            <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Navigate to="/" replace />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/page-view" element={<PageView />} />
-                <Route path="/test" element={<Test />} />
-                <Route path="/tajweed" element={<Tajweed />} />
-                <Route path="/murajah" element={<Murajah />} />
-                <Route path="/quran-system" element={<QuranSystem />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/journal" element={<Journal />} />
-                <Route path="/mindfulness" element={<Mindfulness />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/index" element={<Index />} />
-                <Route path="/weak-spots" element={<WeakSpotsHub />} />
-                <Route path="/consolidation-view/:surah_number/:ayah_number" element={<ConsolidationView />} />
-              </Routes>
-            </main>
-          </div>
-          <Toaster />
-        </AudioProvider>
+        <WeakSpotsProvider>
+          <AudioProvider>
+            <div className="flex min-h-screen bg-background w-full">
+              <Navigation />
+              <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/page-view" element={<PageView />} />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="/tajweed" element={<Tajweed />} />
+                  <Route path="/murajah" element={<Murajah />} />
+                  <Route path="/quran-system" element={<QuranSystem />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/journal" element={<Journal />} />
+                  <Route path="/mindfulness" element={<Mindfulness />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/index" element={<Index />} />
+                  <Route path="/weak-spots" element={<WeakSpotsHub />} />
+                  <Route path="/consolidation-view/:surah_number/:ayah_number" element={<ConsolidationView />} />
+                </Routes>
+              </main>
+            </div>
+            <Toaster />
+          </AudioProvider>
+        </WeakSpotsProvider>
       </AuthProvider>
     </Router>
   );

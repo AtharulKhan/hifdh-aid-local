@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,23 +6,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 import { getVerseById, getSurahName, getVersesArray, QuranVerse, getVerseBySurahAyah as getQuranVerseBySurahAyah } from '@/data/quranData';
 import { VerseDisplay } from '@/types/features';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export const ConsolidationView: React.FC = () => {
   const { surah_number: surahParam, ayah_number: ayahParam } = useParams<{ surah_number: string; ayah_number: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [weakVerse, setWeakVerse] = useState<VerseDisplay | null>(null);
   const [precedingVerses, setPrecedingVerses] = useState<VerseDisplay[]>([]);
   const [followingVerses, setFollowingVerses] = useState<VerseDisplay[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [mastering, setMastering] = useState<boolean>(false);
 
   const surahNumber = parseInt(surahParam || '0');
   const ayahNumber = parseInt(ayahParam || '0');
 
-  // Memoize allVerses to prevent re-fetching unless quranData changes (which it doesn't in this app's lifecycle)
+  // Memoize allVerses to prevent re-fetching unless quranData changes
   const allVerses = useMemo(() => getVersesArray(), []);
 
   useEffect(() => {
@@ -48,14 +53,13 @@ export const ConsolidationView: React.FC = () => {
 
     if (currentVerseDisplay) {
       const currentGlobalId = currentVerseDisplay.id;
-      const currentGlobalId = currentVerse.id;
 
       // Preceding verses
       const preceding: VerseDisplay[] = [];
       for (let i = 1; i <= 5; i++) {
         const prevGlobalId = currentGlobalId - i;
         if (prevGlobalId < 1) break; // Start of Quran
-        const prevVerseData = getVerseById(prevGlobalId); // Uses the sorted array by id from quranData
+        const prevVerseData = getVerseById(prevGlobalId);
         if (prevVerseData && prevVerseData.surah === surahNumber) {
           preceding.unshift({
             id: prevVerseData.id,
@@ -100,12 +104,13 @@ export const ConsolidationView: React.FC = () => {
   }, [surahNumber, ayahNumber, user, allVerses]);
 
   const markAsMastered = async () => {
-    if (!user || !weakVerse) return;
-    setLoading(true);
+    if (!user || !weakVerse || mastering) return;
+    
+    setMastering(true);
     try {
       const { error } = await supabase
         .from('weak_spots')
-        .update({ status: 'mastered', updated_at: new Date().toISOString() })
+        .update({ status: 'mastered' })
         .match({
           user_id: user.id,
           surah_number: weakVerse.surah_number,
@@ -114,15 +119,27 @@ export const ConsolidationView: React.FC = () => {
 
       if (error) {
         console.error('Error marking as mastered:', error);
-        // Potentially show a toast notification with the error
+        toast({
+          title: "Error",
+          description: "Failed to mark verse as mastered. Please try again.",
+          variant: "destructive",
+        });
       } else {
-        // Potentially show a success toast
+        toast({
+          title: "Success!",
+          description: "Verse marked as mastered and removed from weak spots.",
+        });
         navigate('/weak-spots');
       }
     } catch (e) {
       console.error('Exception marking as mastered:', e);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setMastering(false);
     }
   };
 
@@ -135,11 +152,26 @@ export const ConsolidationView: React.FC = () => {
   }
 
   if (!weakVerse) {
-    return <div className="container mx-auto p-4 text-center">Verse not found or invalid parameters. Ensure you are logged in. Surah: {surahNumber}, Ayah: {ayahNumber}</div>;
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p className="mb-4">Verse not found. Please check the parameters.</p>
+        <Button onClick={() => navigate('/weak-spots')} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Weak Spots
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto p-4">
+      <div className="flex items-center justify-between mb-6">
+        <Button onClick={() => navigate('/weak-spots')} variant="outline" size="sm">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Weak Spots
+        </Button>
+      </div>
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-xl text-center">
@@ -172,8 +204,20 @@ export const ConsolidationView: React.FC = () => {
       </div>
 
       <div className="mt-8 text-center">
-        <Button onClick={markAsMastered} size="lg" className="bg-green-600 hover:bg-green-700">
-          Mark as Mastered
+        <Button 
+          onClick={markAsMastered} 
+          size="lg" 
+          className="bg-green-600 hover:bg-green-700"
+          disabled={mastering}
+        >
+          {mastering ? (
+            "Marking as Mastered..."
+          ) : (
+            <>
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              Mark as Mastered
+            </>
+          )}
         </Button>
       </div>
     </div>

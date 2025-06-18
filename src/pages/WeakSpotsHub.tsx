@@ -1,76 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { getSurahName, QuranVerse, getVersesArray, getVerseBySurahAyah } from '@/data/quranData';
-import { getVerseSnippet } from '@/lib/utils';
-import { WeakSpotDisplay } from '@/types/features';
-import { Tables } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWeakSpots } from '@/hooks/useWeakSpots';
 
 export const WeakSpotsHub: React.FC = () => {
   const { user } = useAuth();
-  // Supabase data will conform to Tables<'weak_spots'> which is WeakSpotRow
-  // We then map it to WeakSpotDisplay for our UI
-  const [weakSpotsList, setWeakSpotsList] = useState<WeakSpotDisplay[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const fetchWeakSpots = async () => {
-      if (!user) {
-        setLoading(false);
-        setWeakSpotsList([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        // Fetch all columns needed for WeakSpotDisplay that come directly from the DB
-        const { data: rawWeakSpots, error } = await supabase
-          .from('weak_spots')
-          .select('id, user_id, surah_number, ayah_number, status, created_at, updated_at')
-          .eq('user_id', user.id)
-          .eq('status', 'weak')
-          .returns<Tables<'weak_spots'>[]>(); // Ensure Supabase client returns the correct type
-
-        if (error) {
-          console.error('Error fetching weak spots:', error);
-          setWeakSpotsList([]);
-        } else if (rawWeakSpots) {
-          const allVerses = getVersesArray(); // Get all verses once for efficiency
-
-          const displayDataList: WeakSpotDisplay[] = rawWeakSpots.map(spot => {
-            const verseData = getVerseBySurahAyah(spot.surah_number, spot.ayah_number, allVerses);
-
-            let textSnippet = "Snippet not available.";
-            let verseKey = `${spot.surah_number}:${spot.ayah_number}`;
-
-            if (verseData) {
-              verseKey = verseData.verse_key;
-              textSnippet = getVerseSnippet(verseData.text); // Use utility function
-            }
-
-            return {
-              ...spot, // Spread all fields from the raw weak spot
-              verse_key: verseKey,
-              text_snippet: textSnippet,
-              surah_name: getSurahName(spot.surah_number),
-            };
-          });
-          setWeakSpotsList(displayDataList);
-        }
-      } catch (e) {
-        console.error('Exception fetching weak spots:', e);
-        setWeakSpotsList([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeakSpots();
-  }, [user]);
+  const { weakSpots, loading } = useWeakSpots();
 
   if (loading) {
     return <div className="container mx-auto p-4 text-center">Loading weak spots...</div>;
@@ -80,15 +19,29 @@ export const WeakSpotsHub: React.FC = () => {
     return <div className="container mx-auto p-4 text-center">Please log in to see your weak spots.</div>;
   }
 
-  if (weakSpotsList.length === 0) {
-    return <div className="container mx-auto p-4 text-center">No weak spots flagged yet. Start reviewing to identify them!</div>;
+  if (weakSpots.length === 0) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6 text-center">Your Weak Spots</h1>
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No weak spots flagged yet.</p>
+          <p className="text-sm text-gray-500">
+            Look for the flag icon 🚩 next to verses throughout the app to mark them as weak spots!
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6 text-center">Your Weak Spots</h1>
+      <p className="text-center text-gray-600 mb-6">
+        {weakSpots.length} verse{weakSpots.length !== 1 ? 's' : ''} flagged for review
+      </p>
+      
       <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {weakSpotsList.map(spot => (
+        {weakSpots.map(spot => (
           <Card key={spot.id} className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
