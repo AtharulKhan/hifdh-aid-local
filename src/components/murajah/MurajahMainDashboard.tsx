@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1035,7 +1034,7 @@ export const MurajahMainDashboard = () => {
                       onClick={toggleMemorizationTaskCompletion}
                       className="text-xs"
                     >
-                      {todaysMemorizationTask.completed ? (
+                      {todaysMemororizationTask.completed ? (
                         <>
                           <Undo className="h-3 w-3 mr-1" />
                           Undo
