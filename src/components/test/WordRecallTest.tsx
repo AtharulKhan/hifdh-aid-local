@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { ArrowLeft, Settings, RefreshCw, Plus, Minus, Eye, EyeOff } from "lucide
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { getVersesArray, getSurahName, QuranVerse, surahNamesData, getJuzInfo } from "@/data/quranData";
+import { VerseWithFlag } from "@/components/weak-spots/VerseWithFlag";
 
 interface TestMemorizationEntry {
   id: string;
@@ -408,8 +408,22 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
                   Verse {index + 1} of {currentVerses.length}
                 </Badge>
               </div>
-              <div className={`font-arabic text-lg md:text-2xl text-right leading-relaxed text-gray-800 break-words p-4 bg-white rounded-lg border border-slate-100 ${enableTajweed ? 'tajweed-text' : ''}`}>
-                {renderVerseWithHiddenWords(verse)}
+              <div className="relative group">
+                <div className="flex items-start gap-2 flex-row-reverse">
+                  <div className="flex-shrink-0 mt-1">
+                    <VerseWithFlag 
+                      surahNumber={verse.surah}
+                      ayahNumber={verse.ayah}
+                      verseText=""
+                      showFlag={true}
+                      flagSize="sm"
+                      className="opacity-60 group-hover:opacity-100 transition-opacity"
+                    />
+                  </div>
+                  <div className={`flex-1 font-arabic text-lg md:text-2xl text-right leading-relaxed text-gray-800 break-words p-4 bg-white rounded-lg border border-slate-100 ${enableTajweed ? 'tajweed-text' : ''}`}>
+                    {renderVerseWithHiddenWords(verse)}
+                  </div>
+                </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
                 Hover over the gaps to reveal hidden words • {hiddenWords.get(verse.verse_key)?.length || 0} words hidden
