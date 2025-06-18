@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, RefreshCw, Eye, EyeOff, Settings, SkipForward } from "lucide-react";
-import { getVersesArray, getSurahName, QuranVerse, getJuzInfo } from "@/data/quranData";
+import { getVersesArray, getSurahName, QuranVerse, getJuzInfo, surahNamesData } from "@/data/quranData";
 import { WeakSpotFlag } from "@/components/weak-spots/WeakSpotFlag";
 
 interface FirstWordTestProps {
@@ -22,10 +23,11 @@ interface FirstWordTestProps {
   }>;
 }
 
-type TestScope = "memorized" | "juz";
+type TestScope = "memorized" | "surah" | "juz";
 
 export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedEntries }) => {
   const [testScope, setTestScope] = useState<TestScope>("memorized");
+  const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedJuz, setSelectedJuz] = useState<number>(1);
   const [currentVerse, setCurrentVerse] = useState<QuranVerse | null>(null);
   const [showFullVerse, setShowFullVerse] = useState(false);
@@ -34,6 +36,7 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
   const [hoveredWords, setHoveredWords] = useState<Set<number>>(new Set());
 
   const allVerses = getVersesArray();
+  const surahNumbers = Object.keys(surahNamesData).map(Number).sort((a, b) => a - b);
 
   const getMemorizedJuzNumbers = () => {
     return [...new Set(memorizedEntries.map(entry => entry.juz))].sort((a, b) => a - b);
@@ -68,6 +71,9 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
           });
         }
         break;
+      case "surah":
+        eligibleVerses = allVerses.filter(verse => verse.surah === selectedSurah);
+        break;
       case "juz":
         const juzInfo = getJuzInfo(selectedJuz);
         if (juzInfo) {
@@ -98,7 +104,7 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
 
   useEffect(() => {
     generateRandomVerse();
-  }, [testScope, selectedJuz, memorizedEntries]);
+  }, [testScope, selectedSurah, selectedJuz, memorizedEntries]);
 
   const handleCorrect = () => {
     setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
@@ -118,6 +124,8 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
           return "from your memorized portion (no entries found - using entire Quran)";
         }
         return `from your memorized Juz: ${memorizedJuzNumbers.join(', ')}`;
+      case "surah":
+        return `from ${getSurahName(selectedSurah)}`;
       case "juz":
         return `from Juz ${selectedJuz}`;
     }
@@ -189,7 +197,7 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-800 text-sm md:text-base">Test Configuration</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               <div className="space-y-2">
                 <label className="text-xs md:text-sm font-medium text-gray-700">Test Scope</label>
                 <Select value={testScope} onValueChange={(value: TestScope) => setTestScope(value)}>
@@ -198,10 +206,29 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="memorized">Your Memorized</SelectItem>
+                    <SelectItem value="surah">Specific Surah</SelectItem>
                     <SelectItem value="juz">Specific Juz</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {testScope === "surah" && (
+                <div className="space-y-2">
+                  <label className="text-xs md:text-sm font-medium text-gray-700">Select Surah</label>
+                  <Select value={selectedSurah.toString()} onValueChange={(value) => setSelectedSurah(Number(value))}>
+                    <SelectTrigger className="text-xs md:text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {surahNumbers.map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}. {getSurahName(num)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {testScope === "juz" && (
                 <div className="space-y-2">

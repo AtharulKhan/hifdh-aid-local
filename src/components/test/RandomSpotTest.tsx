@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -276,8 +277,8 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="memorized">Your Memorized</SelectItem>
-                    <SelectItem value="surah">Within a Surah</SelectItem>
-                    <SelectItem value="juz">Within a Juz</SelectItem>
+                    <SelectItem value="surah">Specific Surah</SelectItem>
+                    <SelectItem value="juz">Specific Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>
                   </SelectContent>
                 </Select>
@@ -373,7 +374,7 @@ export const RandomSpotTest: React.FC<RandomSpotTestProps> = ({ onBack, memorize
                       value={sliderValue}
                       onValueChange={(value) => {
                         setSliderValue(value);
-                        setNextWordCount(0); // Reset next word count when slider changes
+                        setNextWordCount(0);
                       }}
                       max={totalWords}
                       min={1}
