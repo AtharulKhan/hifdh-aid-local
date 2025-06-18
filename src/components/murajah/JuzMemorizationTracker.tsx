@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,8 +33,49 @@ export const JuzMemorizationTracker = () => {
     }
   }, []);
 
+  // Helper function to update memorization planner data
+  const updateMemorizationPlannerData = (juzData: JuzMemorization[]) => {
+    const memorizedJuzNumbers = juzData
+      .filter(j => j.isMemorized)
+      .map(j => j.juzNumber);
+    
+    const memorizedSurahIds = new Set<number>();
+    
+    // Add surahs from fully memorized juz
+    memorizedJuzNumbers.forEach(juzNumber => {
+      const juz = juzData.find(j => j.juzNumber === juzNumber);
+      if (juz?.isMemorized) {
+        const juzInfo = juzData[juzNumber.toString() as keyof typeof juzData];
+        if (juzInfo) {
+          Object.keys(juzInfo.verse_mapping).forEach(surahId => {
+            memorizedSurahIds.add(Number(surahId));
+          });
+        }
+      }
+    });
+    
+    // Add individually memorized surahs
+    juzData.forEach(juz => {
+      if (juz.memorizedSurahs) {
+        juz.memorizedSurahs.forEach(surahId => {
+          memorizedSurahIds.add(surahId);
+        });
+      }
+    });
+    
+    const plannerData = {
+      juz: memorizedJuzNumbers,
+      surahs: Array.from(memorizedSurahIds)
+    };
+    
+    localStorage.setItem('memorizationPlannerAlreadyMemorized', JSON.stringify(plannerData));
+  };
+
   useEffect(() => {
     localStorage.setItem('murajah-juz-memorization', JSON.stringify(memorizedJuz));
+    
+    // Update memorization planner data format
+    updateMemorizationPlannerData(memorizedJuz);
     
     if (user && memorizedJuz.length > 0) {
       syncToSupabase();
