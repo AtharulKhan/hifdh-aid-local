@@ -24,12 +24,12 @@ import { UserMenu } from "./auth/UserMenu";
 
 const navItems = [
   { path: "/", icon: BarChart3, label: "Dashboard" },
-  { path: "/page-view", icon: BookOpen, label: "Quran & Tafsir" },
+  { path: "/page-view", icon: BookOpen, label: "Qur'an & Tafsir" },
   { path: "/test", icon: ClipboardCheck, label: "Memorization Test" },
   { path: "/tajweed", icon: BookText, label: "Tajweed Refresher" },
   { path: "/quran-system", icon: Book, label: "Qur'an System" },
-  { path: "/murajah", icon: RotateCcw, label: "Your Schedule" },
-  { path: "/weak-spots", icon: ListChecks, label: "Weak Spots" }
+  { path: "/weak-spots", icon: ListChecks, label: "Weak Spots" },
+  { path: "/murajah", icon: RotateCcw, label: "Schedule & Settings" }
 ];
 
 export const Navigation = () => {
