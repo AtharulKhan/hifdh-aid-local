@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare, Heart
+import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare, Heart, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -28,6 +28,10 @@ const navItems = [{
   path: "/murajah",
   icon: RotateCcw,
   label: "Schedule & Settings"
+}, {
+  path: "/murajah?tab=hifdh-settings",
+  icon: Settings,
+  label: "Set Hifdh Settings"
 }];
 
 const learnItems = [{
@@ -117,7 +121,7 @@ Your Story:
             path,
             icon: Icon,
             label
-          }) => <Link key={path} to={path} onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50", location.pathname === path ? "bg-green-500 text-white shadow-lg shadow-green-500/20" : "text-gray-600 hover:text-gray-800")}>
+          }) => <Link key={path} to={path} onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50", location.pathname === path || (path.includes('?') && location.pathname + location.search === path) ? "bg-green-500 text-white shadow-lg shadow-green-500/20" : "text-gray-600 hover:text-gray-800")}>
                 <Icon className="h-5 w-5" />
                 <span className="font-medium">{label}</span>
               </Link>)}
@@ -203,7 +207,7 @@ Your Story:
           path,
           icon: Icon,
           label
-        }) => <Link key={path} to={path} className={cn("flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50 hover:scale-105", location.pathname === path ? "bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600" : "text-gray-600 hover:text-gray-800")}>
+        }) => <Link key={path} to={path} className={cn("flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200", "hover:bg-gray-50 hover:scale-105", location.pathname === path || (path.includes('?') && location.pathname + location.search === path) ? "bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600" : "text-gray-600 hover:text-gray-800")}>
               <Icon className="h-5 w-5 flex-shrink-0" />
               <span className={cn("font-medium transition-opacity duration-300", isMinimized ? "opacity-0 hidden" : "opacity-100")}>
                 {label}
