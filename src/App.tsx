@@ -1,48 +1,71 @@
 
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
+import { Toaster } from "./components/ui/toaster";
+import { AudioProvider } from "./contexts/AudioContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { WeakSpotsProvider } from "./contexts/WeakSpotsContext";
+import { useIsMobile } from "./hooks/use-mobile";
 import Index from "./pages/Index";
-import Stats from "./pages/Stats";
+import Chat from "./pages/Chat";
+import Journal from "./pages/Journal";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
+import Mindfulness from "./pages/Mindfulness";
 import PageView from "./pages/PageView";
 import Test from "./pages/Test";
-import WeakSpotsHub from "./pages/WeakSpotsHub";
-import Murajah from "./pages/Murajah";
 import Tajweed from "./pages/Tajweed";
+import Murajah from "./pages/Murajah";
 import QuranSystem from "./pages/QuranSystem";
+import Dashboard from "./pages/Dashboard";
 import { AuthPage } from "./components/auth/AuthPage";
+import WeakSpotsHub from "./pages/WeakSpotsHub";
+import ConsolidationView from "./pages/ConsolidationView";
+import { usePageTracking } from "./hooks/usePageTracking";
 
-const queryClient = new QueryClient();
+// RouteTracker component to track page views
+const RouteTracker = () => {
+  usePageTracking();
+  return null;
+};
 
 function App() {
+  const isMobile = useIsMobile();
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50">
-            <div className="flex">
+    <Router>
+      <AuthProvider>
+        <WeakSpotsProvider>
+          <AudioProvider>
+            <div className="flex min-h-screen bg-background w-full">
               <Navigation />
-              <main className="flex-1 transition-all duration-300">
+              <main className={`flex-1 ${isMobile ? 'pt-16' : ''}`}>
+                <RouteTracker />
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/stats" element={<Stats />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                  <Route path="/auth" element={<AuthPage />} />
                   <Route path="/page-view" element={<PageView />} />
                   <Route path="/test" element={<Test />} />
-                  <Route path="/weak-spots" element={<WeakSpotsHub />} />
-                  <Route path="/murajah" element={<Murajah />} />
                   <Route path="/tajweed" element={<Tajweed />} />
+                  <Route path="/murajah" element={<Murajah />} />
                   <Route path="/quran-system" element={<QuranSystem />} />
-                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/journal" element={<Journal />} />
+                  <Route path="/mindfulness" element={<Mindfulness />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/index" element={<Index />} />
+                  <Route path="/weak-spots" element={<WeakSpotsHub />} />
+                  <Route path="/consolidation-view/:surah_number/:ayah_number" element={<ConsolidationView />} />
                 </Routes>
               </main>
             </div>
-          </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+            <Toaster />
+          </AudioProvider>
+        </WeakSpotsProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
