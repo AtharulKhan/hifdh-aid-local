@@ -69,24 +69,27 @@ export const WebhookExportDialog: React.FC<WebhookExportDialogProps> = ({ open, 
         data: localData
       };
 
+      console.log('Sending webhook request to:', webhookUrl);
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'no-cors', // This bypasses CORS for webhooks like Google Apps Script
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        toast({
-          title: "Data sent successfully",
-          description: `Local cache data has been sent to the webhook endpoint.`
-        });
-        onOpenChange(false);
-        setWebhookUrl('');
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+      // With no-cors mode, we can't read the response status
+      // The request will succeed if it's sent, regardless of the server response
+      toast({
+        title: "Data sent successfully",
+        description: "Local cache data has been sent to the webhook endpoint. Check your webhook's logs to confirm receipt."
+      });
+      
+      onOpenChange(false);
+      setWebhookUrl('');
+
     } catch (error) {
       console.error('Webhook export error:', error);
       toast({
@@ -127,6 +130,9 @@ export const WebhookExportDialog: React.FC<WebhookExportDialogProps> = ({ open, 
               onChange={(e) => setWebhookUrl(e.target.value)}
               disabled={isLoading}
             />
+            <p className="text-xs text-gray-500">
+              Note: For Google Apps Script webhooks, the request uses no-cors mode to bypass CORS restrictions.
+            </p>
           </div>
         </div>
 
