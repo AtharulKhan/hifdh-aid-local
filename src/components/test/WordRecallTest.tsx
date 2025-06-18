@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
   const [currentVerses, setCurrentVerses] = useState<QuranVerse[]>([]);
   const [versesCount, setVersesCount] = useState<number>(5);
   const [hiddenWords, setHiddenWords] = useState<Map<string, HiddenWord[]>>(new Map());
-  const [gapRate, setGapRate] = useState<number>(60);
+  const [gapRate, setGapRate] = useState<number>(60); // Default 60% of words to hide
   const [showSettings, setShowSettings] = useState(false);
   const [showAllWords, setShowAllWords] = useState(false);
   const [enableTajweed, setEnableTajweed] = useState(false);
@@ -283,8 +284,8 @@ export const WordRecallTest: React.FC<WordRecallTestProps> = ({ onBack, memorize
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="memorized">Your Memorized</SelectItem>
-                    <SelectItem value="surah">Specific Surah</SelectItem>
-                    <SelectItem value="juz">Specific Juz</SelectItem>
+                    <SelectItem value="surah">Within a Surah</SelectItem>
+                    <SelectItem value="juz">Within a Juz</SelectItem>
                     <SelectItem value="entire">Entire Quran</SelectItem>
                   </SelectContent>
                 </Select>
