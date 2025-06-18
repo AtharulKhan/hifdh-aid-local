@@ -12,7 +12,7 @@ interface ExpandableSectionProps {
 
 export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
   children,
-  initialHeight = '2400px',
+  initialHeight = '150px',
   title,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
