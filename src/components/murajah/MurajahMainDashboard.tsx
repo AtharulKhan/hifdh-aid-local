@@ -20,13 +20,15 @@ import {
   TrendingUp,
   Award,
   Target,
-  Settings
+  Settings,
+  ExternalLink
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { PracticeVerseCard } from './PracticeVerseCard';
+import { useNavigate } from 'react-router-dom';
 
 // Use the actual data structures from quranData
 const juzData = juzDataJson;
@@ -98,6 +100,8 @@ interface RandomVerseSettings {
 }
 
 export const MurajahMainDashboard = () => {
+  const navigate = useNavigate();
+  
   const [todaysReviewCycles, setTodaysReviewCycles] = useState<ReviewCycle[]>([]);
   const [weeklyReviewCycles, setWeeklyReviewCycles] = useState<ReviewCycle[]>([]);
   const [memorizationSchedule, setMemorizationSchedule] = useState<ScheduleItem[]>([]);
@@ -939,9 +943,20 @@ export const MurajahMainDashboard = () => {
         {/* Today's Muraja'ah */}
         <Card>
           <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-              Today's Muraja'ah
+            <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                Today's Muraja'ah
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/murajah')}
+                className="text-xs flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View All
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -987,9 +1002,20 @@ export const MurajahMainDashboard = () => {
         {/* Today's Goal */}
         <Card>
           <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Target className="h-4 w-4 sm:h-5 sm:w-5" />
-              Today's Goal
+            <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 sm:h-5 sm:w-5" />
+                Today's Goal
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/quran-system')}
+                className="text-xs flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Go to Planner
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
