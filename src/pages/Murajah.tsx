@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -205,7 +204,7 @@ const Murajah = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto md:h-10">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto md:h-10">
           <TabsTrigger value="dashboard" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Dashboard
           </TabsTrigger>
@@ -218,11 +217,8 @@ const Murajah = () => {
           <TabsTrigger value="log" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Muraja'ah Log
           </TabsTrigger>
-          <TabsTrigger value="juz" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
-            Hifdh Progress
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
-            Settings
+          <TabsTrigger value="hifdh-settings" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
+            Set Hifdh Settings
           </TabsTrigger>
           <TabsTrigger value="import-export" className="text-xs md:text-sm px-1 md:px-3 py-2 md:py-1.5">
             Import/Export
@@ -241,16 +237,15 @@ const Murajah = () => {
           <MemorizationPlanner />
         </TabsContent>
 
-        <TabsContent value="juz" className="space-y-6">
-          <JuzMemorizationTracker />
-        </TabsContent>
-
         <TabsContent value="log" className="space-y-6">
           <MurajahLog />
         </TabsContent>
 
-        <TabsContent value="settings" className="space-y-6">
-          <ReviewSettings />
+        <TabsContent value="hifdh-settings" className="space-y-6">
+          <div className="space-y-6">
+            <JuzMemorizationTracker />
+            <ReviewSettings />
+          </div>
         </TabsContent>
 
         <TabsContent value="import-export" className="space-y-6">
