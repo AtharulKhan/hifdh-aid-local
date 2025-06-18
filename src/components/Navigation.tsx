@@ -66,7 +66,7 @@ export const Navigation = () => {
   };
 
   const handleHifdhStory = () => {
-    const subject = encodeURIComponent("My Hifdh Story - Email");
+    const subject = encodeURIComponent("My Hifdh Story");
     const body = encodeURIComponent(`Name: 
 
 Age: 
