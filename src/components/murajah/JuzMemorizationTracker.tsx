@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Check, Hash } from "lucide-react";
+import { BookOpen, Check, Hash, Search } from "lucide-react";
+import { ExpandableSection } from "@/components/ui/ExpandableSection";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +23,7 @@ interface JuzMemorization {
 
 export const JuzMemorizationTracker = () => {
   const [memorizedJuz, setMemorizedJuz] = useState<JuzMemorization[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
 
   // Load data from localStorage on component mount
@@ -31,11 +34,9 @@ export const JuzMemorizationTracker = () => {
     }
   }, []);
 
-  // Save to localStorage and Supabase whenever memorizedJuz change
   useEffect(() => {
     localStorage.setItem('murajah-juz-memorization', JSON.stringify(memorizedJuz));
     
-    // Also save to Supabase if user is logged in
     if (user && memorizedJuz.length > 0) {
       syncToSupabase();
     }
@@ -74,7 +75,7 @@ export const JuzMemorizationTracker = () => {
                 ...juz, 
                 isMemorized,
                 dateMemorized: isMemorized ? new Date().toISOString().split('T')[0] : undefined,
-                memorizedSurahs: isMemorized ? undefined : juz.memorizedSurahs // Clear individual surahs if full juz is marked
+                memorizedSurahs: isMemorized ? undefined : juz.memorizedSurahs
               }
             : juz
         );
@@ -109,7 +110,7 @@ export const JuzMemorizationTracker = () => {
             return {
               ...juz,
               memorizedSurahs: newSurahs.length > 0 ? newSurahs : undefined,
-              isMemorized: false // Uncheck full juz if individual surahs are being tracked
+              isMemorized: false
             };
           }
           return juz;
@@ -185,7 +186,7 @@ export const JuzMemorizationTracker = () => {
 
   const isSurahMemorizedInJuz = (juzNumber: number, surahId: number) => {
     const juz = memorizedJuz.find(j => j.juzNumber === juzNumber);
-    if (juz?.isMemorized) return true; // If full juz is memorized, all surahs are memorized
+    if (juz?.isMemorized) return true;
     return juz?.memorizedSurahs?.includes(surahId) || false;
   };
 
@@ -210,6 +211,29 @@ export const JuzMemorizationTracker = () => {
       };
     });
   };
+
+  // Filter juz based on search term
+  const filteredJuzData = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return Object.values(juzData);
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+    
+    return Object.values(juzData).filter((juz) => {
+      // Search by Juz number
+      if (juz.juz_number.toString().includes(searchLower)) {
+        return true;
+      }
+
+      // Search by Surah names in this Juz
+      const surahsInJuz = getSurahsInJuz(juz.juz_number);
+      return surahsInJuz.some(surah => 
+        surah.name_simple.toLowerCase().includes(searchLower) ||
+        surah.name_arabic.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [searchTerm]);
 
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
@@ -243,136 +267,162 @@ export const JuzMemorizationTracker = () => {
         </Card>
       </div>
 
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="p-4 md:p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search by Juz number or Surah name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Juz List */}
       <Card>
         <CardHeader className="p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
             <Hash className="h-4 md:h-5 w-4 md:w-5" />
             Juz Memorization Progress
+            {searchTerm && (
+              <Badge variant="outline" className="text-xs">
+                {filteredJuzData.length} results
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 md:p-6">
-          <div className="space-y-4 md:space-y-6">
-            {Object.values(juzData).map((juz) => {
-              const isMemorized = isJuzMemorized(juz.juz_number);
-              const juzMemData = getJuzData(juz.juz_number);
-              const dateMemorized = getJuzMemorizationDate(juz.juz_number);
-              const surahsInJuz = getSurahsInJuz(juz.juz_number);
-              
-              return (
-                <div
-                  key={juz.juz_number}
-                  className="border border-gray-200 rounded-lg p-4 md:p-6 space-y-4"
-                >
-                  {/* Juz Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        checked={isMemorized}
-                        onCheckedChange={(checked) => toggleMemorization(juz.juz_number, checked as boolean)}
-                        className="flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-bold text-base md:text-lg">
-                            Juz {juz.juz_number}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {juz.verses_count} verses
-                          </Badge>
-                          {isMemorized && (
-                            <Badge variant="default" className="text-xs bg-green-500">
-                              <Check className="h-3 w-3 mr-1" />
-                              Memorized
+          <ExpandableSection 
+            initialHeight="400px"
+            title={null}
+          >
+            <div className="space-y-4 md:space-y-6">
+              {filteredJuzData.map((juz) => {
+                const isMemorized = isJuzMemorized(juz.juz_number);
+                const juzMemData = getJuzData(juz.juz_number);
+                const dateMemorized = getJuzMemorizationDate(juz.juz_number);
+                const surahsInJuz = getSurahsInJuz(juz.juz_number);
+                
+                return (
+                  <div
+                    key={juz.juz_number}
+                    className="border border-gray-200 rounded-lg p-4 md:p-6 space-y-4"
+                  >
+                    {/* Juz Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          checked={isMemorized}
+                          onCheckedChange={(checked) => toggleMemorization(juz.juz_number, checked as boolean)}
+                          className="flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-base md:text-lg">
+                              Juz {juz.juz_number}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {juz.verses_count} verses
                             </Badge>
+                            {isMemorized && (
+                              <Badge variant="default" className="text-xs bg-green-500">
+                                <Check className="h-3 w-3 mr-1" />
+                                Memorized
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs md:text-sm text-gray-600 mt-1">
+                            {juz.first_verse_key} - {juz.last_verse_key}
+                          </div>
+                          {dateMemorized && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Memorized: {new Date(dateMemorized).toLocaleDateString()}
+                            </div>
                           )}
                         </div>
-                        <div className="text-xs md:text-sm text-gray-600 mt-1">
-                          {juz.first_verse_key} - {juz.last_verse_key}
-                        </div>
-                        {dateMemorized && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Memorized: {new Date(dateMemorized).toLocaleDateString()}
-                          </div>
-                        )}
+                      </div>
+                    </div>
+
+                    {/* Page Range Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`start-page-${juz.juz_number}`} className="text-xs md:text-sm">
+                          Start Page
+                        </Label>
+                        <Input
+                          id={`start-page-${juz.juz_number}`}
+                          type="number"
+                          placeholder="Start page"
+                          value={juzMemData?.startPage || ''}
+                          onChange={(e) => updatePageRange(
+                            juz.juz_number, 
+                            e.target.value ? parseInt(e.target.value) : undefined, 
+                            juzMemData?.endPage
+                          )}
+                          className="text-xs md:text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`end-page-${juz.juz_number}`} className="text-xs md:text-sm">
+                          End Page
+                        </Label>
+                        <Input
+                          id={`end-page-${juz.juz_number}`}
+                          type="number"
+                          placeholder="End page"
+                          value={juzMemData?.endPage || ''}
+                          onChange={(e) => updatePageRange(
+                            juz.juz_number, 
+                            juzMemData?.startPage, 
+                            e.target.value ? parseInt(e.target.value) : undefined
+                          )}
+                          className="text-xs md:text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Surahs in this Juz */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm md:text-base flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        Surahs in this Juz
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {surahsInJuz.map((surah) => {
+                          const isSurahMemorized = isSurahMemorizedInJuz(juz.juz_number, surah.id);
+                          return (
+                            <div key={surah.id} className="flex items-center gap-1">
+                              <Checkbox
+                                checked={isSurahMemorized}
+                                onCheckedChange={(checked) => toggleSurahMemorization(juz.juz_number, surah.id, checked as boolean)}
+                                className="h-3 w-3"
+                                disabled={isMemorized}
+                              />
+                              <Badge 
+                                variant={isSurahMemorized ? "default" : "secondary"} 
+                                className={`text-xs cursor-pointer ${
+                                  isSurahMemorized ? 'bg-green-500 hover:bg-green-600' : ''
+                                }`}
+                                onClick={() => toggleSurahMemorization(juz.juz_number, surah.id, !isSurahMemorized)}
+                              >
+                                {surah.name_simple} ({surah.verses})
+                                {isSurahMemorized && <Check className="h-3 w-3 ml-1" />}
+                              </Badge>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
-
-                  {/* Page Range Inputs */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`start-page-${juz.juz_number}`} className="text-xs md:text-sm">
-                        Start Page
-                      </Label>
-                      <Input
-                        id={`start-page-${juz.juz_number}`}
-                        type="number"
-                        placeholder="Start page"
-                        value={juzMemData?.startPage || ''}
-                        onChange={(e) => updatePageRange(
-                          juz.juz_number, 
-                          e.target.value ? parseInt(e.target.value) : undefined, 
-                          juzMemData?.endPage
-                        )}
-                        className="text-xs md:text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`end-page-${juz.juz_number}`} className="text-xs md:text-sm">
-                        End Page
-                      </Label>
-                      <Input
-                        id={`end-page-${juz.juz_number}`}
-                        type="number"
-                        placeholder="End page"
-                        value={juzMemData?.endPage || ''}
-                        onChange={(e) => updatePageRange(
-                          juz.juz_number, 
-                          juzMemData?.startPage, 
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )}
-                        className="text-xs md:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Surahs in this Juz */}
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm md:text-base flex items-center gap-2">
-                      <BookOpen className="h-4 w-4" />
-                      Surahs in this Juz
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {surahsInJuz.map((surah) => {
-                        const isSurahMemorized = isSurahMemorizedInJuz(juz.juz_number, surah.id);
-                        return (
-                          <div key={surah.id} className="flex items-center gap-1">
-                            <Checkbox
-                              checked={isSurahMemorized}
-                              onCheckedChange={(checked) => toggleSurahMemorization(juz.juz_number, surah.id, checked as boolean)}
-                              className="h-3 w-3"
-                              disabled={isMemorized} // Disable if full juz is memorized
-                            />
-                            <Badge 
-                              variant={isSurahMemorized ? "default" : "secondary"} 
-                              className={`text-xs cursor-pointer ${
-                                isSurahMemorized ? 'bg-green-500 hover:bg-green-600' : ''
-                              }`}
-                              onClick={() => toggleSurahMemorization(juz.juz_number, surah.id, !isSurahMemorized)}
-                            >
-                              {surah.name_simple} ({surah.verses})
-                              {isSurahMemorized && <Check className="h-3 w-3 ml-1" />}
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </ExpandableSection>
         </CardContent>
       </Card>
     </div>
