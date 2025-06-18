@@ -4,6 +4,7 @@ import { QuranVerse, getVersesArray, getTranslationForVerse } from '@/data/quran
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { WeakSpotFlag } from '@/components/weak-spots/WeakSpotFlag';
 
 interface PracticeVerseCardProps {
   startVerse: QuranVerse;
@@ -83,7 +84,14 @@ export const PracticeVerseCard: React.FC<PracticeVerseCardProps> = ({ startVerse
         <Badge variant="secondary">
           Surah {currentlyDisplayedVerse.surah}, Ayah {currentlyDisplayedVerse.ayah}
         </Badge>
-        <span className="text-sm text-gray-500">Verse Key: {currentlyDisplayedVerse.verse_key}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Verse Key: {currentlyDisplayedVerse.verse_key}</span>
+          <WeakSpotFlag 
+            surahNumber={currentlyDisplayedVerse.surah}
+            ayahNumber={currentlyDisplayedVerse.ayah}
+            size="sm"
+          />
+        </div>
       </div>
       
       {/* Translation Toggle */}
