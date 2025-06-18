@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import WeakSpotsHub from "./pages/WeakSpotsHub";
 import Murajah from "./pages/Murajah";
 import Tajweed from "./pages/Tajweed";
 import QuranSystem from "./pages/QuranSystem";
-import Auth from "./pages/Auth";
+import { AuthPage } from "./components/auth/AuthPage";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,7 @@ function App() {
                   <Route path="/murajah" element={<Murajah />} />
                   <Route path="/tajweed" element={<Tajweed />} />
                   <Route path="/quran-system" element={<QuranSystem />} />
-                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth" element={<AuthPage />} />
                 </Routes>
               </main>
             </div>
