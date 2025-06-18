@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, RefreshCw, Eye, EyeOff, Settings, SkipForward } from "lucide-react";
 import { getVersesArray, getSurahName, QuranVerse, getJuzInfo } from "@/data/quranData";
+import { WeakSpotFlag } from "@/components/weak-spots/WeakSpotFlag";
 
 interface FirstWordTestProps {
   onBack: () => void;
@@ -238,9 +238,16 @@ export const FirstWordTest: React.FC<FirstWordTestProps> = ({ onBack, memorizedE
           {/* Verse Reference */}
           <div className="bg-blue-50 p-3 md:p-4 rounded-lg border border-blue-200">
             <div className="text-center space-y-2">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs md:text-sm">
-                {getSurahName(currentVerse.surah)} - Verse {currentVerse.ayah}
-              </Badge>
+              <div className="flex items-center justify-center gap-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs md:text-sm">
+                  {getSurahName(currentVerse.surah)} - Verse {currentVerse.ayah}
+                </Badge>
+                <WeakSpotFlag 
+                  surahNumber={currentVerse.surah}
+                  ayahNumber={currentVerse.ayah}
+                  size="sm"
+                />
+              </div>
               <div className="text-sm text-gray-600">
                 {currentVerse.verse_key}
               </div>
