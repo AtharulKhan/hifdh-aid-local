@@ -18,6 +18,7 @@ import Tajweed from "./pages/Tajweed";
 import Murajah from "./pages/Murajah";
 import QuranSystem from "./pages/QuranSystem";
 import Dashboard from "./pages/Dashboard";
+import Stats from "./pages/Stats";
 import { AuthPage } from "./components/auth/AuthPage";
 import WeakSpotsHub from "./pages/WeakSpotsHub";
 import ConsolidationView from "./pages/ConsolidationView";
@@ -50,6 +51,7 @@ function App() {
                   <Route path="/tajweed" element={<Tajweed />} />
                   <Route path="/murajah" element={<Murajah />} />
                   <Route path="/quran-system" element={<QuranSystem />} />
+                  <Route path="/stats" element={<Stats />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/journal" element={<Journal />} />
                   <Route path="/mindfulness" element={<Mindfulness />} />
