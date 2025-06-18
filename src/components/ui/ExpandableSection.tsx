@@ -1,7 +1,5 @@
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface ExpandableSectionProps {
@@ -12,11 +10,9 @@ interface ExpandableSectionProps {
 
 export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
   children,
-  initialHeight = '150px',
+  initialHeight, // This prop is now unused but kept for compatibility
   title,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <div className="mb-1">
       {title && (
@@ -25,35 +21,8 @@ export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
         </div>
       )}
 
-      <div
-        className={cn('relative overflow-hidden transition-all duration-500 ease-in-out')}
-        style={{ maxHeight: isExpanded ? '10000px' : initialHeight }}
-      >
+      <div className={cn('overflow-visible')}>
         <div className={cn("px-4 py-1", title ? "" : "pt-3")}>{children}</div>
-        {!isExpanded && (
-          <div
-            className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none"
-          />
-        )}
-      </div>
-
-      <div className="px-4 pb-1 pt-0 flex justify-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-sm"
-        >
-          {isExpanded ? (
-            <>
-              Show Less <ChevronUp className="ml-2 h-4 w-4" />
-            </>
-          ) : (
-            <>
-              Show More <ChevronDown className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
       </div>
     </div>
   );
