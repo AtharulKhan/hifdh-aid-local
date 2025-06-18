@@ -34,8 +34,8 @@ export const JuzMemorizationTracker = () => {
   }, []);
 
   // Helper function to update memorization planner data
-  const updateMemorizationPlannerData = (juzData: JuzMemorization[]) => {
-    const memorizedJuzNumbers = juzData
+  const updateMemorizationPlannerData = (juzMemorizationData: JuzMemorization[]) => {
+    const memorizedJuzNumbers = juzMemorizationData
       .filter(j => j.isMemorized)
       .map(j => j.juzNumber);
     
@@ -43,19 +43,16 @@ export const JuzMemorizationTracker = () => {
     
     // Add surahs from fully memorized juz
     memorizedJuzNumbers.forEach(juzNumber => {
-      const juz = juzData.find(j => j.juzNumber === juzNumber);
-      if (juz?.isMemorized) {
-        const juzInfo = juzData[juzNumber.toString() as keyof typeof juzData];
-        if (juzInfo) {
-          Object.keys(juzInfo.verse_mapping).forEach(surahId => {
-            memorizedSurahIds.add(Number(surahId));
-          });
-        }
+      const juzInfo = juzData[juzNumber.toString() as keyof typeof juzData];
+      if (juzInfo) {
+        Object.keys(juzInfo.verse_mapping).forEach(surahId => {
+          memorizedSurahIds.add(Number(surahId));
+        });
       }
     });
     
     // Add individually memorized surahs
-    juzData.forEach(juz => {
+    juzMemorizationData.forEach(juz => {
       if (juz.memorizedSurahs) {
         juz.memorizedSurahs.forEach(surahId => {
           memorizedSurahIds.add(surahId);
