@@ -20,15 +20,13 @@ import {
   TrendingUp,
   Award,
   Target,
-  Settings,
-  ExternalLink
+  Settings
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { PracticeVerseCard } from './PracticeVerseCard';
-import { useNavigate } from 'react-router-dom';
 
 // Use the actual data structures from quranData
 const juzData = juzDataJson;
@@ -100,8 +98,6 @@ interface RandomVerseSettings {
 }
 
 export const MurajahMainDashboard = () => {
-  const navigate = useNavigate();
-  
   const [todaysReviewCycles, setTodaysReviewCycles] = useState<ReviewCycle[]>([]);
   const [weeklyReviewCycles, setWeeklyReviewCycles] = useState<ReviewCycle[]>([]);
   const [memorizationSchedule, setMemorizationSchedule] = useState<ScheduleItem[]>([]);
