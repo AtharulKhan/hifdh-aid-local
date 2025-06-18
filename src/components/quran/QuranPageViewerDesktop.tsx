@@ -1,330 +1,396 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { SkipForward, SkipBack, BookOpen, Search } from "lucide-react";
+import { getVersesArray, getVerseById, getSurahName, QuranVerse, tajweedData, getTafsirForVerse, getTafsirIbnKathirForVerse, getTafsirMaarifForVerse, getTranslationForVerse } from "@/data/quranData";
+import { QuranNavigationModal } from "./QuranNavigationModal";
+import { TafsirDialog } from "./TafsirDialog";
+import { TafsirViewer } from "./TafsirViewer";
+import { PersonalNotes } from "./PersonalNotes";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronLeft, ChevronRight, BookOpen, Volume2, VolumeX, Settings, HelpCircle } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAudio } from "@/contexts/AudioContext";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { getTafsir } from "@/lib/tafsir";
-import { useSettings } from "@/contexts/SettingsContext";
 
 interface QuranPageViewerDesktopProps {
-  currentPage: number;
-  onPageChange: (page: number) => void;
-  onNavigate?: (surah: number, ayah: number) => void;
+  startingVerseId?: number;
 }
+export const QuranPageViewerDesktop: React.FC<QuranPageViewerDesktopProps> = ({
+  startingVerseId = 1
+}) => {
+  const [currentSurah, setCurrentSurah] = useState(() => {
+    const startingVerse = getVerseById(startingVerseId);
+    return startingVerse ? startingVerse.surah : 1;
+  });
+  const [showTajweed, setShowTajweed] = useState(false);
+  const [showVerseNumbers, setShowVerseNumbers] = useState(true);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [hideVerses, setHideVerses] = useState(false);
+  const [revelationRate, setRevelationRate] = useState([100]);
+  const [verseRange, setVerseRange] = useState([1, 0]); // [start, end] - 0 means no limit for end
+  const [surahSearch, setSurahSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const allVerses = getVersesArray();
+  const currentSurahVerses = allVerses.filter(verse => verse.surah === currentSurah);
+  const maxSurah = Math.max(...allVerses.map(v => v.surah));
+  const totalSurahVerses = allVerses.filter(verse => verse.surah === currentSurah).length;
 
-export const QuranPageViewerDesktop = ({ currentPage, onPageChange, onNavigate }: QuranPageViewerDesktopProps) => {
-  const [helpOpen, setHelpOpen] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-  const {
-    isPlaying,
-    currentVerse,
-    isAudioAvailable,
-    togglePlay,
-    stop,
-    setAudioSource,
-    setIsAudioAvailable,
-  } = useAudio();
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [showTafsir, setShowTafsir] = useState(false);
-  const [tafsirText, setTafsirText] = useState("");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { fontSize, setFontSize } = useSettings();
+  // Filter surahs based on search
+  const filteredSurahs = Array.from({ length: maxSurah }, (_, i) => i + 1).filter((surahNum) => {
+    if (!surahSearch.trim()) return true;
+    const surahName = getSurahName(surahNum).toLowerCase();
+    const searchTerm = surahSearch.toLowerCase();
+    return surahName.includes(searchTerm) || surahNum.toString().includes(searchTerm);
+  });
 
-  const handleFontSizeChange = (size: number) => {
-    setFontSize(size);
+  const handleNavigate = (verseId: number) => {
+    const verse = getVerseById(verseId);
+    if (verse) {
+      setCurrentSurah(verse.surah);
+    }
+    setRevelationRate([100]);
   };
-
-  const toggleTafsir = useCallback(async () => {
-    setShowTafsir((prevShowTafsir) => !prevShowTafsir);
-  }, []);
-
-  const fetchTafsir = useCallback(
-    async (surah: number, ayah: number) => {
-      try {
-        const tafsir = await getTafsir(surah, ayah);
-        setTafsirText(tafsir);
-      } catch (error) {
-        console.error("Failed to fetch tafsir:", error);
-        setTafsirText("Failed to load Tafsir.");
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    const surah = searchParams.get("surah");
-    const ayah = searchParams.get("ayah");
-
-    if (surah && ayah) {
-      fetchTafsir(parseInt(surah), parseInt(ayah));
-    }
-  }, [searchParams, fetchTafsir]);
-
-  const handleVerseClick = useCallback(
-    async (surah: number, ayah: number) => {
-      setSearchParams({ surah: surah.toString(), ayah: ayah.toString() });
-
-      if (showTafsir) {
-        await fetchTafsir(surah, ayah);
-      }
-
-      if (onNavigate) {
-        onNavigate(surah, ayah);
-      }
-    },
-    [setSearchParams, showTafsir, fetchTafsir, onNavigate]
-  );
-
-  const toggleAudio = () => {
-    if (!isAudioAvailable) {
-      toast({
-        title: "Audio not available",
-        description: "Audio is still loading. Please wait.",
-      });
-      return;
-    }
-
-    if (isPlaying) {
-      stop();
-    } else {
-      const surah = searchParams.get("surah");
-      const ayah = searchParams.get("ayah");
-
-      if (surah && ayah) {
-        togglePlay(parseInt(surah), parseInt(ayah));
-      } else {
-        togglePlay(1, 1);
-      }
+  const goToNextSurah = () => {
+    if (currentSurah < maxSurah) {
+      setCurrentSurah(currentSurah + 1);
+      setRevelationRate([100]);
+      setVerseRange([1, 0]); // Reset verse range for new surah
     }
   };
+  const goToPreviousSurah = () => {
+    if (currentSurah > 1) {
+      setCurrentSurah(currentSurah - 1);
+      setRevelationRate([100]);
+      setVerseRange([1, 0]); // Reset verse range for new surah
+    }
+  };
+  const handleSurahSliderChange = (value: number[]) => {
+    setCurrentSurah(value[0]);
+    setRevelationRate([100]);
+    setVerseRange([1, 0]); // Reset verse range for new surah
+  };
 
-  const renderPageContent = (pageNumber: number) => {
-    const lines = Array.from({ length: 15 }, (_, i) => i + 1);
+  const handleSurahSelect = (surahNumber: number) => {
+    setCurrentSurah(surahNumber);
+    setRevelationRate([100]);
+    setVerseRange([1, 0]);
+  };
 
-    return (
-      <div className="flex flex-col">
-        {lines.map((lineNumber) => {
-          const lineNumberKey = `page-${pageNumber}-line-${lineNumber}`;
-          const words = Array.from({ length: 10 }, (_, i) => i + 1);
+  const getTajweedText = (verse: QuranVerse): string => {
+    const words: string[] = [];
+    let wordIndex = 1;
+    while (true) {
+      const tajweedKey = `${verse.surah}:${verse.ayah}:${wordIndex}`;
+      const tajweedWord = tajweedData[tajweedKey];
+      if (!tajweedWord) break;
+      words.push(tajweedWord.text);
+      wordIndex++;
+    }
+    return words.length > 0 ? words.join(' ') : verse.text;
+  };
+  const removeVerseNumbers = (text: string): string => {
+    return text.replace(/\s*[٠-٩]+\s*$/, '').trim();
+  };
+  const getDisplayText = (verse: QuranVerse): string => {
+    let text = showTajweed ? getTajweedText(verse) : verse.text;
+    if (!showVerseNumbers) {
+      text = removeVerseNumbers(text);
+    }
+    return text;
+  };
 
-          return (
-            <div key={lineNumberKey} className="flex justify-center items-center">
-              {words.map((wordNumber) => {
-                const wordNumberKey = `page-${pageNumber}-line-${lineNumber}-word-${wordNumber}`;
-                const surah = parseInt(searchParams.get("surah") || "0");
-                const ayah = parseInt(searchParams.get("ayah") || "0");
-                const isHighlighted = surah > 0 && ayah > 0;
+  const versesToDisplay = currentSurahVerses.slice(verseRange[0] - 1, verseRange[1] === 0 ? undefined : verseRange[1]);
 
-                return (
-                  <span
-                    key={wordNumberKey}
-                    className={`text-gray-900 mx-1 ${isHighlighted ? "bg-yellow-200" : ""
-                      }`}
-                    style={{ fontSize: `${fontSize}px`, lineHeight: "2.0" }}
-                    onClick={() => handleVerseClick(1, 1)}
+  return <div className="space-y-6">
+      {/* Header with Surah Info */}
+      <div className="bg-white p-6 rounded-lg border border-green-100 text-center">
+        <h2 className="text-2xl font-bold text-gray-700 mb-2">
+          {getSurahName(currentSurah)}
+        </h2>
+        <div className="flex justify-center space-x-4 mb-4">
+          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+            Surah {currentSurah}
+          </Badge>
+          <Badge variant="outline" className="border-green-200 text-green-600">
+            {currentSurahVerses.length} verses
+          </Badge>
+        </div>
+
+        {/* Search Input */}
+        <div className="mb-4 max-w-md mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 h-4 w-4" />
+            <Input
+              placeholder="Search surah by name or number..."
+              value={surahSearch}
+              onChange={(e) => setSurahSearch(e.target.value)}
+              className="pl-10 border-green-200 focus:border-green-400 focus:ring-green-200"
+            />
+          </div>
+        </div>
+
+        {/* Horizontal Surah Navigation Carousel */}
+        <div className="mb-6">
+          <Carousel className="w-full max-w-4xl mx-auto" opts={{ align: "start", loop: false }}>
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {filteredSurahs.map((surahNum) => (
+                <CarouselItem key={surahNum} className="pl-2 md:pl-4 basis-1/6 md:basis-1/8">
+                  <Button
+                    variant={currentSurah === surahNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSurahSelect(surahNum)}
+                    className={`w-full h-12 text-xs flex flex-col items-center justify-center ${
+                      currentSurah === surahNum 
+                        ? "bg-green-600 text-white border-green-600" 
+                        : "bg-white border-green-200 text-green-600 hover:bg-green-50"
+                    }`}
                   >
-                    بِسْمِ ٱللّٰهِ ٱلرَّحْمٰنِ ٱلرَّحِيمِ
-                  </span>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+                    <span className="font-bold">{surahNum}</span>
+                    <span className="text-[10px] truncate w-full">{getSurahName(surahNum).split(' ')[0]}</span>
+                  </Button>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="border-green-200 text-green-600 hover:bg-green-50" />
+            <CarouselNext className="border-green-200 text-green-600 hover:bg-green-50" />
+          </Carousel>
+        </div>
 
-  return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-green-50 to-emerald-50">
-      {/* Header */}
-      <div className="bg-white border-b shadow-sm p-4 relative">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <BookOpen className="h-6 w-6 text-green-600" />
-            <h1 className="text-xl font-semibold text-gray-800">
-              Qur'an Page View
-            </h1>
-            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-              Page {currentPage}
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage >= 604}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={toggleAudio}>
-              {isPlaying ? (
-                <Volume2 className="h-4 w-4 text-green-600" />
-              ) : (
-                <VolumeX className="h-4 w-4 text-gray-600" />
-              )}
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
-              <Settings className="h-4 w-4 text-gray-600" />
-            </Button>
-            
-            {/* Help Button */}
-            <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
-                >
-                  <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-2xl h-[80vh] p-0 gap-0">
-                <DialogHeader className="p-4 sm:p-6 pb-2 border-b">
-                  <DialogTitle className="text-lg sm:text-xl font-semibold text-green-700">
-                    Page View Help & Guide
-                  </DialogTitle>
-                </DialogHeader>
-                
-                <ScrollArea className="flex-1 p-4 sm:p-6">
-                  <div className="space-y-4 sm:space-y-6 pr-2">
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        📖 Purpose of Page View
-                      </h3>
-                      <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                        The Page View provides a traditional Qur'an reading experience with authentic Uthmani script layout. It displays the Qur'an exactly as it appears in the Mushaf, maintaining the original page structure and verse arrangements.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        🎯 What You'll Find Here
-                      </h3>
-                      <ul className="text-sm sm:text-base text-gray-600 space-y-2 list-disc list-inside">
-                        <li><strong>Authentic Layout:</strong> View the Qur'an in its traditional Mushaf format</li>
-                        <li><strong>Page Navigation:</strong> Easily navigate between all 604 pages of the Qur'an</li>
-                        <li><strong>Audio Playback:</strong> Listen to recitations synchronized with the text</li>
-                        <li><strong>Tafsir Access:</strong> Read detailed explanations and interpretations</li>
-                        <li><strong>Personal Notes:</strong> Add and manage your own study notes</li>
-                        <li><strong>Verse Selection:</strong> Click on verses for detailed interactions</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        🚀 How to Use Page View
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="text-sm sm:text-base font-medium text-gray-700">1. Navigation</h4>
-                          <p className="text-sm text-gray-600">Use the arrow buttons or keyboard shortcuts (← →) to move between pages. You can also use the navigation modal to jump to specific surahs or verses.</p>
-                        </div>
-                        
-                        <div>
-                          <h4 className="text-sm sm:text-base font-medium text-gray-700">2. Audio Controls</h4>
-                          <p className="text-sm text-gray-600">Click the audio button to play/pause recitation. The audio will automatically follow the text and highlight the current verse being recited.</p>
-                        </div>
-                        
-                        <div>
-                          <h4 className="text-sm sm:text-base font-medium text-gray-700">3. Verse Interaction</h4>
-                          <p className="text-sm text-gray-600">Click on any verse to access tafsir, add personal notes, or perform other verse-specific actions.</p>
-                        </div>
-                        
-                        <div>
-                          <h4 className="text-sm sm:text-base font-medium text-gray-700">4. Settings</h4>
-                          <p className="text-sm text-gray-600">Use the settings button to customize your reading experience, including font size, audio preferences, and display options.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        ⌨️ Keyboard Shortcuts
-                      </h3>
-                      <ul className="text-sm sm:text-base text-gray-600 space-y-2 list-disc list-inside">
-                        <li><strong>← / →:</strong> Navigate to previous/next page</li>
-                        <li><strong>Space:</strong> Play/pause audio recitation</li>
-                        <li><strong>Ctrl/Cmd + F:</strong> Open navigation modal</li>
-                        <li><strong>Escape:</strong> Close any open dialogs</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        💡 Pro Tips
-                      </h3>
-                      <ul className="text-sm sm:text-base text-gray-600 space-y-2 list-disc list-inside">
-                        <li>Use the page view for focused reading and memorization practice</li>
-                        <li>Follow along with audio to improve your recitation and pronunciation</li>
-                        <li>Take notes while reading to capture insights and reflections</li>
-                        <li>Use the authentic layout to familiarize yourself with the traditional Mushaf</li>
-                        <li>Navigate quickly using the search and jump features</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                        🔍 Features Overview
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <h5 className="font-medium text-blue-800">Reading</h5>
-                          <p className="text-xs text-blue-600">Traditional Mushaf layout</p>
-                        </div>
-                        <div className="bg-purple-50 p-3 rounded-lg">
-                          <h5 className="font-medium text-purple-800">Audio</h5>
-                          <p className="text-xs text-purple-600">Synchronized recitation</p>
-                        </div>
-                        <div className="bg-orange-50 p-3 rounded-lg">
-                          <h5 className="font-medium text-orange-800">Notes</h5>
-                          <p className="text-xs text-orange-600">Personal annotations</p>
-                        </div>
-                        <div className="bg-teal-50 p-3 rounded-lg">
-                          <h5 className="font-medium text-teal-800">Tafsir</h5>
-                          <p className="text-xs text-teal-600">Detailed explanations</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-2">
-                        🤲 Reflection
-                      </h3>
-                      <p className="text-sm sm:text-base text-green-700 leading-relaxed">
-                        "This is the Book about which there is no doubt, a guidance for those conscious of Allah." (2:2)
-                        <br /><br />
-                        Use this page view to connect deeply with the Qur'an's text, reflect on its meanings, and enhance your relationship with Allah's words. May your reading be a source of guidance and blessing.
-                      </p>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
-          </div>
+        {/* Navigation */}
+        <div className="flex items-center justify-center space-x-4">
+          <Button variant="outline" onClick={goToPreviousSurah} disabled={currentSurah <= 1} className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100">
+            <SkipBack className="h-4 w-4 mr-2" />
+            Previous Surah
+          </Button>
+          
+          <Button variant="outline" onClick={goToNextSurah} disabled={currentSurah >= maxSurah} className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100">
+            Next Surah
+            <SkipForward className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       </div>
 
-      {/* Page Content */}
-      <div className="flex-1 overflow-auto p-4 max-w-7xl mx-auto">
-        {renderPageContent(currentPage)}
-      </div>
-    </div>
-  );
+      {/* Main Content */}
+      <Tabs defaultValue="reader" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="reader">Reader</TabsTrigger>
+          <TabsTrigger value="tafsir-study">Tafsir (Scrollable)</TabsTrigger>
+          <TabsTrigger value="tafsir">Tafsir (Focused)</TabsTrigger>
+          <TabsTrigger value="notes">Personal Notes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="reader" className="space-y-6">
+          {/* Controls */}
+          <Card className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Navigation Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Navigate Surah:</span>
+                  <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+                    {currentSurah} of {maxSurah}
+                  </span>
+                </div>
+                <Slider value={[currentSurah]} onValueChange={handleSurahSliderChange} max={maxSurah} min={1} step={1} className="w-full" />
+                <div className="flex justify-between text-xs text-green-400">
+                  <span>1</span>
+                  <span>{maxSurah}</span>
+                </div>
+              </div>
+
+              {/* Verse Range */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Verse Range:</span>
+                  <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+                    {verseRange[1] === 0 ? `${verseRange[0]} - ${totalSurahVerses}` : `${verseRange[0]} - ${verseRange[1]}`}
+                  </span>
+                </div>
+                <Slider value={verseRange} onValueChange={setVerseRange} max={totalSurahVerses} min={1} step={1} className="w-full" />
+                <div className="flex justify-between text-xs text-green-400">
+                  <span>1</span>
+                  <span>{totalSurahVerses}</span>
+                </div>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Verse numbers:</span>
+                  <Switch checked={showVerseNumbers} onCheckedChange={setShowVerseNumbers} />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Translation:</span>
+                  <Switch checked={showTranslation} onCheckedChange={setShowTranslation} className="data-[state=checked]:bg-green-500" />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Tajweed:</span>
+                  <Switch checked={showTajweed} onCheckedChange={setShowTajweed} className="data-[state=checked]:bg-green-500" />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Hide verses:</span>
+                  <Switch checked={hideVerses} onCheckedChange={checked => {
+                  setHideVerses(checked);
+                  if (!checked) {
+                    setRevelationRate([100]);
+                  } else {
+                    setRevelationRate([0]);
+                  }
+                }} />
+                </div>
+              </div>
+            </div>
+
+            {hideVerses && <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-green-700">Revelation Progress:</span>
+                  <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">{revelationRate[0]}%</span>
+                </div>
+                <Slider value={revelationRate} onValueChange={setRevelationRate} max={100} step={1} className="w-full" />
+              </div>}
+          </Card>
+
+          {/* Text Display */}
+          <Card className="p-8 bg-white border border-green-100 shadow-sm min-h-[600px]">
+            <div className="relative">
+              {versesToDisplay.length > 0 ? 
+                <div ref={containerRef} className="w-full relative">
+                  {versesToDisplay.map((verse, index) => {
+                    const isVisible = !hideVerses || index < Math.ceil(versesToDisplay.length * (revelationRate[0] / 100));
+                    const verseText = getDisplayText(verse);
+                    const translation = getTranslationForVerse(verse.surah, verse.ayah);
+                    
+                    return (
+                      <div key={verse.id} className={`mb-6 ${!isVisible ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+                        <div className="font-arabic text-3xl leading-relaxed text-gray-800 text-right mb-2" style={{ lineHeight: '3' }}>
+                          {showTajweed ? (
+                            <span dangerouslySetInnerHTML={{ __html: verseText }} />
+                          ) : (
+                            verseText
+                          )}
+                        </div>
+                        
+                        {/* Translation Display */}
+                        {showTranslation && translation && (
+                          <div className="text-right text-gray-600 text-lg leading-relaxed italic mb-2">
+                            {translation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+               : 
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-gray-500">No verses to display</p>
+                </div>
+              }
+              
+              {/* Hide verses overlay */}
+              {hideVerses && revelationRate[0] === 0 && <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-center">
+                    <p className="font-medium">Use the slider above to reveal verses</p>
+                  </div>
+                </div>}
+            </div>
+          </Card>
+
+          <QuranNavigationModal onNavigate={handleNavigate} currentVerseId={currentSurahVerses[0]?.id || 1} maxVerseId={allVerses.length} />
+        </TabsContent>
+
+        <TabsContent value="tafsir-study" className="space-y-6">
+          {/* Tafsir Study Mode Content */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-green-700 mb-4">Tafsir (Scrollable)</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {currentSurahVerses.map(verse => {
+              const tafsirIbnKathir = getTafsirIbnKathirForVerse(verse.surah, verse.ayah);
+              const tafsirMaarif = getTafsirMaarifForVerse(verse.surah, verse.ayah);
+              const translation = getTranslationForVerse(verse.surah, verse.ayah);
+              return <div key={verse.id} className="border border-green-100 rounded-lg p-4 bg-green-25">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge variant="outline" className="border-green-300 text-green-600">
+                        {verse.surah}:{verse.ayah}
+                      </Badge>
+                      <TafsirDialog surah={verse.surah} ayah={verse.ayah} verseKey={verse.verse_key} />
+                    </div>
+                    <p className="font-arabic text-xl leading-loose text-gray-800 text-right mb-3">
+                      {showTajweed ? getTajweedText(verse) : verse.text}
+                    </p>
+                    
+                    {/* Translation Display */}
+                    {translation && (
+                      <div className="text-right text-gray-600 text-lg leading-relaxed italic mb-3">
+                        {translation}
+                      </div>
+                    )}
+                    
+                    {/* Tafsir Section */}
+                    {(tafsirIbnKathir || tafsirMaarif) && <Card className="mt-4 border-amber-200">
+                        <div className="p-3 bg-amber-50 border-b border-amber-200">
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="h-4 w-4 text-amber-600" />
+                            <h4 className="font-medium text-amber-700 text-sm">
+                              Commentary
+                            </h4>
+                          </div>
+                        </div>
+                        
+                        <Tabs defaultValue="ibn-kathir" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2 bg-amber-25 rounded-none">
+                            <TabsTrigger value="ibn-kathir" className="text-xs data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Ibn Kathir
+                            </TabsTrigger>
+                            <TabsTrigger value="maarif-ul-quran" className="text-xs data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                              Maarif-ul-Qur'an
+                            </TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="ibn-kathir" className="mt-0">
+                            <ScrollArea className="h-[200px] p-4">
+                              {tafsirIbnKathir ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                  __html: tafsirIbnKathir.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-sm">No Ibn Kathir commentary available for this verse.</p>
+                              )}
+                            </ScrollArea>
+                          </TabsContent>
+
+                          <TabsContent value="maarif-ul-quran" className="mt-0">
+                            <ScrollArea className="h-[200px] p-4">
+                              {tafsirMaarif ? (
+                                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                  __html: tafsirMaarif.text
+                                }} />
+                              ) : (
+                                <p className="text-gray-500 text-sm">No Maarif-ul-Qur'an commentary available for this verse.</p>
+                              )}
+                            </ScrollArea>
+                          </TabsContent>
+                        </Tabs>
+                      </Card>}
+                  </div>;
+            })}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tafsir" className="space-y-6">
+          <TafsirViewer startingVerseId={currentSurahVerses[0]?.id || 1} />
+        </TabsContent>
+
+        <TabsContent value="notes" className="space-y-6">
+          <PersonalNotes surahNumber={currentSurah} />
+        </TabsContent>
+      </Tabs>
+    </div>;
 };
