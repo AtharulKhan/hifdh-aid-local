@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare, Heart, Settings
+import { Home, PanelLeftClose, PanelLeft, BookOpen, Menu, X, ClipboardCheck, BookText, RotateCcw, Book, BarChart3, LogIn, ListChecks, ChevronDown, ChevronRight, GraduationCap, MessageSquare, Heart, Settings, TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -12,6 +13,10 @@ const navItems = [{
   path: "/",
   icon: BarChart3,
   label: "Dashboard"
+}, {
+  path: "/stats",
+  icon: TrendingUp,
+  label: "Stats"
 }, {
   path: "/page-view",
   icon: BookOpen,
