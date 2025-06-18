@@ -7,18 +7,21 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Cloud } from 'lucide-react';
+import { User, LogOut, Cloud, Upload, Download, Trash2, HardDrive, Webhook } from 'lucide-react';
+import { useDataSync } from '@/hooks/useDataSync';
 import { useToast } from '@/hooks/use-toast';
 import { WebhookExportDialog } from './WebhookExportDialog';
-import { SyncDataDialog } from './SyncDataDialog';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
+  const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData, clearLocalData } = useDataSync();
   const { toast } = useToast();
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
-  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,6 +29,22 @@ export const UserMenu = () => {
       title: "Signed out",
       description: "You have been signed out successfully.",
     });
+  };
+
+  const handlePushData = async () => {
+    await syncLocalDataToSupabase();
+  };
+
+  const handlePullData = async () => {
+    await loadDataFromSupabase();
+  };
+
+  const handleClearCloudData = async () => {
+    await clearSupabaseData();
+  };
+
+  const handleClearLocalData = () => {
+    clearLocalData();
   };
 
   if (!user) return null;
@@ -44,10 +63,36 @@ export const UserMenu = () => {
             <p className="text-xs text-gray-500">Signed in</p>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setSyncDialogOpen(true)}>
-            <Cloud className="mr-2 h-4 w-4" />
-            Sync Data
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Cloud className="mr-2 h-4 w-4" />
+              Sync Data
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={handlePushData}>
+                <Upload className="mr-2 h-4 w-4" />
+                Push to Cloud
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePullData}>
+                <Download className="mr-2 h-4 w-4" />
+                Pull from Cloud
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setWebhookDialogOpen(true)}>
+                <Webhook className="mr-2 h-4 w-4" />
+                Export to Webhook
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleClearCloudData} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear Cloud Data
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleClearLocalData} className="text-red-600">
+                <HardDrive className="mr-2 h-4 w-4" />
+                Clear Local Data
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -55,12 +100,6 @@ export const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <SyncDataDialog 
-        open={syncDialogOpen} 
-        onOpenChange={setSyncDialogOpen}
-        onWebhookClick={() => setWebhookDialogOpen(true)}
-      />
 
       <WebhookExportDialog 
         open={webhookDialogOpen} 
