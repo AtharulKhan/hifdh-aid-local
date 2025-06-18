@@ -49,7 +49,7 @@ const Dashboard = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <ScrollArea className="flex-1 h-full">
+            <ScrollArea className="flex-1 h-[60vh]">
               <div className="space-y-6 text-left p-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-3 text-gray-800">What is this page for?</h3>
