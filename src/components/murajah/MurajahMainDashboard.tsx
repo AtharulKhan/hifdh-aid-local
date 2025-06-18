@@ -88,9 +88,12 @@ interface Achievement {
 }
 
 type JuzPortion = 'all' | 'first-third' | 'second-third' | 'third-third';
+type ContentSource = 'juz' | 'surah';
 
 interface RandomVerseSettings {
+  contentSource: ContentSource;
   selectedJuzNumbers: number[];
+  selectedSurahs: number[];
   juzPortion: JuzPortion;
 }
 
@@ -112,7 +115,9 @@ export const MurajahMainDashboard = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showRandomVerseSettings, setShowRandomVerseSettings] = useState(false);
   const [randomVerseSettings, setRandomVerseSettings] = useState<RandomVerseSettings>({
+    contentSource: 'juz',
     selectedJuzNumbers: [],
+    selectedSurahs: [],
     juzPortion: 'all'
   });
 
@@ -565,34 +570,70 @@ export const MurajahMainDashboard = () => {
     }
   };
 
+  const getSurahVerses = (surahNumber: number, allVersesInput: QuranVerse[], portion: JuzPortion): QuranVerse[] => {
+    const surahVerses = allVersesInput.filter(verse => verse.surah === surahNumber);
+    
+    if (portion === 'all') return surahVerses;
+
+    const totalVerses = surahVerses.length;
+    const thirdSize = Math.ceil(totalVerses / 3);
+
+    switch (portion) {
+      case 'first-third':
+        return surahVerses.slice(0, thirdSize);
+      case 'second-third':
+        return surahVerses.slice(thirdSize, thirdSize * 2);
+      case 'third-third':
+        return surahVerses.slice(thirdSize * 2);
+      default:
+        return surahVerses;
+    }
+  };
+
   const generateRandomVerses = () => {
     const allVerses = getVersesArray();
-    const memorizedSurahIds = new Set<number>();
     let versesForPractice: QuranVerse[] = [];
 
-    // If we have specific settings, use them
-    if (randomVerseSettings.selectedJuzNumbers.length > 0) {
-      randomVerseSettings.selectedJuzNumbers.forEach(juzNumber => {
-        const juzVerses = getJuzPortionVerses(juzNumber, allVerses, randomVerseSettings.juzPortion);
-        versesForPractice.push(...juzVerses);
-      });
-    } else {
-      // Default behavior - use all memorized Juz
-      juzMemorization.forEach(juzEntry => {
-        if (juzEntry.isMemorized) {
-          const juzVerses = getJuzPortionVerses(juzEntry.juzNumber, allVerses, randomVerseSettings.juzPortion);
+    if (randomVerseSettings.contentSource === 'juz') {
+      // Juz-based selection
+      if (randomVerseSettings.selectedJuzNumbers.length > 0) {
+        randomVerseSettings.selectedJuzNumbers.forEach(juzNumber => {
+          const juzVerses = getJuzPortionVerses(juzNumber, allVerses, randomVerseSettings.juzPortion);
           versesForPractice.push(...juzVerses);
-        } else if (juzEntry.memorizedSurahs) {
-          juzEntry.memorizedSurahs.forEach(surahId => {
-            memorizedSurahIds.add(surahId);
+        });
+      } else {
+        // Default behavior - use all memorized Juz
+        juzMemorization.forEach(juzEntry => {
+          if (juzEntry.isMemorized) {
+            const juzVerses = getJuzPortionVerses(juzEntry.juzNumber, allVerses, randomVerseSettings.juzPortion);
+            versesForPractice.push(...juzVerses);
+          }
+        });
+      }
+    } else {
+      // Surah-based selection
+      if (randomVerseSettings.selectedSurahs.length > 0) {
+        randomVerseSettings.selectedSurahs.forEach(surahNumber => {
+          const surahVerses = getSurahVerses(surahNumber, allVerses, randomVerseSettings.juzPortion);
+          versesForPractice.push(...surahVerses);
+        });
+      } else {
+        // Default behavior - use all memorized Surahs
+        const memorizedSurahIds = new Set<number>();
+        juzMemorization.forEach(juzEntry => {
+          if (juzEntry.memorizedSurahs) {
+            juzEntry.memorizedSurahs.forEach(surahId => {
+              memorizedSurahIds.add(surahId);
+            });
+          }
+        });
+
+        if (memorizedSurahIds.size > 0) {
+          memorizedSurahIds.forEach(surahId => {
+            const surahVerses = getSurahVerses(surahId, allVerses, randomVerseSettings.juzPortion);
+            versesForPractice.push(...surahVerses);
           });
         }
-      });
-
-      // Add individual memorized surahs
-      if (memorizedSurahIds.size > 0) {
-        const individualSurahVerses = allVerses.filter(verse => memorizedSurahIds.has(verse.surah));
-        versesForPractice.push(...individualSurahVerses);
       }
     }
 
@@ -609,17 +650,31 @@ export const MurajahMainDashboard = () => {
     setRandomVerses(shuffled.slice(0, 5));
   };
 
-  // Initialize settings with all memorized Juz when component loads
+  // Initialize settings with all memorized Juz/Surahs when component loads
   useEffect(() => {
     const memorizedJuzNumbers = getMemorizedJuzNumbers();
+    const memorizedSurahs = getMemorizedSurahs();
     setRandomVerseSettings(prev => ({
       ...prev,
-      selectedJuzNumbers: prev.selectedJuzNumbers.length === 0 ? memorizedJuzNumbers : prev.selectedJuzNumbers
+      selectedJuzNumbers: prev.selectedJuzNumbers.length === 0 ? memorizedJuzNumbers : prev.selectedJuzNumbers,
+      selectedSurahs: prev.selectedSurahs.length === 0 ? memorizedSurahs : prev.selectedSurahs
     }));
   }, [juzMemorization]);
 
   const getMemorizedJuzNumbers = () => {
     return juzMemorization.filter(j => j.isMemorized).map(j => j.juzNumber);
+  };
+
+  const getMemorizedSurahs = () => {
+    const memorizedSurahs = new Set<number>();
+    juzMemorization.forEach(juzEntry => {
+      if (juzEntry.memorizedSurahs) {
+        juzEntry.memorizedSurahs.forEach(surahId => {
+          memorizedSurahs.add(surahId);
+        });
+      }
+    });
+    return Array.from(memorizedSurahs).sort((a, b) => a - b);
   };
 
   const toggleJuzSelection = (juzNumber: number) => {
@@ -628,6 +683,15 @@ export const MurajahMainDashboard = () => {
       selectedJuzNumbers: prev.selectedJuzNumbers.includes(juzNumber)
         ? prev.selectedJuzNumbers.filter(j => j !== juzNumber)
         : [...prev.selectedJuzNumbers, juzNumber]
+    }));
+  };
+
+  const toggleSurahSelection = (surahNumber: number) => {
+    setRandomVerseSettings(prev => ({
+      ...prev,
+      selectedSurahs: prev.selectedSurahs.includes(surahNumber)
+        ? prev.selectedSurahs.filter(s => s !== surahNumber)
+        : [...prev.selectedSurahs, surahNumber]
     }));
   };
 
@@ -643,6 +707,21 @@ export const MurajahMainDashboard = () => {
     setRandomVerseSettings(prev => ({
       ...prev,
       selectedJuzNumbers: []
+    }));
+  };
+
+  const selectAllMemorizedSurahs = () => {
+    const memorizedSurahs = getMemorizedSurahs();
+    setRandomVerseSettings(prev => ({
+      ...prev,
+      selectedSurahs: memorizedSurahs
+    }));
+  };
+
+  const deselectAllSurahs = () => {
+    setRandomVerseSettings(prev => ({
+      ...prev,
+      selectedSurahs: []
     }));
   };
 
@@ -937,7 +1016,25 @@ export const MurajahMainDashboard = () => {
                 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Juz Portion</label>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Content Source</label>
+                    <Select 
+                      value={randomVerseSettings.contentSource} 
+                      onValueChange={(value: ContentSource) => 
+                        setRandomVerseSettings(prev => ({ ...prev, contentSource: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="juz">By Juz</SelectItem>
+                        <SelectItem value="surah">By Surah</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Portion</label>
                     <Select 
                       value={randomVerseSettings.juzPortion} 
                       onValueChange={(value: JuzPortion) => 
@@ -948,7 +1045,7 @@ export const MurajahMainDashboard = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Complete Juz</SelectItem>
+                        <SelectItem value="all">Complete {randomVerseSettings.contentSource === 'juz' ? 'Juz' : 'Surah'}</SelectItem>
                         <SelectItem value="first-third">First Third</SelectItem>
                         <SelectItem value="second-third">Second Third</SelectItem>
                         <SelectItem value="third-third">Third Third</SelectItem>
@@ -956,43 +1053,88 @@ export const MurajahMainDashboard = () => {
                     </Select>
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700">Select Juz to Practice</label>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={selectAllMemorizedJuz}>
-                          Select All
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={deselectAllJuz}>
-                          Deselect All
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
-                      {getMemorizedJuzNumbers().map(juzNumber => (
-                        <div key={juzNumber} className="flex items-center space-x-2">
-                          <Switch
-                            id={`juz-${juzNumber}`}
-                            checked={randomVerseSettings.selectedJuzNumbers.includes(juzNumber)}
-                            onCheckedChange={() => toggleJuzSelection(juzNumber)}
-                          />
-                          <label 
-                            htmlFor={`juz-${juzNumber}`} 
-                            className="text-sm cursor-pointer"
-                          >
-                            Juz {juzNumber}
-                          </label>
+                  {randomVerseSettings.contentSource === 'juz' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">Select Juz to Practice</label>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={selectAllMemorizedJuz}>
+                            Select All
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={deselectAllJuz}>
+                            Deselect All
+                          </Button>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
+                        {getMemorizedJuzNumbers().map(juzNumber => (
+                          <div key={juzNumber} className="flex items-center space-x-2">
+                            <Switch
+                              id={`juz-${juzNumber}`}
+                              checked={randomVerseSettings.selectedJuzNumbers.includes(juzNumber)}
+                              onCheckedChange={() => toggleJuzSelection(juzNumber)}
+                            />
+                            <label 
+                              htmlFor={`juz-${juzNumber}`} 
+                              className="text-sm cursor-pointer"
+                            >
+                              Juz {juzNumber}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {randomVerseSettings.selectedJuzNumbers.length === 0 && (
+                        <p className="text-sm text-amber-600 mt-2">
+                          No Juz selected. Will use default practice verses.
+                        </p>
+                      )}
                     </div>
-                    
-                    {randomVerseSettings.selectedJuzNumbers.length === 0 && (
-                      <p className="text-sm text-amber-600 mt-2">
-                        No Juz selected. Will use default practice verses.
-                      </p>
-                    )}
-                  </div>
+                  )}
+
+                  {randomVerseSettings.contentSource === 'surah' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">Select Surahs to Practice</label>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={selectAllMemorizedSurahs}>
+                            Select All
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={deselectAllSurahs}>
+                            Deselect All
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                        {getMemorizedSurahs().map(surahNumber => {
+                          const surahName = surahNamesData[surahNumber] || `Surah ${surahNumber}`;
+                          return (
+                            <div key={surahNumber} className="flex items-center space-x-2">
+                              <Switch
+                                id={`surah-${surahNumber}`}
+                                checked={randomVerseSettings.selectedSurahs.includes(surahNumber)}
+                                onCheckedChange={() => toggleSurahSelection(surahNumber)}
+                              />
+                              <label 
+                                htmlFor={`surah-${surahNumber}`} 
+                                className="text-sm cursor-pointer"
+                              >
+                                {surahName}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {randomVerseSettings.selectedSurahs.length === 0 && (
+                        <p className="text-sm text-amber-600 mt-2">
+                          No Surahs selected. Will use default practice verses.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
