@@ -115,6 +115,7 @@ export type Database = {
           date: string
           end_line: number
           id: string
+          is_overdue: boolean
           page: number
           start_line: number
           surah: string
@@ -128,6 +129,7 @@ export type Database = {
           date: string
           end_line: number
           id?: string
+          is_overdue?: boolean
           page: number
           start_line: number
           surah: string
@@ -141,6 +143,7 @@ export type Database = {
           date?: string
           end_line?: number
           id?: string
+          is_overdue?: boolean
           page?: number
           start_line?: number
           surah?: string
