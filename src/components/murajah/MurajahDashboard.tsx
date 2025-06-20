@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock } from "lucide-react";
+import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -16,6 +17,7 @@ interface ReviewCycle {
   icon: React.ReactNode;
   color: string;
   id: string;
+  isOverdue?: boolean;
 }
 
 interface DailyCompletion {
@@ -124,7 +126,15 @@ export const MurajahDashboard = () => {
 
     if (juzWithMemorization.length === 0) return cycles;
 
-    // Check for carry-overs from previous days
+    // Check for overdue cycles first
+    const overdueCycles = getOverdueCycles(date);
+    
+    // If there are overdue cycles, only show those and don't generate new ones
+    if (overdueCycles.length > 0) {
+      return overdueCycles;
+    }
+
+    // Check for carry-overs from previous days (not overdue)
     const carryOvers = getCarryOverCycles(date);
 
     // RMV - Recent Memorization (Last X pages from current Juz)
@@ -210,18 +220,17 @@ export const MurajahDashboard = () => {
     return cycles;
   };
 
-  const getCarryOverCycles = (currentDate: string): ReviewCycle[] => {
+  const getOverdueCycles = (currentDate: string): ReviewCycle[] => {
     const savedData = localStorage.getItem('murajah-daily-completions');
     if (!savedData) return [];
 
     try {
       const allCompletions: DailyCompletion[] = JSON.parse(savedData);
-      const carryOvers: ReviewCycle[] = [];
-
-      // Look for incomplete cycles from previous days
+      const overdueCycles: ReviewCycle[] = [];
       const currentDateObj = new Date(currentDate);
       
-      for (let i = 1; i <= 7; i++) { // Check last 7 days for incomplete cycles
+      // Check previous days for incomplete cycles
+      for (let i = 1; i <= 7; i++) {
         const checkDate = new Date(currentDateObj);
         checkDate.setDate(checkDate.getDate() - i);
         const checkDateStr = checkDate.toISOString().split('T')[0];
@@ -229,16 +238,116 @@ export const MurajahDashboard = () => {
         const dayData = allCompletions.find(d => d.date === checkDateStr);
         if (dayData) {
           Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
-            if (!completed && !carryOvers.some(c => c.type === cycleId.split('-')[0].toUpperCase())) {
-              // Create carry-over cycle based on the incomplete cycle
+            if (!completed && !overdueCycles.some(c => c.type === cycleId.split('-')[0].toUpperCase())) {
               const cycleType = cycleId.split('-')[0] as 'rmv' | 'omv' | 'listening' | 'reading';
-              const carryOverCycle = createCarryOverCycle(cycleType, checkDateStr, currentDate);
-              if (carryOverCycle) {
-                carryOvers.push(carryOverCycle);
+              const overdueCycle = createOverdueCycle(cycleType, checkDateStr, currentDate);
+              if (overdueCycle) {
+                overdueCycles.push(overdueCycle);
               }
             }
           });
         }
+      }
+
+      return overdueCycles;
+    } catch (error) {
+      console.error('Error getting overdue cycles:', error);
+      return [];
+    }
+  };
+
+  const createOverdueCycle = (type: string, originalDate: string, currentDate: string): ReviewCycle | null => {
+    const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
+    const memorizedJuz = juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0));
+    const daysDiff = Math.floor((new Date(currentDate).getTime() - new Date(originalDate).getTime()) / (1000 * 60 * 60 * 24));
+    
+    switch (upperType) {
+      case 'RMV':
+        const rmvContent = calculateRMV(juzMemorization, settings);
+        if (!rmvContent) return null;
+        return {
+          type: 'RMV',
+          title: `RMV (Last ${settings.rmvPages} Pages)`,
+          content: rmvContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <Clock className="h-4 w-4" />,
+          color: 'bg-red-50 border-red-200',
+          id: `rmv-${originalDate}-overdue`,
+          isOverdue: true
+        };
+      case 'OMV':
+        const omvContent = calculateOMV(memorizedJuz, settings, originalDate);
+        if (!omvContent) return null;
+        return {
+          type: 'OMV',
+          title: `OMV (${settings.omvJuz} Juz)`,
+          content: omvContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <RotateCcw className="h-4 w-4" />,
+          color: 'bg-red-50 border-red-200',
+          id: `omv-${originalDate}-overdue`,
+          isOverdue: true
+        };
+      case 'LISTENING':
+        const listeningContent = calculateListeningCycle(memorizedJuz, settings, originalDate);
+        if (!listeningContent) return null;
+        return {
+          type: 'Listening',
+          title: `Listening Cycle (${settings.listeningJuz} Juz)`,
+          content: listeningContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <PlayCircle className="h-4 w-4" />,
+          color: 'bg-red-50 border-red-200',
+          id: `listening-${originalDate}-overdue`,
+          isOverdue: true
+        };
+      case 'READING':
+        const readingContent = calculateReadingCycle(memorizedJuz, settings, originalDate);
+        if (!readingContent) return null;
+        return {
+          type: 'Reading',
+          title: `Reading Cycle (${settings.readingJuz} Juz)`,
+          content: readingContent,
+          startDate: originalDate,
+          completed: false,
+          icon: <BookOpen className="h-4 w-4" />,
+          color: 'bg-red-50 border-red-200',
+          id: `reading-${originalDate}-overdue`,
+          isOverdue: true
+        };
+      default:
+        return null;
+    }
+  };
+
+  const getCarryOverCycles = (currentDate: string): ReviewCycle[] => {
+    const savedData = localStorage.getItem('murajah-daily-completions');
+    if (!savedData) return [];
+
+    try {
+      const allCompletions: DailyCompletion[] = JSON.parse(savedData);
+      const carryOvers: ReviewCycle[] = [];
+      const currentDateObj = new Date(currentDate);
+      
+      // Only check yesterday for carry-overs (not overdue)
+      const yesterday = new Date(currentDateObj);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      const dayData = allCompletions.find(d => d.date === yesterdayStr);
+      if (dayData) {
+        Object.entries(dayData.completions).forEach(([cycleId, completed]) => {
+          if (!completed && !carryOvers.some(c => c.type === cycleId.split('-')[0].toUpperCase())) {
+            const cycleType = cycleId.split('-')[0] as 'rmv' | 'omv' | 'listening' | 'reading';
+            const carryOverCycle = createCarryOverCycle(cycleType, yesterdayStr, currentDate);
+            if (carryOverCycle) {
+              carryOvers.push(carryOverCycle);
+            }
+          }
+        });
       }
 
       return carryOvers;
@@ -250,7 +359,7 @@ export const MurajahDashboard = () => {
 
   const createCarryOverCycle = (type: string, originalDate: string, currentDate: string): ReviewCycle | null => {
     const upperType = type.toUpperCase() as 'RMV' | 'OMV' | 'LISTENING' | 'READING';
-    const memorizedJuz = juzMemorization.filter(j => j.isMemorized);
+    const memorizedJuz = juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0));
     
     switch (upperType) {
       case 'RMV':
@@ -467,12 +576,18 @@ export const MurajahDashboard = () => {
                     <p className="text-gray-600">{cycle.content}</p>
                     {cycle.startDate !== new Date().toISOString().split('T')[0] && (
                       <p className="text-xs text-orange-600 mt-1">
-                        Carried over from {new Date(cycle.startDate).toLocaleDateString()}
+                        {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {cycle.isOverdue && (
+                    <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Overdue
+                    </Badge>
+                  )}
                   <Badge variant={cycle.completed ? "default" : "outline"}>
                     {cycle.completed ? "Completed" : "Pending"}
                   </Badge>
