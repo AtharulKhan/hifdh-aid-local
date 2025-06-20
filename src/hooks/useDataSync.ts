@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,7 +83,8 @@ export const useDataSync = () => {
               page: item.page,
               start_line: item.startLine,
               end_line: item.endLine,
-              surah: item.surah
+              surah: item.surah,
+              is_overdue: item.isOverdue || false
             });
         }
         console.log('Synced memorization planner schedule');
@@ -212,7 +212,8 @@ export const useDataSync = () => {
           page: item.page,
           startLine: item.start_line,
           endLine: item.end_line,
-          surah: item.surah
+          surah: item.surah,
+          isOverdue: item.is_overdue || false
         }));
         localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(formattedSchedule));
       }
