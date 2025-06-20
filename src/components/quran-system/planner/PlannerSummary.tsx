@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { format, parseISO, isFuture } from 'date-fns';
+import { AlertTriangle } from 'lucide-react';
 
 interface PlannerSummaryProps {
   schedule: ScheduleItem[];
@@ -15,11 +16,20 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
     schedule.filter(item => !item.completed),
     [schedule]
   );
-  
-  const todaysTask = React.useMemo(() =>
-    uncompletedTasks[0],
+
+  const overdueTasks = React.useMemo(() =>
+    uncompletedTasks.filter(item => item.isOverdue),
     [uncompletedTasks]
   );
+  
+  const todaysTask = React.useMemo(() => {
+    // If there are overdue tasks, show the first overdue task
+    if (overdueTasks.length > 0) {
+      return overdueTasks[0];
+    }
+    // Otherwise show the first uncompleted task
+    return uncompletedTasks[0];
+  }, [uncompletedTasks, overdueTasks]);
 
   const pastSessions = React.useMemo(() => 
     schedule
@@ -41,7 +51,7 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
   }, [schedule]);
 
   const upcomingTasks = React.useMemo(() =>
-    uncompletedTasks.slice(1, 6),
+    uncompletedTasks.filter(item => !item.isOverdue).slice(0, 5),
     [uncompletedTasks]
   );
 
@@ -56,12 +66,45 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
         <CardDescription>A quick overview of your memorization plan.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Overdue Alert */}
+        {overdueTasks.length > 0 && (
+          <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <h4 className="font-semibold text-red-800">Overdue Tasks</h4>
+              <Badge variant="destructive">{overdueTasks.length}</Badge>
+            </div>
+            <p className="text-sm text-red-700">
+              You have {overdueTasks.length} overdue memorization task{overdueTasks.length > 1 ? 's' : ''}. 
+              Complete them before new tasks will appear.
+            </p>
+          </div>
+        )}
+
         <div>
-          <h4 className="text-lg font-semibold mb-2">Today's Goal</h4>
+          <h4 className="text-lg font-semibold mb-2">
+            {todaysTask?.isOverdue ? "Priority Task (Overdue)" : "Today's Goal"}
+          </h4>
           {todaysTask ? (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="font-bold">{format(parseISO(todaysTask.date), "EEE, MMM d")}</p>
-              <p className="text-muted-foreground">{todaysTask.task}</p>
+            <div className={`p-3 rounded-lg ${
+              todaysTask.isOverdue ? 'bg-red-50 border border-red-200' : 'bg-muted/50'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold">{format(parseISO(todaysTask.date), "EEE, MMM d")}</p>
+                  <p className={`text-sm ${
+                    todaysTask.isOverdue ? 'text-red-700' : 'text-muted-foreground'
+                  }`}>
+                    {todaysTask.task}
+                  </p>
+                </div>
+                {todaysTask.isOverdue && (
+                  <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Overdue
+                  </Badge>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-muted-foreground">Congratulations! You've completed your plan.</p>
@@ -119,6 +162,8 @@ export const PlannerSummary = ({ schedule }: PlannerSummaryProps) => {
                 </li>
               ))}
             </ul>
+          ) : overdueTasks.length > 0 ? (
+            <p className="text-muted-foreground">Complete overdue tasks to see upcoming tasks.</p>
           ) : (
             <p className="text-muted-foreground">No further tasks in this plan.</p>
           )}

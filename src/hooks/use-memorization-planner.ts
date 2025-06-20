@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
-import { addDays, getDay, parseISO } from 'date-fns';
+import { addDays, getDay, parseISO, isBefore, startOfDay } from 'date-fns';
 import { getSurahForPage, surahJuzPageMapData } from "@/data/surah-juz-page-map";
 import surahNamesData from '@/data/surah-names.json';
 
@@ -48,6 +49,7 @@ export interface ScheduleItem {
   startLine: number;
   endLine: number;
   surah: string;
+  isOverdue?: boolean;
 }
 
 const defaultSettings: PlannerSettingsData = {
@@ -109,6 +111,25 @@ export const useMemorizationPlanner = () => {
     localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(schedule));
   }, [schedule]);
 
+  // Check for overdue tasks and mark them
+  useEffect(() => {
+    const today = startOfDay(new Date());
+    const updatedSchedule = schedule.map(item => {
+      const itemDate = startOfDay(parseISO(item.date));
+      const isOverdue = !item.completed && isBefore(itemDate, today);
+      return { ...item, isOverdue };
+    });
+    
+    // Only update if there are changes to avoid infinite loops
+    const hasChanges = updatedSchedule.some((item, index) => 
+      item.isOverdue !== schedule[index].isOverdue
+    );
+    
+    if (hasChanges) {
+      setSchedule(updatedSchedule);
+    }
+  }, [schedule]);
+
   const resetPlanner = useCallback(() => {
     localStorage.removeItem('memorizationPlannerSettings');
     localStorage.removeItem('memorizationPlannerSchedule');
@@ -149,6 +170,20 @@ export const useMemorizationPlanner = () => {
 
   const generateSchedule = useCallback(() => {
     setRefreshKey(prev => prev + 1);
+    
+    // Check if there are any overdue tasks
+    const today = startOfDay(new Date());
+    const overdueTasks = schedule.filter(item => {
+      const itemDate = startOfDay(parseISO(item.date));
+      return !item.completed && isBefore(itemDate, today);
+    });
+
+    // If there are overdue tasks, don't generate new schedule
+    if (overdueTasks.length > 0) {
+      console.log('Cannot generate new schedule - there are overdue tasks that need to be completed first');
+      return;
+    }
+
     const newSchedule: ScheduleItem[] = [];
     
     let allQuranPages: {page: number, juz: number}[] = [];
@@ -230,7 +265,8 @@ export const useMemorizationPlanner = () => {
           page: page,
           startLine: startLine,
           endLine: Math.min(endLine, 15),
-          surah: surah
+          surah: surah,
+          isOverdue: false
         });
 
         lineOnPage += linesForThisDay;
@@ -243,7 +279,7 @@ export const useMemorizationPlanner = () => {
     }
 
     setSchedule(newSchedule);
-  }, [settings, memorizedPagesSet, alreadyMemorized]);
+  }, [settings, memorizedPagesSet, alreadyMemorized, schedule]);
 
   const updateDayStatus = (date: string, completed: boolean) => {
     setSchedule(prevSchedule =>

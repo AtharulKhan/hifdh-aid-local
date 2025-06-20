@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from 'date-fns';
 import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { juzPageMapData } from '@/data/juz-page-map';
-import { X, CheckSquare } from 'lucide-react';
+import { X, CheckSquare, AlertTriangle } from 'lucide-react';
 
 // Helper function to get juz number for a page
 const getJuzForPage = (page: number): number | undefined => {
@@ -91,7 +92,9 @@ export const PlannerSchedule = ({
       : item.task;
     
     return (
-      <div key={item.date} className={`flex items-center justify-between p-3 rounded-lg bg-muted/50 ${item.completed ? 'opacity-70' : ''}`}>
+      <div key={item.date} className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+        item.isOverdue ? 'bg-red-50 border border-red-200' : 'bg-muted/50'
+      } ${item.completed ? 'opacity-70' : ''}`}>
         <div className="flex items-center space-x-4">
           {showSelectionCheckbox && (
             <Checkbox
@@ -105,10 +108,21 @@ export const PlannerSchedule = ({
             onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
             id={`day-${item.date}`}
           />
-          <div>
+          <div className="flex-1">
             <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
             <p className="text-sm text-muted-foreground">{taskWithJuz}</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {item.isOverdue && !item.completed && (
+            <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Overdue
+            </Badge>
+          )}
+          <Badge variant={item.completed ? "default" : "outline"}>
+            {item.completed ? "Completed" : "Pending"}
+          </Badge>
         </div>
       </div>
     );
