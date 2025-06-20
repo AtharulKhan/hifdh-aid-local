@@ -21,9 +21,10 @@ import {
   Award,
   Target,
   Settings,
-  ExternalLink
+  ExternalLink,
+  AlertTriangle
 } from "lucide-react";
-import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval, isBefore, startOfDay } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
 import juzDataJson from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -43,6 +44,7 @@ interface ReviewCycle {
   completed: boolean;
   icon: React.ReactNode;
   color: string;
+  isOverdue?: boolean;
 }
 
 // Updated ReviewSettings interface
@@ -69,6 +71,7 @@ interface ScheduleItem {
   startLine: number;
   endLine: number;
   surah: string;
+  isOverdue?: boolean;
 }
 
 interface JuzMemorization {
@@ -163,7 +166,16 @@ export const MurajahMainDashboard = () => {
       try {
         const scheduleData = JSON.parse(savedSchedule);
         console.log('Parsed schedule data:', scheduleData);
-        setMemorizationSchedule(Array.isArray(scheduleData) ? scheduleData : []);
+        
+        // Mark overdue items
+        const today = startOfDay(new Date());
+        const updatedSchedule = scheduleData.map((item: ScheduleItem) => {
+          const itemDate = startOfDay(parseISO(item.date));
+          const isOverdue = !item.completed && isBefore(itemDate, today);
+          return { ...item, isOverdue };
+        });
+        
+        setMemorizationSchedule(Array.isArray(updatedSchedule) ? updatedSchedule : []);
       } catch (error) {
         console.error('Error parsing memorization schedule:', error);
         setMemorizationSchedule([]);
@@ -396,7 +408,17 @@ export const MurajahMainDashboard = () => {
     const carryOverCycles = getCarryOverCycles(date, currentJuzMem, currentSettings);
     carryOverCycles.forEach(cycle => {
         if (!generatedCycles.some(c => c.type === cycle.type)) {
-            generatedCycles.push({ ...cycle, completed: todayCompletions[cycle.id] || false });
+            // Check if this cycle is overdue
+            const cycleDate = startOfDay(parseISO(cycle.startDate));
+            const today = startOfDay(new Date());
+            const isOverdue = isBefore(cycleDate, today);
+            
+            generatedCycles.push({ 
+              ...cycle, 
+              completed: todayCompletions[cycle.id] || false,
+              isOverdue,
+              color: isOverdue ? 'bg-red-50 border border-red-200' : cycle.color
+            });
         }
     });
 
@@ -422,6 +444,7 @@ export const MurajahMainDashboard = () => {
                 completed: todayCompletions[cycleId] || false,
                 icon: def.icon,
                 color: def.color,
+                isOverdue: false
             });
         }
     });
@@ -839,7 +862,14 @@ export const MurajahMainDashboard = () => {
   // Updated logic to match PlannerSummary - find first uncompleted task
   const todaysMemorizationTask = React.useMemo(() => {
     const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
-    return uncompletedTasks[0]; // First uncompleted task, regardless of date
+    const overdueTasks = uncompletedTasks.filter(item => item.isOverdue);
+    
+    // If there are overdue tasks, show the first overdue task
+    if (overdueTasks.length > 0) {
+      return overdueTasks[0];
+    }
+    // Otherwise show the first uncompleted task
+    return uncompletedTasks[0];
   }, [memorizationSchedule]);
   
   console.log('Todays memorization task:', todaysMemorizationTask);
@@ -847,6 +877,13 @@ export const MurajahMainDashboard = () => {
   
   const upcomingMemorizationTasks = React.useMemo(() => {
     const uncompletedTasks = memorizationSchedule.filter(item => !item.completed);
+    const overdueTasks = uncompletedTasks.filter(item => item.isOverdue);
+    
+    // If there are overdue tasks, don't show upcoming tasks
+    if (overdueTasks.length > 0) {
+      return [];
+    }
+    
     return uncompletedTasks.slice(1, 6); // Next 5 tasks after the first one
   }, [memorizationSchedule]);
   
@@ -976,6 +1013,12 @@ export const MurajahMainDashboard = () => {
                       <p className="text-xs text-gray-600 mt-1 ml-6 truncate">{cycle.content}</p>
                     </div>
                     <div className="flex items-center gap-2">
+                      {cycle.isOverdue && !cycle.completed && (
+                        <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Overdue
+                        </Badge>
+                      )}
                       {cycle.completed ? (
                         <Badge variant="default" className="text-xs">Completed</Badge>
                       ) : (
@@ -1005,7 +1048,7 @@ export const MurajahMainDashboard = () => {
             <CardTitle className="flex items-center justify-between text-base sm:text-lg">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 sm:h-5 sm:w-5" />
-                Today's Goal
+                {todaysMemorizationTask?.isOverdue ? "Priority Task (Overdue)" : "Today's Goal"}
               </div>
               <Button
                 variant="outline"
@@ -1021,7 +1064,10 @@ export const MurajahMainDashboard = () => {
           <CardContent className="pt-0">
             {todaysMemorizationTask ? (
               <div className="space-y-4">
-                <div className={`p-2 sm:p-3 rounded-lg ${todaysMemorizationTask.completed ? 'bg-green-50 border border-green-200' : 'bg-muted/50'} flex items-center justify-between`}>
+                <div className={`p-2 sm:p-3 rounded-lg ${
+                  todaysMemorizationTask.isOverdue ? 'bg-red-50 border border-red-200' : 
+                  todaysMemorizationTask.completed ? 'bg-green-50 border border-green-200' : 'bg-muted/50'
+                } flex items-center justify-between`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       {todaysMemorizationTask.completed ? (
@@ -1031,9 +1077,19 @@ export const MurajahMainDashboard = () => {
                       )}
                       <p className="font-bold text-sm sm:text-base">{format(parseISO(todaysMemorizationTask.date), "EEE, MMM d")}</p>
                     </div>
-                    <p className="text-muted-foreground text-xs sm:text-sm ml-6">{todaysMemorizationTask.task}</p>
+                    <p className={`text-xs sm:text-sm ml-6 ${
+                      todaysMemorizationTask.isOverdue ? 'text-red-700' : 'text-muted-foreground'
+                    }`}>
+                      {todaysMemorizationTask.task}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {todaysMemorizationTask.isOverdue && !todaysMemorizationTask.completed && (
+                      <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Overdue
+                      </Badge>
+                    )}
                     {todaysMemorizationTask.completed ? (
                       <Badge variant="default" className="text-xs">Completed</Badge>
                     ) : (
@@ -1061,6 +1117,10 @@ export const MurajahMainDashboard = () => {
                       ))}
                     </div>
                   </div>
+                )}
+                
+                {upcomingMemorizationTasks.length === 0 && memorizationSchedule.some(item => item.isOverdue && !item.completed) && (
+                  <p className="text-red-600 text-xs sm:text-sm">Complete overdue tasks to see upcoming tasks.</p>
                 )}
               </div>
             ) : (
