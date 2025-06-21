@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { juzPageMapData } from '@/data/juz-page-map';
 import { X, CheckSquare, AlertTriangle } from 'lucide-react';
+import { PrintableScheduleTable } from './PrintableScheduleTable';
+import { printComponent } from '@/utils/printUtils';
+import ReactDOMServer from 'react-dom/server';
 
 // Helper function to get juz number for a page
 const getJuzForPage = (page: number): number | undefined => {
@@ -56,6 +58,18 @@ export const PlannerSchedule = ({
   const completionDate = schedule[schedule.length - 1].date;
   const upcomingTasks = schedule.filter(item => !item.completed);
   const completedTasks = schedule.filter(item => item.completed).sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+
+  const handlePrintSchedule = () => {
+    const printableComponent = <PrintableScheduleTable schedule={schedule} title="Memorization Schedule" />;
+    const componentHTML = ReactDOMServer.renderToStaticMarkup(printableComponent);
+    printComponent(componentHTML, 'Memorization Schedule');
+  };
+
+  const handleDownloadSchedule = () => {
+    const printableComponent = <PrintableScheduleTable schedule={schedule} title="Memorization Schedule" />;
+    const componentHTML = ReactDOMServer.renderToStaticMarkup(printableComponent);
+    printComponent(componentHTML, 'Memorization Schedule');
+  };
 
   const handleTaskSelection = (date: string, selected: boolean) => {
     const newSelected = new Set(selectedTasks);
@@ -131,10 +145,24 @@ export const PlannerSchedule = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Memorization Schedule</CardTitle>
-        <CardDescription>
-          Estimated completion date: {format(parseISO(completionDate), "MMMM do, yyyy")}
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Your Memorization Schedule</CardTitle>
+            <CardDescription>
+              Estimated completion date: {format(parseISO(completionDate), "MMMM do, yyyy")}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrintSchedule}>
+              <printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownloadSchedule}>
+              <download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
