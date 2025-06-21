@@ -153,7 +153,24 @@ const Stats = () => {
   // Calculate basic stats
   const stats = useMemo(() => {
     const memorizedJuz = juzData.filter(j => j.isMemorized).length;
-    const totalPages = memorizationEntries.reduce((sum, entry) => sum + (entry.endPage - entry.startPage + 1), 0);
+    
+    // Calculate total pages from memorized juz using juz-page-map
+    let totalPages = 0;
+    const memorizedJuzNumbers = juzData.filter(j => j.isMemorized).map(j => j.juzNumber);
+    
+    memorizedJuzNumbers.forEach(juzNumber => {
+      const juzPageInfo = juzPageMapData.find(juz => juz.juz === juzNumber);
+      if (juzPageInfo) {
+        totalPages += juzPageInfo.totalPages;
+      }
+    });
+
+    // Also count partial pages from page ranges if they exist
+    juzData.forEach(juz => {
+      if (!juz.isMemorized && juz.startPage && juz.endPage) {
+        totalPages += (juz.endPage - juz.startPage + 1);
+      }
+    });
     
     // Count unique surahs from juz data
     const memorizedSurahs = new Set<number>();
@@ -163,12 +180,19 @@ const Stats = () => {
       }
     });
 
+    // For fully memorized juz, we need to get all surahs in those juz
+    // This is a simplified calculation - in a real app you'd want to use the actual juz-surah mapping
+    const fullyMemorizedJuzCount = memorizedJuz;
+    // Approximate: each juz contains about 3-4 surahs on average
+    const approximateSurahsFromJuz = fullyMemorizedJuzCount * 3.5;
+    const totalMemorizedSurahs = Math.max(memorizedSurahs.size, Math.floor(approximateSurahsFromJuz));
+
     // Calculate verses (approximate - 15 lines per page, ~2 verses per line)
     const approximateVerses = totalPages * 30;
 
     return {
       memorizedJuz,
-      memorizedSurahs: memorizedSurahs.size,
+      memorizedSurahs: totalMemorizedSurahs,
       totalPages,
       approximateVerses,
       totalJuz: 30,
@@ -176,9 +200,9 @@ const Stats = () => {
       totalQuranPages: 604,
       totalQuranVerses: 6236
     };
-  }, [juzData, memorizationEntries]);
+  }, [juzData]);
 
-  // Monthly progress data
+  // Monthly progress data - updated to use juz data
   const monthlyData = useMemo(() => {
     const months = eachMonthOfInterval({
       start: subMonths(new Date(), 11),
@@ -189,34 +213,42 @@ const Stats = () => {
       const monthStart = startOfMonth(month);
       const monthEnd = endOfMonth(month);
       
-      const monthEntries = memorizationEntries.filter(entry => {
-        const entryDate = parseISO(entry.dateMemorized);
-        return entryDate >= monthStart && entryDate <= monthEnd;
+      // Count juz memorized this month from juz data
+      const juzMemorizedThisMonth = juzData.filter(juz => {
+        if (!juz.dateMemorized || !juz.isMemorized) return false;
+        const memDate = parseISO(juz.dateMemorized);
+        return memDate >= monthStart && memDate <= monthEnd;
+      }).length;
+
+      // Calculate pages from memorized juz this month
+      let pagesThisMonth = 0;
+      juzData.forEach(juz => {
+        if (!juz.dateMemorized || !juz.isMemorized) return;
+        const memDate = parseISO(juz.dateMemorized);
+        if (memDate >= monthStart && memDate <= monthEnd) {
+          const juzPageInfo = juzPageMapData.find(j => j.juz === juz.juzNumber);
+          if (juzPageInfo) {
+            pagesThisMonth += juzPageInfo.totalPages;
+          }
+        }
       });
 
-      const juzThisMonth = new Set(monthEntries.map(e => e.juz)).size;
-      const pagesThisMonth = monthEntries.reduce((sum, entry) => sum + (entry.endPage - entry.startPage + 1), 0);
-
-      // Count surahs memorized this month
-      const surahsThisMonth = new Set<number>();
-      monthEntries.forEach(entry => {
-        // This is a simplified calculation - you might want to improve this based on your data structure
-        surahsThisMonth.add(entry.juz); // Using juz as proxy for now
-      });
+      // Count surahs memorized this month (simplified calculation)
+      const surahsThisMonth = Math.floor(juzMemorizedThisMonth * 3.5);
 
       return {
         month: format(month, 'MMM yyyy'),
-        juz: juzThisMonth,
+        juz: juzMemorizedThisMonth,
         pages: pagesThisMonth,
-        surahs: surahsThisMonth.size,
+        surahs: surahsThisMonth,
         date: month
       };
     });
-  }, [memorizationEntries]);
+  }, [juzData]);
 
   // Projection calculation
   const projection = useMemo(() => {
-    if (memorizationEntries.length < 2) return null;
+    if (juzData.length < 2) return null;
 
     // Calculate average pages per month over last 3 months
     const recentMonths = monthlyData.slice(-3);
@@ -431,18 +463,23 @@ const Stats = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {memorizationEntries.slice(-5).reverse().map((entry) => (
-                  <div key={entry.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                {juzData.filter(j => j.isMemorized && j.dateMemorized).slice(-5).reverse().map((juz) => (
+                  <div key={juz.juzNumber} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <div className="font-medium">Juz {entry.juz}</div>
-                      <div className="text-sm text-gray-600">Pages {entry.startPage}-{entry.endPage}</div>
+                      <div className="font-medium">Juz {juz.juzNumber}</div>
+                      <div className="text-sm text-gray-600">
+                        {(() => {
+                          const juzPageInfo = juzPageMapData.find(j => j.juz === juz.juzNumber);
+                          return juzPageInfo ? `Pages ${juzPageInfo.startPage}-${juzPageInfo.endPage}` : 'Complete Juz';
+                        })()}
+                      </div>
                     </div>
                     <Badge variant="outline">
-                      {format(parseISO(entry.dateMemorized), 'MMM d, yyyy')}
+                      {format(parseISO(juz.dateMemorized!), 'MMM d, yyyy')}
                     </Badge>
                   </div>
                 ))}
-                {memorizationEntries.length === 0 && (
+                {juzData.filter(j => j.isMemorized && j.dateMemorized).length === 0 && (
                   <div className="text-center text-gray-500 py-8">
                     No memorization entries yet. Start tracking your progress!
                   </div>
