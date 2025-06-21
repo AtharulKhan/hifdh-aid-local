@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart3, Calendar, TrendingUp, Target, BookOpen, Clock, Award, Filter } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, LabelList } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, LabelList, Cell } from "recharts";
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addDays } from "date-fns";
 import { juzPageMapData } from "@/data/juz-page-map";
 import surahNamesData from '@/data/surah-names.json';
@@ -297,6 +296,15 @@ const Stats = () => {
     }
     return null;
   };
+
+  // Separate schedule data by status for different colored scatter plots
+  const scheduleDataByStatus = useMemo(() => {
+    const completed = scheduleTimeSeriesData.filter(item => item.completed);
+    const overdue = scheduleTimeSeriesData.filter(item => item.isOverdue);
+    const pending = scheduleTimeSeriesData.filter(item => !item.completed && !item.isOverdue);
+    
+    return { completed, overdue, pending };
+  }, [scheduleTimeSeriesData]);
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -589,26 +597,41 @@ const Stats = () => {
               {scheduleTimeSeriesData.length > 0 ? (
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart data={scheduleTimeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="date"
+                        type="category"
                         angle={-45}
                         textAnchor="end"
                         height={60}
                       />
                       <YAxis 
                         dataKey="page"
+                        type="number"
                         label={{ value: 'Page Number', angle: -90, position: 'insideLeft' }}
                       />
                       <Tooltip content={<ScheduleTooltip />} />
+                      
+                      {/* Completed tasks - Green */}
                       <Scatter 
-                        dataKey="page" 
-                        fill={(data: any) => {
-                          if (data.completed) return "#22c55e";
-                          if (data.isOverdue) return "#ef4444";
-                          return "#3b82f6";
-                        }}
+                        name="Completed"
+                        data={scheduleDataByStatus.completed}
+                        fill="#22c55e"
+                      />
+                      
+                      {/* Overdue tasks - Red */}
+                      <Scatter 
+                        name="Overdue"
+                        data={scheduleDataByStatus.overdue}
+                        fill="#ef4444"
+                      />
+                      
+                      {/* Pending tasks - Blue */}
+                      <Scatter 
+                        name="Pending"
+                        data={scheduleDataByStatus.pending}
+                        fill="#3b82f6"
                       />
                     </ScatterChart>
                   </ResponsiveContainer>
