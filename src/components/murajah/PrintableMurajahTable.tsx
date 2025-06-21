@@ -20,21 +20,6 @@ interface PrintableMurajahTableProps {
 export const PrintableMurajahTable: React.FC<PrintableMurajahTableProps> = ({ schedule, title }) => {
   return (
     <div className="print-container">
-      <style jsx>{`
-        @media print {
-          .print-container {
-            font-size: 12px;
-          }
-          .page-break {
-            page-break-before: always;
-          }
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-        }
-      `}</style>
-      
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold mb-2">{title}</h1>
         <p className="text-gray-600">Generated on {format(new Date(), 'MMMM do, yyyy')}</p>
