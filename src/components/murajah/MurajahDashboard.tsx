@@ -8,6 +8,7 @@ import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { ComprehensivePrintDialog } from "@/components/shared/ComprehensivePrintDialog";
 import { PrintableMurajahCycles } from "./PrintableMurajahCycles";
+import { PrintableMurajahSchedule } from "./PrintableMurajahSchedule";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -590,7 +591,7 @@ export const MurajahDashboard = () => {
               <ComprehensivePrintDialog
                 murajah={{
                   schedule: generateMurajahSchedule(),
-                  component: PrintableMurajahCycles
+                  component: PrintableMurajahSchedule
                 }}
                 todaysMurajah={{
                   data: cycles,
