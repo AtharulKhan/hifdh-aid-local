@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -185,6 +186,12 @@ const Stats = () => {
   // Custom label component for showing Juz numbers above points
   const JuzLabel = (props: any) => {
     const { x, y, payload } = props;
+    
+    // Add safety checks for payload and juz property
+    if (!payload || !payload.juz) {
+      return null;
+    }
+    
     return (
       <text 
         x={x} 
