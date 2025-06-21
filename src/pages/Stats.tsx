@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -184,22 +183,21 @@ const Stats = () => {
   }, [monthlyData, stats]);
 
   // Custom label component for showing Juz numbers above points
-  const JuzLabel = (props: any) => {
+  const renderJuzLabel = (props: any) => {
     const { x, y, payload } = props;
     
-    // Add safety checks for payload and juz property
-    if (!payload || !payload.juz) {
+    if (!payload || typeof payload.juz === 'undefined') {
       return null;
     }
     
     return (
       <text 
         x={x} 
-        y={y - 10} 
+        y={y - 15} 
         textAnchor="middle" 
-        fill="#666" 
+        fill="#4F46E5" 
         fontSize="12"
-        fontWeight="500"
+        fontWeight="600"
       >
         J{payload.juz}
       </text>
@@ -291,7 +289,7 @@ const Stats = () => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={juzTimeSeriesData} margin={{ top: 30, right: 30, left: 20, bottom: 60 }}>
+                    <LineChart data={juzTimeSeriesData} margin={{ top: 40, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="date"
@@ -311,9 +309,11 @@ const Stats = () => {
                         strokeWidth={2}
                         dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
                         activeDot={{ r: 8, fill: '#8884d8' }}
-                      >
-                        <LabelList content={<JuzLabel />} />
-                      </Line>
+                      />
+                      <LabelList 
+                        dataKey="juz" 
+                        content={renderJuzLabel}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
