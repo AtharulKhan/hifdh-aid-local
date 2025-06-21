@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Check, Hash, Search } from "lucide-react";
 import { ExpandableSection } from "@/components/ui/ExpandableSection";
+import { CompletionCalculator } from "./CompletionCalculator";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { useAuth } from "@/contexts/AuthContext";
@@ -324,6 +325,9 @@ export const JuzMemorizationTracker = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Completion Calculator - Less Prominent */}
+      <CompletionCalculator memorizedJuz={memorizedJuz.filter(j => j.isMemorized).map(j => j.juzNumber)} />
 
       {/* Search Bar */}
       <Card>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -19,26 +18,6 @@ const Murajah = () => {
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("dashboard");
-
-  // Get memorized Juz for completion calculator
-  const [memorizedJuz, setMemorizedJuz] = useState<number[]>([]);
-
-  useEffect(() => {
-    const savedJuzData = localStorage.getItem('murajah-juz-memorization');
-    if (savedJuzData) {
-      try {
-        const parsedJuzData = JSON.parse(savedJuzData);
-        if (Array.isArray(parsedJuzData)) {
-          const memorized = parsedJuzData
-            .filter(juz => juz.isMemorized)
-            .map(juz => juz.juzNumber);
-          setMemorizedJuz(memorized);
-        }
-      } catch (error) {
-        console.error('Failed to parse juz memorization data:', error);
-      }
-    }
-  }, []);
 
   // Handle URL tab parameter
   useEffect(() => {
@@ -224,9 +203,6 @@ const Murajah = () => {
           Intelligent spaced repetition system for Quran memorization. Track your progress and get automated daily review cycles.
         </p>
       </div>
-
-      {/* Completion Calculator */}
-      <CompletionCalculator memorizedJuz={memorizedJuz} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto md:h-10">
