@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, Calendar, TrendingUp, Target, BookOpen, Clock, Award } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter } from "recharts";
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addDays } from "date-fns";
 import { juzPageMapData } from "@/data/juz-page-map";
 import surahNamesData from '@/data/surah-names.json';
@@ -59,6 +59,29 @@ const Stats = () => {
     }
     return [];
   }, []);
+
+  // Create time series data for Juz memorization
+  const juzTimeSeriesData = useMemo(() => {
+    const memorizedJuzWithDates = juzData
+      .filter(j => j.isMemorized && j.dateMemorized)
+      .map(j => ({
+        date: j.dateMemorized!,
+        juzNumber: j.juzNumber,
+        parsedDate: parseISO(j.dateMemorized!)
+      }))
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+
+    let cumulativeCount = 0;
+    return memorizedJuzWithDates.map((item, index) => {
+      cumulativeCount = index + 1;
+      return {
+        date: format(item.parsedDate, 'MMM dd, yyyy'),
+        juz: item.juzNumber,
+        cumulativeJuz: cumulativeCount,
+        parsedDate: item.parsedDate
+      };
+    });
+  }, [juzData]);
 
   // Calculate basic stats
   const stats = useMemo(() => {
@@ -146,6 +169,21 @@ const Stats = () => {
     };
   }, [monthlyData, stats]);
 
+  // Custom tooltip for Juz time series
+  const JuzTimeSeriesTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border rounded-lg shadow-lg">
+          <p className="font-medium">Juz {data.juz}</p>
+          <p className="text-sm text-gray-600">{data.date}</p>
+          <p className="text-sm text-blue-600">Total: {data.cumulativeJuz} Juz</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -200,6 +238,55 @@ const Stats = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Juz Memorization Timeline */}
+          {juzTimeSeriesData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Juz Memorization Timeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart data={juzTimeSeriesData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="parsedDate"
+                        type="number"
+                        scale="time"
+                        domain={['dataMin', 'dataMax']}
+                        tickFormatter={(value) => format(new Date(value), 'MMM yyyy')}
+                      />
+                      <YAxis 
+                        dataKey="cumulativeJuz"
+                        type="number"
+                        domain={[0, 30]}
+                        label={{ value: 'Cumulative Juz', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip content={<JuzTimeSeriesTooltip />} />
+                      <Scatter 
+                        dataKey="cumulativeJuz" 
+                        fill="#8884d8"
+                        stroke="#8884d8"
+                        strokeWidth={2}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cumulativeJuz" 
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
+                        activeDot={{ r: 8, fill: '#8884d8' }}
+                      />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recent Activity */}
           <Card>
