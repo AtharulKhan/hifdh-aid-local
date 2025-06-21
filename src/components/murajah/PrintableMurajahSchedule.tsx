@@ -17,6 +17,14 @@ interface PrintableMurajahScheduleProps {
   title: string;
 }
 
+interface GroupedDayData {
+  date: string;
+  RMV: ScheduleItem | null;
+  OMV: ScheduleItem | null;
+  Listening: ScheduleItem | null;
+  Reading: ScheduleItem | null;
+}
+
 export const PrintableMurajahSchedule: React.FC<PrintableMurajahScheduleProps> = ({ schedule, title }) => {
   // Group schedule by date
   const groupedByDate = schedule.reduce((acc, item) => {
@@ -29,15 +37,21 @@ export const PrintableMurajahSchedule: React.FC<PrintableMurajahScheduleProps> =
         Reading: null
       };
     }
-    acc[item.date][item.type as keyof typeof acc[string]] = item;
+    
+    // Fix the type assignment by being more explicit
+    const dayData = acc[item.date];
+    if (item.type === 'RMV') {
+      dayData.RMV = item;
+    } else if (item.type === 'OMV') {
+      dayData.OMV = item;
+    } else if (item.type === 'Listening') {
+      dayData.Listening = item;
+    } else if (item.type === 'Reading') {
+      dayData.Reading = item;
+    }
+    
     return acc;
-  }, {} as { [date: string]: { 
-    date: string; 
-    RMV: ScheduleItem | null; 
-    OMV: ScheduleItem | null; 
-    Listening: ScheduleItem | null; 
-    Reading: ScheduleItem | null; 
-  } });
+  }, {} as { [date: string]: GroupedDayData });
 
   const sortedDates = Object.keys(groupedByDate).sort();
 
