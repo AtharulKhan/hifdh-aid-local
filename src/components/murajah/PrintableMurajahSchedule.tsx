@@ -18,6 +18,49 @@ interface PrintableMurajahScheduleProps {
 }
 
 export const PrintableMurajahSchedule: React.FC<PrintableMurajahScheduleProps> = ({ schedule, title }) => {
+  // Group schedule by date
+  const groupedByDate = schedule.reduce((acc, item) => {
+    if (!acc[item.date]) {
+      acc[item.date] = {
+        date: item.date,
+        RMV: null,
+        OMV: null,
+        Listening: null,
+        Reading: null
+      };
+    }
+    acc[item.date][item.type as keyof typeof acc[string]] = item;
+    return acc;
+  }, {} as { [date: string]: { 
+    date: string; 
+    RMV: ScheduleItem | null; 
+    OMV: ScheduleItem | null; 
+    Listening: ScheduleItem | null; 
+    Reading: ScheduleItem | null; 
+  } });
+
+  const sortedDates = Object.keys(groupedByDate).sort();
+
+  const renderTaskCell = (task: ScheduleItem | null) => {
+    if (!task) {
+      return <span className="text-gray-400">-</span>;
+    }
+    
+    return (
+      <div>
+        <div className="font-medium text-sm">{task.title}</div>
+        <div className="text-xs text-gray-600 mt-1">{task.content}</div>
+        <span className={`inline-block px-2 py-1 rounded text-xs mt-1 ${
+          task.completed 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {task.completed ? 'Completed' : 'Pending'}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="print-container">
       <div className="mb-6 text-center">
@@ -29,44 +72,40 @@ export const PrintableMurajahSchedule: React.FC<PrintableMurajahScheduleProps> =
         <TableHeader>
           <TableRow className="bg-gray-100">
             <TableHead className="border border-gray-300 p-2 text-left font-bold">Date</TableHead>
-            <TableHead className="border border-gray-300 p-2 text-left font-bold">Type</TableHead>
-            <TableHead className="border border-gray-300 p-2 text-left font-bold">Title</TableHead>
-            <TableHead className="border border-gray-300 p-2 text-left font-bold">Content</TableHead>
-            <TableHead className="border border-gray-300 p-2 text-left font-bold">Status</TableHead>
+            <TableHead className="border border-gray-300 p-2 text-left font-bold">RMV</TableHead>
+            <TableHead className="border border-gray-300 p-2 text-left font-bold">OMV</TableHead>
+            <TableHead className="border border-gray-300 p-2 text-left font-bold">Listening</TableHead>
+            <TableHead className="border border-gray-300 p-2 text-left font-bold">Reading</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {schedule.map((item, index) => (
-            <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <TableCell className="border border-gray-300 p-2">
-                {format(new Date(item.date), 'MMM d, yyyy')}
-              </TableCell>
-              <TableCell className="border border-gray-300 p-2">
-                <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800">
-                  {item.type}
-                </span>
-              </TableCell>
-              <TableCell className="border border-gray-300 p-2">
-                {item.title}
-              </TableCell>
-              <TableCell className="border border-gray-300 p-2">
-                {item.content}
-              </TableCell>
-              <TableCell className="border border-gray-300 p-2">
-                <span className={`px-2 py-1 rounded text-xs ${
-                  item.completed 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {item.completed ? 'Completed' : 'Pending'}
-                </span>
-              </TableCell>
-            </TableRow>
-          ))}
+          {sortedDates.map((date, index) => {
+            const dayData = groupedByDate[date];
+            return (
+              <TableRow key={date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <TableCell className="border border-gray-300 p-2 font-medium">
+                  {format(new Date(date), 'MMM d, yyyy')}
+                </TableCell>
+                <TableCell className="border border-gray-300 p-2">
+                  {renderTaskCell(dayData.RMV)}
+                </TableCell>
+                <TableCell className="border border-gray-300 p-2">
+                  {renderTaskCell(dayData.OMV)}
+                </TableCell>
+                <TableCell className="border border-gray-300 p-2">
+                  {renderTaskCell(dayData.Listening)}
+                </TableCell>
+                <TableCell className="border border-gray-300 p-2">
+                  {renderTaskCell(dayData.Reading)}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
       <div className="mt-6 text-sm text-gray-600">
+        <p>Total Days: {sortedDates.length}</p>
         <p>Total Tasks: {schedule.length}</p>
         <p>Completed: {schedule.filter(s => s.completed).length}</p>
         <p>Pending: {schedule.filter(s => !s.completed).length}</p>
