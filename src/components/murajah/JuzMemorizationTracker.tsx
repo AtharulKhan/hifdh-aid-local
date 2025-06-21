@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Check, Hash, Search } from "lucide-react";
+import { BookOpen, Check, Hash, Search, Calendar } from "lucide-react";
 import { ExpandableSection } from "@/components/ui/ExpandableSection";
 import { CompletionCalculator } from "./CompletionCalculator";
 import juzData from "@/data/juz-numbers.json";
@@ -122,7 +122,7 @@ export const JuzMemorizationTracker = () => {
             ? { 
                 ...juz, 
                 isMemorized,
-                dateMemorized: isMemorized ? new Date().toISOString().split('T')[0] : undefined,
+                dateMemorized: isMemorized ? (juz.dateMemorized || new Date().toISOString().split('T')[0]) : undefined,
                 memorizedSurahs: isMemorized ? undefined : juz.memorizedSurahs
               }
             : juz
@@ -141,6 +141,33 @@ export const JuzMemorizationTracker = () => {
       }
       
       return prev;
+    });
+  };
+
+  const updateMemorizationDate = (juzNumber: number, date: string) => {
+    console.log(`Updating memorization date for Juz ${juzNumber} to ${date}`);
+    setMemorizedJuz(prev => {
+      const existingJuz = prev.find(j => j.juzNumber === juzNumber);
+      
+      if (existingJuz) {
+        const updated = prev.map(juz => 
+          juz.juzNumber === juzNumber 
+            ? { ...juz, dateMemorized: date }
+            : juz
+        );
+        console.log('Updated juz list with new date:', updated);
+        return updated;
+      } else {
+        // Create new entry if it doesn't exist
+        const newJuz = {
+          juzNumber,
+          isMemorized: false,
+          dateMemorized: date
+        };
+        const updated = [...prev, newJuz];
+        console.log('Added new juz with date:', newJuz, 'Updated list:', updated);
+        return updated;
+      }
     });
   };
 
@@ -401,13 +428,23 @@ export const JuzMemorizationTracker = () => {
                           <div className="text-xs md:text-sm text-gray-600 mt-1">
                             {juz.first_verse_key} - {juz.last_verse_key}
                           </div>
-                          {dateMemorized && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Memorized: {new Date(dateMemorized).toLocaleDateString()}
-                            </div>
-                          )}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Date Memorized */}
+                    <div className="space-y-2">
+                      <Label htmlFor={`date-memorized-${juz.juz_number}`} className="text-xs md:text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Date Memorized
+                      </Label>
+                      <Input
+                        id={`date-memorized-${juz.juz_number}`}
+                        type="date"
+                        value={dateMemorized || ''}
+                        onChange={(e) => updateMemorizationDate(juz.juz_number, e.target.value)}
+                        className="text-xs md:text-sm max-w-48"
+                      />
                     </div>
 
                     {/* Page Range Inputs */}
