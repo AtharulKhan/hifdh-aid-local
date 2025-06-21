@@ -9,12 +9,9 @@ import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { juzPageMapData } from '@/data/juz-page-map';
-import { X, CheckSquare, AlertTriangle, Printer, Download } from 'lucide-react';
+import { X, CheckSquare, AlertTriangle } from 'lucide-react';
 import { PrintableScheduleTable } from './PrintableScheduleTable';
-import { printComponent } from '@/utils/printUtils';
-import ReactDOMServer from 'react-dom/server';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ComprehensivePrintDialog } from '@/components/shared/ComprehensivePrintDialog';
 
 // Helper function to get juz number for a page
 const getJuzForPage = (page: number): number | undefined => {
@@ -43,8 +40,6 @@ export const PlannerSchedule = ({
 }) => {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-  const [printDialogOpen, setPrintDialogOpen] = useState(false);
-  const [printTimeframe, setPrintTimeframe] = useState('7');
 
   if (schedule.length === 0) {
     return (
@@ -62,33 +57,6 @@ export const PlannerSchedule = ({
   const completionDate = schedule[schedule.length - 1].date;
   const upcomingTasks = schedule.filter(item => !item.completed);
   const completedTasks = schedule.filter(item => item.completed).sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
-
-  const getFilteredSchedule = (days: number) => {
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + days);
-    
-    return schedule.filter(item => {
-      const itemDate = parseISO(item.date);
-      return itemDate >= today && itemDate <= futureDate;
-    });
-  };
-
-  const handlePrintSchedule = () => {
-    const days = parseInt(printTimeframe);
-    const filteredSchedule = getFilteredSchedule(days);
-    const timeframeText = days === 7 ? 'Next 7 Days' : 
-                         days === 30 ? 'Next 30 Days' : 
-                         days === 180 ? 'Next 6 Months' : `Next ${days} Days`;
-    
-    const printableComponent = <PrintableScheduleTable 
-      schedule={filteredSchedule} 
-      title={`Memorization Schedule - ${timeframeText}`} 
-    />;
-    const componentHTML = ReactDOMServer.renderToStaticMarkup(printableComponent);
-    printComponent(componentHTML, `Memorization Schedule - ${timeframeText}`);
-    setPrintDialogOpen(false);
-  };
 
   const handleTaskSelection = (date: string, selected: boolean) => {
     const newSelected = new Set(selectedTasks);
@@ -172,38 +140,12 @@ export const PlannerSchedule = ({
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Dialog open={printDialogOpen} onOpenChange={setPrintDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Print Memorization Schedule</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Select timeframe to print:</Label>
-                    <Select value={printTimeframe} onValueChange={setPrintTimeframe}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7">Next 7 Days</SelectItem>
-                        <SelectItem value="30">Next 30 Days</SelectItem>
-                        <SelectItem value="180">Next 6 Months</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handlePrintSchedule} className="w-full">
-                    <Printer className="h-4 w-4 mr-2" />
-                    Print Schedule
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <ComprehensivePrintDialog
+              memorization={{
+                schedule: schedule,
+                component: PrintableScheduleTable
+              }}
+            />
           </div>
         </div>
       </CardHeader>
