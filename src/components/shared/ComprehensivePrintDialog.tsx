@@ -127,7 +127,7 @@ export const ComprehensivePrintDialog: React.FC<ComprehensivePrintDialogProps> =
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   checked={includeMemorization} 
-                  onCheckedChange={setIncludeMemorization}
+                  onCheckedChange={(checked) => setIncludeMemorization(checked === true)}
                   id="memorization"
                 />
                 <Label htmlFor="memorization">Memorization Schedule</Label>
@@ -137,7 +137,7 @@ export const ComprehensivePrintDialog: React.FC<ComprehensivePrintDialogProps> =
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   checked={includeMurajah} 
-                  onCheckedChange={setIncludeMurajah}
+                  onCheckedChange={(checked) => setIncludeMurajah(checked === true)}
                   id="murajah"
                 />
                 <Label htmlFor="murajah">Murajah Review Schedule</Label>
@@ -147,7 +147,7 @@ export const ComprehensivePrintDialog: React.FC<ComprehensivePrintDialogProps> =
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   checked={includeTodaysMurajah} 
-                  onCheckedChange={setIncludeTodaysMurajah}
+                  onCheckedChange={(checked) => setIncludeTodaysMurajah(checked === true)}
                   id="todays-murajah"
                 />
                 <Label htmlFor="todays-murajah">Today's Murajah Tasks</Label>
