@@ -1,9 +1,12 @@
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, Calendar, TrendingUp, Target, BookOpen, Clock, Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart3, Calendar, TrendingUp, Target, BookOpen, Clock, Award, Filter } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, LabelList } from "recharts";
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addDays } from "date-fns";
 import { juzPageMapData } from "@/data/juz-page-map";
@@ -33,7 +36,20 @@ interface MemorizationEntry {
   dateMemorized: string;
 }
 
+interface ScheduleItem {
+  date: string;
+  task: string;
+  completed: boolean;
+  page: number;
+  startLine: number;
+  endLine: number;
+  surah: string;
+  isOverdue?: boolean;
+}
+
 const Stats = () => {
+  const [scheduleFilter, setScheduleFilter] = useState<'all' | 'completed' | 'pending' | 'overdue'>('all');
+
   // Load Juz data from the correct localStorage key
   const juzData = useMemo(() => {
     const saved = localStorage.getItem('murajah-juz-memorization');
@@ -52,6 +68,19 @@ const Stats = () => {
     if (saved) {
       try {
         return JSON.parse(saved) as MemorizationEntry[];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, []);
+
+  // Load memorization planner schedule
+  const plannerSchedule = useMemo(() => {
+    const saved = localStorage.getItem('memorizationPlannerSchedule');
+    if (saved) {
+      try {
+        return JSON.parse(saved) as ScheduleItem[];
       } catch {
         return [];
       }
@@ -95,6 +124,32 @@ const Stats = () => {
     console.log('Time series data:', timeSeriesData);
     return timeSeriesData;
   }, [juzData]);
+
+  // Create time series data for hifdh schedule
+  const scheduleTimeSeriesData = useMemo(() => {
+    if (plannerSchedule.length === 0) return [];
+
+    const filteredSchedule = plannerSchedule.filter(item => {
+      if (scheduleFilter === 'all') return true;
+      if (scheduleFilter === 'completed') return item.completed;
+      if (scheduleFilter === 'pending') return !item.completed && !item.isOverdue;
+      if (scheduleFilter === 'overdue') return item.isOverdue;
+      return true;
+    });
+
+    return filteredSchedule
+      .map(item => ({
+        date: format(parseISO(item.date), 'MMM dd, yyyy'),
+        page: item.page,
+        surah: item.surah,
+        lines: item.endLine - item.startLine + 1,
+        completed: item.completed,
+        isOverdue: item.isOverdue,
+        parsedDate: parseISO(item.date),
+        task: item.task
+      }))
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+  }, [plannerSchedule, scheduleFilter]);
 
   // Calculate basic stats
   const stats = useMemo(() => {
@@ -222,6 +277,27 @@ const Stats = () => {
     return null;
   };
 
+  // Custom tooltip for schedule time series
+  const ScheduleTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border rounded-lg shadow-lg">
+          <p className="font-medium">{data.surah}</p>
+          <p className="text-sm text-gray-600">{data.date}</p>
+          <p className="text-sm text-blue-600">Page {data.page}</p>
+          <p className="text-sm text-green-600">{data.lines} lines</p>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant={data.completed ? "default" : data.isOverdue ? "destructive" : "outline"}>
+              {data.completed ? "Completed" : data.isOverdue ? "Overdue" : "Pending"}
+            </Badge>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -230,10 +306,11 @@ const Stats = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="projection">Projection</TabsTrigger>
         </TabsList>
 
@@ -479,6 +556,110 @@ const Stats = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Hifdh Schedule Timeline
+              </CardTitle>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <Filter className="h-4 w-4" />
+                  <Select value={scheduleFilter} onValueChange={(value: any) => setScheduleFilter(value)}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter schedule" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Tasks</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge variant="outline">
+                    {scheduleTimeSeriesData.length} tasks
+                  </Badge>
+                </div>
+              </CardContent>
+            </CardHeader>
+            <CardContent>
+              {scheduleTimeSeriesData.length > 0 ? (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart data={scheduleTimeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis 
+                        dataKey="page"
+                        label={{ value: 'Page Number', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip content={<ScheduleTooltip />} />
+                      <Scatter 
+                        dataKey="page" 
+                        fill={(data: any) => {
+                          if (data.completed) return "#22c55e";
+                          if (data.isOverdue) return "#ef4444";
+                          return "#3b82f6";
+                        }}
+                      />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <div className="text-gray-500 mb-2">No schedule data available</div>
+                  <div className="text-sm text-gray-400">
+                    Create a memorization plan to see your schedule timeline
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {scheduleTimeSeriesData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Schedule Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {scheduleTimeSeriesData.filter(s => s.completed).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Completed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {scheduleTimeSeriesData.filter(s => !s.completed && !s.isOverdue).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Pending</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">
+                      {scheduleTimeSeriesData.filter(s => s.isOverdue).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Overdue</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {scheduleTimeSeriesData.reduce((sum, s) => sum + s.lines, 0)}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Lines</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="projection" className="space-y-4">
