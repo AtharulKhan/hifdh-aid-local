@@ -35,7 +35,7 @@ interface MemorizationEntry {
 }
 
 const Stats = () => {
-  // Load data from localStorage
+  // Load Juz data from the correct localStorage key
   const juzData = useMemo(() => {
     const saved = localStorage.getItem('murajah-juz-memorization');
     if (saved) {
@@ -62,25 +62,39 @@ const Stats = () => {
 
   // Create time series data for Juz memorization
   const juzTimeSeriesData = useMemo(() => {
+    console.log('Raw juz data:', juzData);
+    
+    // Get all Juz with memorization dates (both fully memorized and with date)
     const memorizedJuzWithDates = juzData
-      .filter(j => j.isMemorized && j.dateMemorized)
+      .filter(j => j.dateMemorized) // Only include Juz with dates
       .map(j => ({
         date: j.dateMemorized!,
         juzNumber: j.juzNumber,
+        isFullyMemorized: j.isMemorized,
         parsedDate: parseISO(j.dateMemorized!)
       }))
       .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
 
+    console.log('Filtered juz with dates:', memorizedJuzWithDates);
+
     let cumulativeCount = 0;
-    return memorizedJuzWithDates.map((item, index) => {
-      cumulativeCount = index + 1;
+    const timeSeriesData = memorizedJuzWithDates.map((item, index) => {
+      // Only count fully memorized Juz for cumulative count
+      if (item.isFullyMemorized) {
+        cumulativeCount++;
+      }
+      
       return {
         date: format(item.parsedDate, 'MMM dd, yyyy'),
         juz: item.juzNumber,
         cumulativeJuz: cumulativeCount,
-        parsedDate: item.parsedDate
+        parsedDate: item.parsedDate,
+        isFullyMemorized: item.isFullyMemorized
       };
     });
+
+    console.log('Time series data:', timeSeriesData);
+    return timeSeriesData;
   }, [juzData]);
 
   // Calculate basic stats
@@ -177,7 +191,10 @@ const Stats = () => {
         <div className="bg-white p-3 border rounded-lg shadow-lg">
           <p className="font-medium">Juz {data.juz}</p>
           <p className="text-sm text-gray-600">{data.date}</p>
-          <p className="text-sm text-blue-600">Total: {data.cumulativeJuz} Juz</p>
+          <p className="text-sm text-blue-600">Total Completed: {data.cumulativeJuz} Juz</p>
+          {!data.isFullyMemorized && (
+            <p className="text-xs text-orange-600">Partial progress</p>
+          )}
         </div>
       );
     }
@@ -240,7 +257,7 @@ const Stats = () => {
           </div>
 
           {/* Juz Memorization Timeline */}
-          {juzTimeSeriesData.length > 0 && (
+          {juzTimeSeriesData.length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -251,28 +268,19 @@ const Stats = () => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart data={juzTimeSeriesData}>
+                    <LineChart data={juzTimeSeriesData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
-                        dataKey="parsedDate"
-                        type="number"
-                        scale="time"
-                        domain={['dataMin', 'dataMax']}
-                        tickFormatter={(value) => format(new Date(value), 'MMM yyyy')}
+                        dataKey="date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
                       />
                       <YAxis 
-                        dataKey="cumulativeJuz"
-                        type="number"
                         domain={[0, 30]}
                         label={{ value: 'Cumulative Juz', angle: -90, position: 'insideLeft' }}
                       />
                       <Tooltip content={<JuzTimeSeriesTooltip />} />
-                      <Scatter 
-                        dataKey="cumulativeJuz" 
-                        fill="#8884d8"
-                        stroke="#8884d8"
-                        strokeWidth={2}
-                      />
                       <Line 
                         type="monotone" 
                         dataKey="cumulativeJuz" 
@@ -281,8 +289,23 @@ const Stats = () => {
                         dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
                         activeDot={{ r: 8, fill: '#8884d8' }}
                       />
-                    </ScatterChart>
+                    </LineChart>
                   </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Juz Memorization Timeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-8">
+                <div className="text-gray-500 mb-2">No memorization dates recorded yet</div>
+                <div className="text-sm text-gray-400">
+                  Add dates to your memorized Juz to see your progress timeline
                 </div>
               </CardContent>
             </Card>
