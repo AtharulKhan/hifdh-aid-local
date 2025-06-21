@@ -519,6 +519,34 @@ export const MurajahDashboard = () => {
     saveTodaysCompletions(completions);
   };
 
+  // Add a function to generate future murajah schedule for printing
+  const generateMurajahSchedule = () => {
+    const schedule = [];
+    const today = new Date();
+    
+    // Generate schedule for the next 180 days (6 months)
+    for (let i = 0; i < 180; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dailyCycles = generateDailyCycles(juzMemorization, settings, dateStr);
+      
+      dailyCycles.forEach(cycle => {
+        schedule.push({
+          date: dateStr,
+          task: `${cycle.title}: ${cycle.content}`,
+          type: cycle.type,
+          completed: false,
+          title: cycle.title,
+          content: cycle.content
+        });
+      });
+    }
+    
+    return schedule;
+  };
+
   // Updated condition to check for any memorized content (full Juz or individual surahs)
   if (juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0)).length === 0) {
     return (
@@ -560,6 +588,10 @@ export const MurajahDashboard = () => {
                 <div className="text-sm text-gray-600">Completed</div>
               </div>
               <ComprehensivePrintDialog
+                murajah={{
+                  schedule: generateMurajahSchedule(),
+                  component: PrintableMurajahCycles
+                }}
                 todaysMurajah={{
                   data: cycles,
                   component: PrintableMurajahCycles
