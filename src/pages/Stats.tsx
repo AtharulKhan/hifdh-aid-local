@@ -1,11 +1,10 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, Calendar, TrendingUp, Target, BookOpen, Clock, Award } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, LabelList } from "recharts";
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addDays } from "date-fns";
 import { juzPageMapData } from "@/data/juz-page-map";
 import surahNamesData from '@/data/surah-names.json';
@@ -183,6 +182,23 @@ const Stats = () => {
     };
   }, [monthlyData, stats]);
 
+  // Custom label component for showing Juz numbers above points
+  const JuzLabel = (props: any) => {
+    const { x, y, payload } = props;
+    return (
+      <text 
+        x={x} 
+        y={y - 10} 
+        textAnchor="middle" 
+        fill="#666" 
+        fontSize="12"
+        fontWeight="500"
+      >
+        J{payload.juz}
+      </text>
+    );
+  };
+
   // Custom tooltip for Juz time series
   const JuzTimeSeriesTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -268,7 +284,7 @@ const Stats = () => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={juzTimeSeriesData}>
+                    <LineChart data={juzTimeSeriesData} margin={{ top: 30, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="date"
@@ -288,7 +304,9 @@ const Stats = () => {
                         strokeWidth={2}
                         dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
                         activeDot={{ r: 8, fill: '#8884d8' }}
-                      />
+                      >
+                        <LabelList content={<JuzLabel />} />
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
