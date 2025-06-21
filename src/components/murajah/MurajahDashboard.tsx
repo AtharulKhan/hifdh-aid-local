@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,8 @@ import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTri
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
+import { ComprehensivePrintDialog } from "@/components/shared/ComprehensivePrintDialog";
+import { PrintableMurajahCycles } from "./PrintableMurajahCycles";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -551,11 +552,19 @@ export const MurajahDashboard = () => {
                 Based on start date: {new Date(settings.startDate).toLocaleDateString()}
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">
-                {cycles.filter(c => c.completed).length}/{cycles.length}
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-green-600">
+                  {cycles.filter(c => c.completed).length}/{cycles.length}
+                </div>
+                <div className="text-sm text-gray-600">Completed</div>
               </div>
-              <div className="text-sm text-gray-600">Completed</div>
+              <ComprehensivePrintDialog
+                todaysMurajah={{
+                  data: cycles,
+                  component: PrintableMurajahCycles
+                }}
+              />
             </div>
           </div>
         </CardContent>
