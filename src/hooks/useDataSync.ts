@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -110,6 +109,34 @@ export const useDataSync = () => {
             });
         }
         console.log('Synced juz memorization data');
+      }
+
+      // Sync postponed Muraja'ah cycles
+      const postponedCycles = localStorage.getItem('murajah-postponed-cycles');
+      if (postponedCycles) {
+        const cycles = JSON.parse(postponedCycles);
+        
+        // Clear existing postponed cycles for this user first
+        await supabase
+          .from('postponed_murajah_cycles')
+          .delete()
+          .eq('user_id', user.id);
+        
+        // Insert new postponed cycles
+        for (const cycle of cycles) {
+          await supabase
+            .from('postponed_murajah_cycles')
+            .insert({
+              user_id: user.id,
+              cycle_type: cycle.type,
+              title: cycle.title,
+              content: cycle.content,
+              original_date: cycle.originalDate,
+              target_date: cycle.targetDate,
+              postponed_from_date: cycle.postponedFromDate
+            });
+        }
+        console.log('Synced postponed Muraja\'ah cycles');
       }
 
       // Sync journal entries
@@ -237,6 +264,25 @@ export const useDataSync = () => {
         localStorage.setItem('murajah-juz-memorization', JSON.stringify(formattedJuzData));
       }
 
+      // Load postponed Muraja'ah cycles
+      const { data: postponedCyclesData } = await supabase
+        .from('postponed_murajah_cycles')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (postponedCyclesData && postponedCyclesData.length > 0) {
+        const formattedPostponedCycles = postponedCyclesData.map(cycle => ({
+          type: cycle.cycle_type,
+          title: cycle.title,
+          content: cycle.content,
+          originalDate: cycle.original_date,
+          targetDate: cycle.target_date,
+          postponedFromDate: cycle.postponed_from_date,
+          isPostponed: true
+        }));
+        localStorage.setItem('murajah-postponed-cycles', JSON.stringify(formattedPostponedCycles));
+      }
+
       // Load journal entries
       const { data: journalData } = await supabase
         .from('journal_entries')
@@ -319,6 +365,12 @@ export const useDataSync = () => {
         .delete()
         .eq('user_id', user.id);
 
+      // Clear postponed Muraja'ah cycles
+      await supabase
+        .from('postponed_murajah_cycles')
+        .delete()
+        .eq('user_id', user.id);
+
       console.log('Cleared all data from Supabase');
 
       toast({
@@ -348,6 +400,9 @@ export const useDataSync = () => {
       
       // Clear juz memorization data
       localStorage.removeItem('murajah-juz-memorization');
+      
+      // Clear postponed cycles
+      localStorage.removeItem('murajah-postponed-cycles');
       
       // Clear journal entries
       localStorage.removeItem('journal-storage');

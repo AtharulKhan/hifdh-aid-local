@@ -10,6 +10,8 @@ import { ComprehensivePrintDialog } from "@/components/shared/ComprehensivePrint
 import { PrintableMurajahCycles } from "./PrintableMurajahCycles";
 import { PrintableMurajahSchedule } from "./PrintableMurajahSchedule";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -52,6 +54,8 @@ export const MurajahDashboard = () => {
     startDate: new Date().toISOString().split('T')[0]
   });
 
+  const { user } = useAuth();
+
   // Load data from localStorage
   useEffect(() => {
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
@@ -65,13 +69,24 @@ export const MurajahDashboard = () => {
     }
   }, []);
 
-  const postponeCycle = (cycleIndex: number) => {
+  const postponeCycle = async (cycleIndex: number) => {
     const cycle = cycles[cycleIndex];
     if (cycle.completed || cycle.isPostponed) return; // Don't postpone completed or already postponed cycles
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    // Create clean postponed cycle data (without React components)
+    const postponedCycle = {
+      type: cycle.type,
+      title: cycle.title,
+      content: cycle.content,
+      originalDate: cycle.startDate,
+      targetDate: tomorrowStr,
+      postponedFromDate: new Date().toISOString().split('T')[0],
+      isPostponed: true
+    };
 
     // Save postponed cycle to localStorage
     const postponedKey = 'murajah-postponed-cycles';
@@ -86,16 +101,29 @@ export const MurajahDashboard = () => {
       }
     }
 
-    // Add the postponed cycle for tomorrow
-    const postponedCycle = {
-      ...cycle,
-      postponedFromDate: new Date().toISOString().split('T')[0],
-      targetDate: tomorrowStr,
-      isPostponed: true
-    };
-
     postponedCycles.push(postponedCycle);
     localStorage.setItem(postponedKey, JSON.stringify(postponedCycles));
+
+    // Save to Supabase if user is authenticated
+    if (user) {
+      try {
+        await supabase
+          .from('postponed_murajah_cycles')
+          .insert({
+            user_id: user.id,
+            cycle_type: cycle.type,
+            title: cycle.title,
+            content: cycle.content,
+            original_date: cycle.startDate,
+            target_date: tomorrowStr,
+            postponed_from_date: new Date().toISOString().split('T')[0]
+          });
+        
+        console.log('Postponed cycle saved to Supabase');
+      } catch (error) {
+        console.error('Error saving postponed cycle to Supabase:', error);
+      }
+    }
 
     // Update the cycle in the current list to show it's postponed
     const updatedCycles = [...cycles];
@@ -135,14 +163,40 @@ export const MurajahDashboard = () => {
       return postponedCycles
         .filter((cycle: any) => cycle.targetDate === date)
         .map((cycle: any) => ({
-          ...cycle,
+          type: cycle.type,
           title: cycle.title.includes('Postponed!') ? cycle.title : `${cycle.title} - Postponed!`,
-          id: `${cycle.id}-postponed`,
-          isPostponed: true
+          content: cycle.content,
+          startDate: cycle.originalDate,
+          completed: false,
+          icon: getIconForCycleType(cycle.type),
+          color: getColorForCycleType(cycle.type),
+          id: `${cycle.type.toLowerCase()}-${cycle.originalDate}-postponed`,
+          isPostponed: true,
+          postponedToDate: cycle.targetDate
         }));
     } catch (error) {
       console.error('Error loading postponed cycles:', error);
       return [];
+    }
+  };
+
+  const getIconForCycleType = (type: string) => {
+    switch (type) {
+      case 'RMV': return <Clock className="h-4 w-4" />;
+      case 'OMV': return <RotateCcw className="h-4 w-4" />;
+      case 'Listening': return <PlayCircle className="h-4 w-4" />;
+      case 'Reading': return <BookOpen className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  const getColorForCycleType = (type: string) => {
+    switch (type) {
+      case 'RMV': return 'bg-green-50 border-green-200';
+      case 'OMV': return 'bg-purple-50 border-purple-200';
+      case 'Listening': return 'bg-blue-50 border-blue-200';
+      case 'Reading': return 'bg-orange-50 border-orange-200';
+      default: return 'bg-gray-50 border-gray-200';
     }
   };
 

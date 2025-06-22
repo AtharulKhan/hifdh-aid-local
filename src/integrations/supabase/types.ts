@@ -186,6 +186,45 @@ export type Database = {
         }
         Relationships: []
       }
+      postponed_murajah_cycles: {
+        Row: {
+          content: string
+          created_at: string
+          cycle_type: string
+          id: string
+          original_date: string
+          postponed_from_date: string
+          target_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          cycle_type: string
+          id?: string
+          original_date: string
+          postponed_from_date: string
+          target_date: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          cycle_type?: string
+          id?: string
+          original_date?: string
+          postponed_from_date?: string
+          target_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
