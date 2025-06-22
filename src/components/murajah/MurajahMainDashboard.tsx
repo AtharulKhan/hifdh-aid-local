@@ -22,7 +22,8 @@ import {
   Target,
   Settings,
   ExternalLink,
-  AlertTriangle
+  AlertTriangle,
+  ArrowRight
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval, isBefore, startOfDay } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
@@ -45,6 +46,8 @@ interface ReviewCycle {
   icon: React.ReactNode;
   color: string;
   isOverdue?: boolean;
+  isPostponed?: boolean;
+  originalDate?: string;
 }
 
 // Updated ReviewSettings interface
@@ -399,11 +402,95 @@ export const MurajahMainDashboard = () => {
     }
   };
 
+  const getPostponedCycles = (date: string): ReviewCycle[] => {
+    const savedPostponed = localStorage.getItem('murajah-postponed-cycles');
+    if (!savedPostponed) return [];
+
+    try {
+      const postponedCycles: { [date: string]: string[] } = JSON.parse(savedPostponed);
+      const todaysPostponed = postponedCycles[date] || [];
+      
+      const postponedReviewCycles: ReviewCycle[] = [];
+      const currentJuzMem = juzMemorization;
+      const currentSettings = reviewSettings;
+      const juzForOMV = currentJuzMem.filter(j => j.isMemorized);
+
+      todaysPostponed.forEach(cycleType => {
+        let content = '';
+        let titleSuffix = '';
+        let baseType: ReviewCycle['type'] = 'RMV';
+        let icon: React.ReactNode;
+        let color = '';
+
+        switch (cycleType.toUpperCase()) {
+          case 'RMV':
+            content = calculateRMV(currentJuzMem, currentSettings);
+            titleSuffix = `(Last ${currentSettings.rmvPages} Pages) - Postponed!`;
+            baseType = 'RMV';
+            icon = <Clock className="h-4 w-4" />;
+            color = 'bg-green-50 border-green-200';
+            break;
+          case 'OMV':
+            content = calculateOMV(juzForOMV, currentSettings, date);
+            titleSuffix = `(${currentSettings.omvJuz} Juz) - Postponed!`;
+            baseType = 'OMV';
+            icon = <RotateCcw className="h-4 w-4" />;
+            color = 'bg-purple-50 border-purple-200';
+            break;
+          case 'LISTENING':
+            content = calculateListeningCycle(juzForOMV, currentSettings, date);
+            titleSuffix = `(${currentSettings.listeningJuz} Juz) - Postponed!`;
+            baseType = 'Listening';
+            icon = <PlayCircle className="h-4 w-4" />;
+            color = 'bg-blue-50 border-blue-200';
+            break;
+          case 'READING':
+            content = calculateReadingCycle(juzForOMV, currentSettings, date);
+            titleSuffix = `(${currentSettings.readingJuz} Juz) - Postponed!`;
+            baseType = 'Reading';
+            icon = <BookOpen className="h-4 w-4" />;
+            color = 'bg-orange-50 border-orange-200';
+            break;
+          default:
+            return;
+        }
+
+        if (content && !content.startsWith('No Juz') && !content.startsWith('Set current Juz')) {
+          postponedReviewCycles.push({
+            id: `${cycleType.toLowerCase()}-${date}-postponed`,
+            type: baseType,
+            title: `${baseType} ${titleSuffix}`,
+            content: content,
+            startDate: date,
+            completed: false,
+            icon: icon,
+            color: color,
+            isPostponed: true
+          });
+        }
+      });
+
+      return postponedReviewCycles;
+    } catch (error) {
+      console.error('Error getting postponed cycles:', error);
+      return [];
+    }
+  };
+
   const generateDailyCycles = (currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings, date: string): ReviewCycle[] => {
     const generatedCycles: ReviewCycle[] = [];
     const todayCompletions = loadTodaysCompletions();
 
     const juzForOMVTypeCycles = currentJuzMem.filter(j => j.isMemorized);
+
+    // First, add any postponed cycles for today
+    const postponedCycles = getPostponedCycles(date);
+    postponedCycles.forEach(cycle => {
+      generatedCycles.push({ 
+        ...cycle, 
+        completed: todayCompletions[cycle.id] || false
+      });
+    });
 
     const carryOverCycles = getCarryOverCycles(date, currentJuzMem, currentSettings);
     carryOverCycles.forEach(cycle => {
@@ -1019,19 +1106,38 @@ export const MurajahMainDashboard = () => {
                           Overdue
                         </Badge>
                       )}
+                      {cycle.isPostponed && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+                          <ArrowRight className="h-3 w-3 mr-1" />
+                          Postponed
+                        </Badge>
+                      )}
                       {cycle.completed ? (
                         <Badge variant="default" className="text-xs">Completed</Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs">Pending</Badge>
                       )}
-                      <Button
-                        variant={cycle.completed ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleCycleCompletion(cycle.id)}
-                        className="text-xs"
-                      >
-                        {cycle.completed ? "Undo" : "Complete"}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={cycle.completed ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleCycleCompletion(cycle.id)}
+                          className="text-xs"
+                        >
+                          {cycle.completed ? "Undo" : "Complete"}
+                        </Button>
+                        {!cycle.completed && !cycle.isPostponed && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => postponeCycle(cycle.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <ArrowRight className="h-3 w-3 mr-1" />
+                            Postpone
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
