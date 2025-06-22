@@ -12,6 +12,7 @@ import { PrintableMurajahSchedule } from "./PrintableMurajahSchedule";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { MurajahTable } from "./MurajahTable";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -946,6 +947,9 @@ export const MurajahDashboard = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* 30-Day Schedule Table */}
+      <MurajahTable juzMemorization={juzMemorization} settings={settings} />
     </div>
   );
 };
