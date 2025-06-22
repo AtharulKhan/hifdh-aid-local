@@ -853,6 +853,53 @@ export const MurajahMainDashboard = () => {
     }));
   };
 
+  const postponeCycle = (cycleId: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    // Get the cycle type from the cycle ID
+    const cycleType = cycleId.split('-')[0].toUpperCase();
+    
+    // Save to postponed cycles in localStorage
+    const savedPostponed = localStorage.getItem('murajah-postponed-cycles');
+    let postponedData: { [date: string]: string[] } = {};
+    
+    if (savedPostponed) {
+      try {
+        postponedData = JSON.parse(savedPostponed);
+      } catch (error) {
+        console.error('Error parsing postponed cycles:', error);
+      }
+    }
+    
+    // Add cycle type to tomorrow's postponed list
+    if (!postponedData[tomorrowStr]) {
+      postponedData[tomorrowStr] = [];
+    }
+    
+    if (!postponedData[tomorrowStr].includes(cycleType)) {
+      postponedData[tomorrowStr].push(cycleType);
+    }
+    
+    localStorage.setItem('murajah-postponed-cycles', JSON.stringify(postponedData));
+    
+    // Remove the cycle from today's list
+    const updatedCycles = todaysReviewCycles.filter(cycle => cycle.id !== cycleId);
+    setTodaysReviewCycles(updatedCycles);
+    
+    // Update today's completions to remove this cycle
+    const completions = updatedCycles.reduce((acc, cycle) => {
+      acc[cycle.id] = cycle.completed;
+      return acc;
+    }, {} as { [cycleId: string]: boolean });
+    
+    saveTodaysCompletions(completions);
+    
+    console.log(`Postponed ${cycleType} cycle to ${tomorrowStr}`);
+  };
+
   const saveTodaysCompletions = (completions: { [cycleId: string]: boolean }) => {
     const today = new Date().toISOString().split('T')[0];
     const savedData = localStorage.getItem('murajah-daily-completions');
