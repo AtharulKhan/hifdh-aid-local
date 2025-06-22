@@ -45,29 +45,27 @@ export const MemorizationPlanner = () => {
     : 0;
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-hidden">
-      <PlannerSchedule
-        schedule={schedule}
-        onDayStatusChange={updateDayStatus}
-        totalProgress={totalProgress}
-        planProgress={planProgress}
-        alreadyMemorizedPages={alreadyMemorizedPages}
-        completedPagesInPlan={completedPagesInPlan}
-        totalPagesInPlan={totalPagesInPlan}
-        totalQuranPages={totalQuranPages}
-      />
-      <PlannerSummary schedule={schedule} />
+    <div className="w-full max-w-full overflow-hidden">
+      <div className="space-y-4 sm:space-y-6">
+        <PlannerSchedule
+          schedule={schedule}
+          onDayStatusChange={updateDayStatus}
+          totalProgress={totalProgress}
+          planProgress={planProgress}
+          alreadyMemorizedPages={alreadyMemorizedPages}
+          completedPagesInPlan={completedPagesInPlan}
+          totalPagesInPlan={totalPagesInPlan}
+          totalQuranPages={totalQuranPages}
+        />
+        <PlannerSummary schedule={schedule} />
 
-      <div className="flex flex-col space-y-4 sm:space-y-6 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 xl:gap-6 items-start">
-        <div className="w-full lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="w-full space-y-4 sm:space-y-6">
           <PlannerSettings
             settings={settings}
             onSettingsChange={setSettings}
             onGeneratePlan={generateSchedule}
             alreadyMemorized={alreadyMemorized}
           />
-        </div>
-        <div className="w-full lg:col-span-1 space-y-4 sm:space-y-6">
           <PlannerActions onReset={resetPlanner} />
         </div>
       </div>
