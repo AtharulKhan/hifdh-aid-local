@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -29,16 +28,16 @@ const Murajah = () => {
   }, [searchParams]);
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8 relative">
+    <div className="container mx-auto px-4 py-8 relative">
       {/* Help Button */}
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogTrigger asChild>
           <Button
             variant="outline"
             size="icon"
-            className="fixed top-4 right-2 sm:absolute sm:top-0 sm:right-4 h-8 w-8 sm:h-10 sm:w-10 hover:bg-green-50 hover:border-green-300 transition-all duration-200 z-50 sm:z-10"
+            className="absolute top-0 right-0 sm:right-4 h-8 w-8 sm:h-10 sm:w-10 hover:bg-green-50 hover:border-green-300 transition-all duration-200 z-10"
           >
-            <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-green-600" />
+            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
           </Button>
         </DialogTrigger>
         <DialogContent className="w-[95vw] max-w-2xl h-[80vh] p-0 gap-0">
@@ -196,11 +195,11 @@ const Murajah = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="text-center mb-6 sm:mb-8 mt-12 sm:mt-0">
-        <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
           Your Schedule
         </h1>
-        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-2">
+        <p className="text-gray-600 max-w-2xl mx-auto">
           Intelligent spaced repetition system for Quran memorization. Track your progress and get automated daily review cycles.
         </p>
       </div>
