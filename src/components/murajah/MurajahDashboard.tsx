@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle } from "lucide-react";
+import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -20,6 +20,7 @@ interface ReviewCycle {
   color: string;
   id: string;
   isOverdue?: boolean;
+  isPostponed?: boolean;
 }
 
 interface DailyCompletion {
@@ -61,6 +62,73 @@ export const MurajahDashboard = () => {
     }
   }, []);
 
+  const postponeCycle = (cycleIndex: number) => {
+    const cycle = cycles[cycleIndex];
+    if (cycle.completed) return; // Don't postpone completed cycles
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    // Save postponed cycle to localStorage
+    const postponedKey = 'murajah-postponed-cycles';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    let postponedCycles = [];
+    
+    if (existingPostponed) {
+      try {
+        postponedCycles = JSON.parse(existingPostponed);
+      } catch (error) {
+        console.error('Error parsing postponed cycles:', error);
+      }
+    }
+
+    // Add the postponed cycle for tomorrow
+    const postponedCycle = {
+      ...cycle,
+      postponedFromDate: new Date().toISOString().split('T')[0],
+      targetDate: tomorrowStr,
+      isPostponed: true
+    };
+
+    postponedCycles.push(postponedCycle);
+    localStorage.setItem(postponedKey, JSON.stringify(postponedCycles));
+
+    // Remove the cycle from today's list
+    const newCycles = cycles.filter((_, index) => index !== cycleIndex);
+    setCycles(newCycles);
+
+    // Update today's completions to remove this cycle
+    const completions = newCycles.reduce((acc, cycle) => {
+      acc[cycle.id] = cycle.completed;
+      return acc;
+    }, {} as { [cycleId: string]: boolean });
+    
+    saveTodaysCompletions(completions);
+  };
+
+  const getPostponedCycles = (date: string): ReviewCycle[] => {
+    const postponedKey = 'murajah-postponed-cycles';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    
+    if (!existingPostponed) return [];
+    
+    try {
+      const postponedCycles = JSON.parse(existingPostponed);
+      return postponedCycles
+        .filter((cycle: any) => cycle.targetDate === date)
+        .map((cycle: any) => ({
+          ...cycle,
+          title: cycle.title.includes('Postponed!') ? cycle.title : `${cycle.title} - Postponed!`,
+          id: `${cycle.id}-postponed`,
+          isPostponed: true
+        }));
+    } catch (error) {
+      console.error('Error loading postponed cycles:', error);
+      return [];
+    }
+  };
+
   // Generate daily cycles based on current data
   useEffect(() => {
     if (juzMemorization.length === 0) return;
@@ -68,9 +136,13 @@ export const MurajahDashboard = () => {
     const today = new Date().toISOString().split('T')[0];
     const newCycles = generateDailyCycles(juzMemorization, settings, today);
     
+    // Add postponed cycles for today
+    const postponedCycles = getPostponedCycles(today);
+    const allCycles = [...newCycles, ...postponedCycles];
+    
     // Load completion status for today
     const savedCompletions = loadTodaysCompletions();
-    const cyclesWithStatus = newCycles.map(cycle => ({
+    const cyclesWithStatus = allCycles.map(cycle => ({
       ...cycle,
       completed: savedCompletions[cycle.id] || false
     }));
@@ -616,9 +688,14 @@ export const MurajahDashboard = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800">{cycle.title}</h3>
                     <p className="text-gray-600">{cycle.content}</p>
-                    {cycle.startDate !== new Date().toISOString().split('T')[0] && (
+                    {cycle.startDate !== new Date().toISOString().split('T')[0] && !cycle.isPostponed && (
                       <p className="text-xs text-orange-600 mt-1">
                         {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
+                      </p>
+                    )}
+                    {cycle.isPostponed && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Postponed from yesterday
                       </p>
                     )}
                   </div>
@@ -630,9 +707,25 @@ export const MurajahDashboard = () => {
                       Overdue
                     </Badge>
                   )}
+                  {cycle.isPostponed && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
+                      Postponed
+                    </Badge>
+                  )}
                   <Badge variant={cycle.completed ? "default" : "outline"}>
                     {cycle.completed ? "Completed" : "Pending"}
                   </Badge>
+                  {!cycle.completed && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => postponeCycle(index)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300"
+                    >
+                      <ArrowRight className="h-3 w-3 mr-1" />
+                      Postpone
+                    </Button>
+                  )}
                   <Button
                     variant={cycle.completed ? "default" : "outline"}
                     size="sm"
