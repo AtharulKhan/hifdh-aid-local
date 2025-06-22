@@ -9,9 +9,12 @@ import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { juzPageMapData } from '@/data/juz-page-map';
-import { X, CheckSquare, AlertTriangle } from 'lucide-react';
+import { X, CheckSquare, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { PrintableScheduleTable } from './PrintableScheduleTable';
 import { ComprehensivePrintDialog } from '@/components/shared/ComprehensivePrintDialog';
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Helper function to get juz number for a page
 const getJuzForPage = (page: number): number | undefined => {
@@ -40,6 +43,7 @@ export const PlannerSchedule = ({
 }) => {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const { user } = useAuth();
 
   if (schedule.length === 0) {
     return (
@@ -86,16 +90,144 @@ export const PlannerSchedule = ({
     setSelectedTasks(new Set());
   };
 
+  const postponeTask = async (item: ScheduleItem) => {
+    if (item.completed || item.isPostponed) return; // Don't postpone completed or already postponed tasks
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    // Create clean postponed task data (without React components)
+    const postponedTask = {
+      date: item.date,
+      task: item.task,
+      page: item.page,
+      startLine: item.startLine,
+      endLine: item.endLine,
+      surah: item.surah,
+      originalDate: item.date,
+      targetDate: tomorrowStr,
+      postponedFromDate: new Date().toISOString().split('T')[0],
+      isPostponed: true
+    };
+
+    // Save postponed task to localStorage
+    const postponedKey = 'memorization-planner-postponed-tasks';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    let postponedTasks = [];
+    
+    if (existingPostponed) {
+      try {
+        postponedTasks = JSON.parse(existingPostponed);
+      } catch (error) {
+        console.error('Error parsing postponed tasks:', error);
+      }
+    }
+
+    postponedTasks.push(postponedTask);
+    localStorage.setItem(postponedKey, JSON.stringify(postponedTasks));
+
+    // Save to Supabase if user is authenticated
+    if (user) {
+      try {
+        await supabase
+          .from('memorization_planner_schedule')
+          .update({
+            is_postponed: true,
+            postponed_to_date: tomorrowStr,
+            postponed_from_date: new Date().toISOString().split('T')[0]
+          })
+          .eq('user_id', user.id)
+          .eq('date', item.date)
+          .eq('page', item.page)
+          .eq('start_line', item.startLine)
+          .eq('end_line', item.endLine);
+        
+        console.log('Task postponed in Supabase');
+      } catch (error) {
+        console.error('Error postponing task in Supabase:', error);
+      }
+    }
+
+    // Show success toast
+    toast.success(`Task postponed to tomorrow`, {
+      description: "This task will appear in tomorrow's schedule."
+    });
+
+    // Trigger a re-render by updating the schedule
+    window.location.reload();
+  };
+
+  const unPostponeTask = async (item: ScheduleItem) => {
+    if (!item.isPostponed) return; // Only allow un-postponing of postponed tasks
+
+    // Remove from postponed tasks in localStorage
+    const postponedKey = 'memorization-planner-postponed-tasks';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    
+    if (existingPostponed) {
+      try {
+        let postponedTasks = JSON.parse(existingPostponed);
+        // Remove tasks that match this task's original data
+        postponedTasks = postponedTasks.filter((postponedTask: any) => {
+          return !(
+            postponedTask.originalDate === item.date &&
+            postponedTask.page === item.page &&
+            postponedTask.startLine === item.startLine &&
+            postponedTask.endLine === item.endLine
+          );
+        });
+        localStorage.setItem(postponedKey, JSON.stringify(postponedTasks));
+      } catch (error) {
+        console.error('Error removing postponed task from localStorage:', error);
+      }
+    }
+
+    // Remove from Supabase if user is authenticated
+    if (user) {
+      try {
+        await supabase
+          .from('memorization_planner_schedule')
+          .update({
+            is_postponed: false,
+            postponed_to_date: null,
+            postponed_from_date: null
+          })
+          .eq('user_id', user.id)
+          .eq('date', item.date)
+          .eq('page', item.page)
+          .eq('start_line', item.startLine)
+          .eq('end_line', item.endLine);
+        
+        console.log('Task un-postponed in Supabase');
+      } catch (error) {
+        console.error('Error un-postponing task in Supabase:', error);
+      }
+    }
+
+    // Show success toast
+    toast.success(`Task moved back to today`, {
+      description: "This task is now available for completion today."
+    });
+
+    // Trigger a re-render by updating the schedule
+    window.location.reload();
+  };
+
   const renderTaskItem = (item: ScheduleItem, showSelectionCheckbox: boolean = false) => {
     const juzNumber = getJuzForPage(item.page);
     const taskWithJuz = juzNumber 
       ? `Juz ${juzNumber}, Surah ${item.surah}, Page ${item.page}, Lines ${item.startLine}-${item.endLine}`
       : item.task;
     
+    const displayTitle = item.isPostponed && !item.task.includes('Postponed!') 
+      ? `${item.task} - Postponed!`
+      : item.task;
+    
     return (
       <div key={item.date} className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
         item.isOverdue ? 'bg-red-50 border border-red-200' : 'bg-muted/50'
-      } ${item.completed ? 'opacity-70' : ''}`}>
+      } ${item.completed ? 'opacity-70' : ''} ${item.isPostponed ? 'opacity-60' : ''}`}>
         <div className="flex items-center space-x-4">
           {showSelectionCheckbox && (
             <Checkbox
@@ -108,10 +240,16 @@ export const PlannerSchedule = ({
             checked={item.completed}
             onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
             id={`day-${item.date}`}
+            disabled={item.isPostponed}
           />
           <div className="flex-1">
             <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
             <p className="text-sm text-muted-foreground">{taskWithJuz}</p>
+            {item.isPostponed && (
+              <p className="text-xs text-blue-600 mt-1">
+                Postponed to tomorrow
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -121,9 +259,38 @@ export const PlannerSchedule = ({
               Overdue
             </Badge>
           )}
-          <Badge variant={item.completed ? "default" : "outline"}>
-            {item.completed ? "Completed" : "Pending"}
-          </Badge>
+          {item.isPostponed && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
+              Postponed
+            </Badge>
+          )}
+          {!item.isPostponed && (
+            <Badge variant={item.completed ? "default" : "outline"}>
+              {item.completed ? "Completed" : "Pending"}
+            </Badge>
+          )}
+          {item.isPostponed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => unPostponeTask(item)}
+              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300"
+            >
+              <ArrowLeft className="h-3 w-3 mr-1" />
+              Un-postpone
+            </Button>
+          )}
+          {!item.completed && !item.isPostponed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => postponeTask(item)}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300"
+            >
+              <ArrowRight className="h-3 w-3 mr-1" />
+              Postpone
+            </Button>
+          )}
         </div>
       </div>
     );

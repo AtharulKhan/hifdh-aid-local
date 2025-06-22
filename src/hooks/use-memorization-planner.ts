@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { juzPageMapData } from "@/data/juz-page-map";
 import { addDays, getDay, parseISO, isBefore, startOfDay } from 'date-fns';
@@ -50,6 +49,8 @@ export interface ScheduleItem {
   endLine: number;
   surah: string;
   isOverdue?: boolean;
+  isPostponed?: boolean;
+  postponedToDate?: string;
 }
 
 const defaultSettings: PlannerSettingsData = {
@@ -100,7 +101,38 @@ export const useMemorizationPlanner = () => {
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(() => {
     const saved = localStorage.getItem('memorizationPlannerSchedule');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      const parsedSchedule = JSON.parse(saved);
+      // Load postponed tasks and merge them
+      const postponedKey = 'memorization-planner-postponed-tasks';
+      const postponedTasks = localStorage.getItem(postponedKey);
+      if (postponedTasks) {
+        try {
+          const postponed = JSON.parse(postponedTasks);
+          return parsedSchedule.map((item: ScheduleItem) => {
+            const postponedTask = postponed.find((p: any) => 
+              p.originalDate === item.date && 
+              p.page === item.page && 
+              p.startLine === item.startLine && 
+              p.endLine === item.endLine
+            );
+            if (postponedTask) {
+              return {
+                ...item,
+                isPostponed: true,
+                postponedToDate: postponedTask.targetDate
+              };
+            }
+            return item;
+          });
+        } catch (error) {
+          console.error('Error parsing postponed tasks:', error);
+          return parsedSchedule;
+        }
+      }
+      return parsedSchedule;
+    }
+    return [];
   });
 
   useEffect(() => {
@@ -133,6 +165,7 @@ export const useMemorizationPlanner = () => {
   const resetPlanner = useCallback(() => {
     localStorage.removeItem('memorizationPlannerSettings');
     localStorage.removeItem('memorizationPlannerSchedule');
+    localStorage.removeItem('memorization-planner-postponed-tasks');
     setSettings(defaultSettings);
     setSchedule([]);
   }, []);

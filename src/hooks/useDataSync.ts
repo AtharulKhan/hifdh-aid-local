@@ -84,10 +84,35 @@ export const useDataSync = () => {
               start_line: item.startLine,
               end_line: item.endLine,
               surah: item.surah,
-              is_overdue: item.isOverdue || false
+              is_overdue: item.isOverdue || false,
+              is_postponed: item.isPostponed || false,
+              postponed_to_date: item.postponedToDate || null
             });
         }
         console.log('Synced memorization planner schedule');
+      }
+
+      // Sync memorization planner postponed tasks
+      const postponedTasks = localStorage.getItem('memorization-planner-postponed-tasks');
+      if (postponedTasks) {
+        const tasks = JSON.parse(postponedTasks);
+        
+        // Update existing schedule items to mark them as postponed
+        for (const task of tasks) {
+          await supabase
+            .from('memorization_planner_schedule')
+            .update({
+              is_postponed: true,
+              postponed_to_date: task.targetDate,
+              postponed_from_date: task.postponedFromDate
+            })
+            .eq('user_id', user.id)
+            .eq('date', task.originalDate)
+            .eq('page', task.page)
+            .eq('start_line', task.startLine)
+            .eq('end_line', task.endLine);
+        }
+        console.log('Synced memorization planner postponed tasks');
       }
 
       // Sync juz memorization
@@ -241,9 +266,31 @@ export const useDataSync = () => {
           startLine: item.start_line,
           endLine: item.end_line,
           surah: item.surah,
-          isOverdue: (item as any).is_overdue || false
+          isOverdue: (item as any).is_overdue || false,
+          isPostponed: (item as any).is_postponed || false,
+          postponedToDate: (item as any).postponed_to_date || undefined
         }));
         localStorage.setItem('memorizationPlannerSchedule', JSON.stringify(formattedSchedule));
+
+        // Extract postponed tasks and save them separately
+        const postponedTasks = scheduleData
+          .filter(item => (item as any).is_postponed)
+          .map(item => ({
+            date: item.date,
+            task: item.task,
+            page: item.page,
+            startLine: item.start_line,
+            endLine: item.end_line,
+            surah: item.surah,
+            originalDate: item.date,
+            targetDate: (item as any).postponed_to_date,
+            postponedFromDate: (item as any).postponed_from_date,
+            isPostponed: true
+          }));
+
+        if (postponedTasks.length > 0) {
+          localStorage.setItem('memorization-planner-postponed-tasks', JSON.stringify(postponedTasks));
+        }
       }
 
       // Load juz memorization
@@ -397,6 +444,9 @@ export const useDataSync = () => {
       
       // Clear memorization planner schedule
       localStorage.removeItem('memorizationPlannerSchedule');
+      
+      // Clear memorization planner postponed tasks
+      localStorage.removeItem('memorization-planner-postponed-tasks');
       
       // Clear juz memorization data
       localStorage.removeItem('murajah-juz-memorization');
