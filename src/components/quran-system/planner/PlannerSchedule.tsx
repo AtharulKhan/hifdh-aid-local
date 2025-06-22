@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +15,7 @@ import { ComprehensivePrintDialog } from '@/components/shared/ComprehensivePrint
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Helper function to get juz number for a page
 const getJuzForPage = (page: number): number | undefined => {
@@ -46,6 +46,7 @@ export const PlannerSchedule = ({
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [localSchedule, setLocalSchedule] = useState(schedule);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   // Update local schedule when props change
   React.useEffect(() => {
@@ -54,7 +55,7 @@ export const PlannerSchedule = ({
 
   if (localSchedule.length === 0) {
     return (
-      <Card>
+      <Card className="w-full max-w-full overflow-hidden">
         <CardHeader>
           <CardTitle>Memorization Schedule</CardTitle>
         </CardHeader>
@@ -256,26 +257,32 @@ export const PlannerSchedule = ({
       : item.task;
     
     return (
-      <div key={item.date} className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+      <div key={item.date} className={`w-full max-w-full overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg transition-all duration-200 gap-3 ${
         item.isOverdue ? 'bg-red-50 border border-red-200' : 'bg-muted/50'
       } ${item.completed ? 'opacity-70' : ''} ${item.isPostponed ? 'opacity-60' : ''}`}>
-        <div className="flex items-center space-x-4">
-          {showSelectionCheckbox && (
+        <div className="flex items-start space-x-3 min-w-0 flex-1">
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {showSelectionCheckbox && (
+              <Checkbox
+                checked={selectedTasks.has(item.date)}
+                onCheckedChange={(checked) => handleTaskSelection(item.date, !!checked)}
+                id={`select-${item.date}`}
+              />
+            )}
             <Checkbox
-              checked={selectedTasks.has(item.date)}
-              onCheckedChange={(checked) => handleTaskSelection(item.date, !!checked)}
-              id={`select-${item.date}`}
+              checked={item.completed}
+              onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
+              id={`day-${item.date}`}
+              disabled={item.isPostponed}
             />
-          )}
-          <Checkbox
-            checked={item.completed}
-            onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
-            id={`day-${item.date}`}
-            disabled={item.isPostponed}
-          />
-          <div className="flex-1">
-            <Label htmlFor={`day-${item.date}`} className="font-bold">{format(parseISO(item.date), "EEE, MMM d, yyyy")}</Label>
-            <p className="text-sm text-muted-foreground">{taskWithJuz}</p>
+          </div>
+          <div className="flex-1 min-w-0">
+            <Label htmlFor={`day-${item.date}`} className="font-bold text-sm sm:text-base break-words">
+              {format(parseISO(item.date), isMobile ? "MMM d, yy" : "EEE, MMM d, yyyy")}
+            </Label>
+            <p className="text-xs sm:text-sm text-muted-foreground break-words overflow-hidden">
+              {isMobile ? taskWithJuz.substring(0, 30) + '...' : taskWithJuz}
+            </p>
             {item.isPostponed && (
               <p className="text-xs text-blue-600 mt-1">
                 Postponed to tomorrow
@@ -283,61 +290,63 @@ export const PlannerSchedule = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {item.isOverdue && !item.completed && (
-            <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+            <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
               <AlertTriangle className="h-3 w-3 mr-1" />
-              Overdue
+              {isMobile ? "Late" : "Overdue"}
             </Badge>
           )}
           {item.isPostponed && (
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
-              Postponed
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+              {isMobile ? "Later" : "Postponed"}
             </Badge>
           )}
           {!item.isPostponed && (
-            <Badge variant={item.completed ? "default" : "outline"}>
-              {item.completed ? "Completed" : "Pending"}
+            <Badge variant={item.completed ? "default" : "outline"} className="text-xs">
+              {item.completed ? (isMobile ? "Done" : "Completed") : (isMobile ? "Todo" : "Pending")}
             </Badge>
           )}
-          {item.isPostponed && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => unPostponeTask(item)}
-              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300"
-            >
-              <ArrowLeft className="h-3 w-3 mr-1" />
-              Un-postpone
-            </Button>
-          )}
-          {!item.completed && !item.isPostponed && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => postponeTask(item)}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300"
-            >
-              <ArrowRight className="h-3 w-3 mr-1" />
-              Postpone
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {item.isPostponed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => unPostponeTask(item)}
+                className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 text-xs px-2 py-1"
+              >
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                {isMobile ? "Back" : "Un-postpone"}
+              </Button>
+            )}
+            {!item.completed && !item.isPostponed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => postponeTask(item)}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 text-xs px-2 py-1"
+              >
+                <ArrowRight className="h-3 w-3 mr-1" />
+                {isMobile ? "Later" : "Postpone"}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Your Memorization Schedule</CardTitle>
-            <CardDescription>
-              Estimated completion date: {format(parseISO(completionDate), "MMMM do, yyyy")}
+    <Card className="w-full max-w-full overflow-hidden">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg sm:text-xl break-words">Your Memorization Schedule</CardTitle>
+            <CardDescription className="text-sm break-words">
+              Estimated completion: {format(parseISO(completionDate), isMobile ? "MMM do, yyyy" : "MMMM do, yyyy")}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex-shrink-0">
             <ComprehensivePrintDialog
               memorization={{
                 schedule: localSchedule,
@@ -347,23 +356,23 @@ export const PlannerSchedule = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div className='space-y-4'>
-            <div>
-                <Label className="text-base font-medium">Total Memorization</Label>
-                <div className="flex justify-between mb-1 text-sm">
-                    <span className="font-medium text-muted-foreground">
+      <CardContent className="p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+          <div className='space-y-4 w-full'>
+            <div className="w-full">
+                <Label className="text-sm sm:text-base font-medium">Total Memorization</Label>
+                <div className="flex justify-between mb-1 text-xs sm:text-sm">
+                    <span className="font-medium text-muted-foreground break-words">
                         {`${(alreadyMemorizedPages + completedPagesInPlan).toFixed(1)} / ${totalQuranPages} pages`}
                     </span>
                     <span className="font-medium text-primary">{Math.round(totalProgress)}%</span>
                 </div>
                 <Progress value={totalProgress} className="w-full" aria-label={`${Math.round(totalProgress)}% of Quran memorized`} />
             </div>
-            <div>
-                <Label className="text-base font-medium">Current Plan Progress</Label>
-                <div className="flex justify-between mb-1 text-sm">
-                    <span className="font-medium text-muted-foreground">
+            <div className="w-full">
+                <Label className="text-sm sm:text-base font-medium">Current Plan Progress</Label>
+                <div className="flex justify-between mb-1 text-xs sm:text-sm">
+                    <span className="font-medium text-muted-foreground break-words">
                         {`${completedPagesInPlan.toFixed(1)} / ${totalPagesInPlan} pages`}
                     </span>
                     <span className="font-medium text-primary">{Math.round(planProgress)}%</span>
@@ -373,14 +382,15 @@ export const PlannerSchedule = ({
           </div>
 
           {/* Multi-select controls */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+              className="text-xs sm:text-sm"
             >
-              <CheckSquare className="h-4 w-4 mr-2" />
-              {isMultiSelectMode ? 'Exit Multi-Select' : 'Multi-Select'}
+              <CheckSquare className="h-4 w-4 mr-1 sm:mr-2" />
+              {isMultiSelectMode ? 'Exit Multi' : 'Multi-Select'}
             </Button>
             
             {isMultiSelectMode && selectedTasks.size > 0 && (
@@ -389,25 +399,28 @@ export const PlannerSchedule = ({
                   variant="outline"
                   size="sm"
                   onClick={handleBulkComplete}
+                  className="text-xs sm:text-sm"
                 >
-                  Mark Selected Complete
+                  {isMobile ? 'Complete' : 'Mark Selected Complete'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleBulkUncomplete}
+                  className="text-xs sm:text-sm"
                 >
-                  Mark Selected Incomplete
+                  {isMobile ? 'Incomplete' : 'Mark Selected Incomplete'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleUnselectAll}
+                  className="text-xs sm:text-sm"
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  Unselect All
+                  <X className="h-4 w-4 mr-1" />
+                  {isMobile ? 'Clear' : 'Unselect All'}
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   {selectedTasks.size} selected
                 </span>
               </>
@@ -416,27 +429,27 @@ export const PlannerSchedule = ({
 
           <Tabs defaultValue="upcoming" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs sm:text-sm">Completed</TabsTrigger>
             </TabsList>
-            <TabsContent value="upcoming">
-              <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
+            <TabsContent value="upcoming" className="w-full">
+              <div className="max-h-96 overflow-y-auto space-y-2 mt-4 w-full">
                 {upcomingTasks.length > 0 ? (
                   upcomingTasks.map((item) => renderTaskItem(item, isMultiSelectMode))
                 ) : (
                    <div className="text-center py-10">
-                     <p className="text-muted-foreground">You've completed all tasks in this plan!</p>
+                     <p className="text-muted-foreground text-sm">You've completed all tasks in this plan!</p>
                    </div>
                 )}
               </div>
             </TabsContent>
-            <TabsContent value="completed">
-               <div className="max-h-96 overflow-y-auto pr-4 space-y-2 mt-4">
+            <TabsContent value="completed" className="w-full">
+               <div className="max-h-96 overflow-y-auto space-y-2 mt-4 w-full">
                 {completedTasks.length > 0 ? (
                   completedTasks.map((item) => renderTaskItem(item, isMultiSelectMode))
                 ) : (
                   <div className="text-center py-10">
-                    <p className="text-muted-foreground">No tasks completed yet.</p>
+                    <p className="text-muted-foreground text-sm">No tasks completed yet.</p>
                   </div>
                 )}
               </div>
