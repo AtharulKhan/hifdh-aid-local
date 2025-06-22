@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,9 +44,15 @@ export const PlannerSchedule = ({
 }) => {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [localSchedule, setLocalSchedule] = useState(schedule);
   const { user } = useAuth();
 
-  if (schedule.length === 0) {
+  // Update local schedule when props change
+  React.useEffect(() => {
+    setLocalSchedule(schedule);
+  }, [schedule]);
+
+  if (localSchedule.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -58,9 +65,9 @@ export const PlannerSchedule = ({
     );
   }
 
-  const completionDate = schedule[schedule.length - 1].date;
-  const upcomingTasks = schedule.filter(item => !item.completed);
-  const completedTasks = schedule.filter(item => item.completed).sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+  const completionDate = localSchedule[localSchedule.length - 1].date;
+  const upcomingTasks = localSchedule.filter(item => !item.completed);
+  const completedTasks = localSchedule.filter(item => item.completed).sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
   const handleTaskSelection = (date: string, selected: boolean) => {
     const newSelected = new Set(selectedTasks);
@@ -127,6 +134,17 @@ export const PlannerSchedule = ({
     postponedTasks.push(postponedTask);
     localStorage.setItem(postponedKey, JSON.stringify(postponedTasks));
 
+    // Update local schedule state
+    const updatedSchedule = localSchedule.map(scheduleItem => 
+      scheduleItem.date === item.date && 
+      scheduleItem.page === item.page && 
+      scheduleItem.startLine === item.startLine && 
+      scheduleItem.endLine === item.endLine
+        ? { ...scheduleItem, isPostponed: true, postponedToDate: tomorrowStr }
+        : scheduleItem
+    );
+    setLocalSchedule(updatedSchedule);
+
     // Save to Supabase if user is authenticated
     if (user) {
       try {
@@ -157,9 +175,6 @@ export const PlannerSchedule = ({
     toast.success(`Task postponed to tomorrow`, {
       description: "This task will appear in tomorrow's schedule."
     });
-
-    // Trigger a re-render by updating the schedule
-    window.location.reload();
   };
 
   const unPostponeTask = async (item: ScheduleItem) => {
@@ -172,10 +187,10 @@ export const PlannerSchedule = ({
     if (existingPostponed) {
       try {
         let postponedTasks = JSON.parse(existingPostponed);
-        // Remove tasks that match this task's original data
+        // Remove tasks that match this task's data
         postponedTasks = postponedTasks.filter((postponedTask: any) => {
           return !(
-            postponedTask.originalDate === item.date &&
+            postponedTask.date === item.date &&
             postponedTask.page === item.page &&
             postponedTask.startLine === item.startLine &&
             postponedTask.endLine === item.endLine
@@ -186,6 +201,17 @@ export const PlannerSchedule = ({
         console.error('Error removing postponed task from localStorage:', error);
       }
     }
+
+    // Update local schedule state
+    const updatedSchedule = localSchedule.map(scheduleItem => 
+      scheduleItem.date === item.date && 
+      scheduleItem.page === item.page && 
+      scheduleItem.startLine === item.startLine && 
+      scheduleItem.endLine === item.endLine
+        ? { ...scheduleItem, isPostponed: false, postponedToDate: undefined }
+        : scheduleItem
+    );
+    setLocalSchedule(updatedSchedule);
 
     // Remove from Supabase if user is authenticated
     if (user) {
@@ -217,9 +243,6 @@ export const PlannerSchedule = ({
     toast.success(`Task moved back to today`, {
       description: "This task is now available for completion today."
     });
-
-    // Trigger a re-render by updating the schedule
-    window.location.reload();
   };
 
   const renderTaskItem = (item: ScheduleItem, showSelectionCheckbox: boolean = false) => {
@@ -317,7 +340,7 @@ export const PlannerSchedule = ({
           <div className="flex gap-2">
             <ComprehensivePrintDialog
               memorization={{
-                schedule: schedule,
+                schedule: localSchedule,
                 component: PrintableScheduleTable
               }}
             />
