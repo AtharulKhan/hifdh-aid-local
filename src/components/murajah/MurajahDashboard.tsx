@@ -806,11 +806,11 @@ export const MurajahDashboard = () => {
   // Updated condition to check for any memorized content (full Juz or individual surahs)
   if (juzMemorization.filter(j => j.isMemorized || (j.memorizedSurahs && j.memorizedSurahs.length > 0)).length === 0) {
     return (
-      <Card className="text-center py-12">
-        <CardContent>
-          <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorized Content</h3>
-          <p className="text-gray-500 mb-4">
+      <Card className="text-center py-8 sm:py-12 mx-4 sm:mx-0">
+        <CardContent className="p-4 sm:p-6">
+          <Calendar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">No Memorized Content</h3>
+          <p className="text-sm sm:text-base text-gray-500 mb-4">
             Mark your memorized Juz or individual Surahs in the Juz tab to generate your daily review cycles.
           </p>
         </CardContent>
@@ -819,29 +819,29 @@ export const MurajahDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
       {/* Header */}
       <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-l-green-400">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">Today's Review Cycles</h2>
-              <p className="text-gray-600">{new Date().toLocaleDateString('en-US', { 
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Today's Review Cycles</h2>
+              <p className="text-sm sm:text-base text-gray-600">{new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}</p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 Based on start date: {new Date(settings.startDate).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-2xl font-bold text-green-600">
+            <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-2">
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">
                   {cycles.filter(c => c.completed).length}/{cycles.length}
                 </div>
-                <div className="text-sm text-gray-600">Completed</div>
+                <div className="text-xs sm:text-sm text-gray-600">Completed</div>
               </div>
               <ComprehensivePrintDialog
                 murajah={{
@@ -859,18 +859,18 @@ export const MurajahDashboard = () => {
       </Card>
 
       {/* Review Cycles */}
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {cycles.map((cycle, index) => (
           <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''} ${cycle.isPostponed ? 'opacity-60' : ''}`}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${cycle.completed ? 'bg-green-100' : 'bg-white'}`}>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${cycle.completed ? 'bg-green-100' : 'bg-white'}`}>
                     {cycle.completed ? <CheckCircle className="h-4 w-4 text-green-600" /> : cycle.icon}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{cycle.title}</h3>
-                    <p className="text-gray-600">{cycle.content}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base break-words">{cycle.title}</h3>
+                    <p className="text-gray-600 text-sm break-words">{cycle.content}</p>
                     {cycle.startDate !== new Date().toISOString().split('T')[0] && !cycle.isPostponed && (
                       <p className="text-xs text-orange-600 mt-1">
                         {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
@@ -883,20 +883,20 @@ export const MurajahDashboard = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                   {cycle.isOverdue && (
-                    <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+                    <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       Overdue
                     </Badge>
                   )}
                   {cycle.isPostponed && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
                       Postponed
                     </Badge>
                   )}
                   {!cycle.isPostponed && (
-                    <Badge variant={cycle.completed ? "default" : "outline"}>
+                    <Badge variant={cycle.completed ? "default" : "outline"} className="text-xs">
                       {cycle.completed ? "Completed" : "Pending"}
                     </Badge>
                   )}
@@ -905,10 +905,11 @@ export const MurajahDashboard = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => unPostponeCycle(index)}
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 text-xs px-2 py-1"
                     >
                       <ArrowLeft className="h-3 w-3 mr-1" />
-                      Un-postpone
+                      <span className="hidden sm:inline">Un-postpone</span>
+                      <span className="sm:hidden">Undo</span>
                     </Button>
                   )}
                   {!cycle.completed && !cycle.isPostponed && (
@@ -916,7 +917,7 @@ export const MurajahDashboard = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => postponeCycle(index)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 text-xs px-2 py-1"
                     >
                       <ArrowRight className="h-3 w-3 mr-1" />
                       Postpone
@@ -927,6 +928,7 @@ export const MurajahDashboard = () => {
                       variant={cycle.completed ? "default" : "outline"}
                       size="sm"
                       onClick={() => toggleCycleCompletion(index)}
+                      className="text-xs px-3 py-1"
                     >
                       {cycle.completed ? "Undo" : "Complete"}
                     </Button>
@@ -939,9 +941,9 @@ export const MurajahDashboard = () => {
       </div>
 
       {cycles.length === 0 && (
-        <Card className="text-center py-8">
-          <CardContent>
-            <p className="text-gray-500">
+        <Card className="text-center py-6 sm:py-8">
+          <CardContent className="p-4 sm:p-6">
+            <p className="text-sm sm:text-base text-gray-500">
               Configure your settings and mark memorized Juz or individual Surahs to generate review cycles.
             </p>
           </CardContent>

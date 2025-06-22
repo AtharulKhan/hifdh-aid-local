@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, RotateCcw, PlayCircle, BookOpen } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 
@@ -41,6 +41,8 @@ interface DayData {
 }
 
 export const MurajahTable: React.FC<MurajahTableProps> = ({ juzMemorization, settings }) => {
+  const isMobile = useIsMobile();
+
   const generateTableData = (): DayData[] => {
     const data: DayData[] = [];
     const today = new Date();
@@ -64,7 +66,7 @@ export const MurajahTable: React.FC<MurajahTableProps> = ({ juzMemorization, set
         formattedDate: date.toLocaleDateString('en-US', { 
           month: 'short', 
           day: 'numeric',
-          weekday: 'short'
+          weekday: isMobile ? undefined : 'short'
         }),
         isToday,
         rmv: calculateRMV(juzMemorization, settings),
@@ -164,10 +166,10 @@ export const MurajahTable: React.FC<MurajahTableProps> = ({ juzMemorization, set
   if (tableData.length === 0) {
     return (
       <Card className="mt-6">
-        <CardContent className="p-6 text-center">
-          <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Memorized Content</h3>
-          <p className="text-gray-500">
+        <CardContent className="p-4 sm:p-6 text-center">
+          <Calendar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">No Memorized Content</h3>
+          <p className="text-sm sm:text-base text-gray-500">
             Mark your memorized Juz or individual Surahs to generate the schedule table.
           </p>
         </CardContent>
@@ -175,10 +177,85 @@ export const MurajahTable: React.FC<MurajahTableProps> = ({ juzMemorization, set
     );
   }
 
+  // Mobile card layout
+  if (isMobile) {
+    return (
+      <Card className="mt-6">
+        <CardHeader className="p-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Calendar className="h-5 w-5" />
+            30-Day Murajah Schedule
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Overview of your review cycles for the next 30 days
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          {tableData.map((day) => (
+            <Card 
+              key={day.date} 
+              className={`${day.isToday ? 'bg-green-50 border-green-200 border-2' : 'border'}`}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-medium text-lg">
+                    <span className={day.isToday ? 'text-green-700 font-semibold' : ''}>
+                      {day.formattedDate}
+                    </span>
+                    {day.isToday && (
+                      <Badge variant="default" className="ml-2 bg-green-100 text-green-700 text-xs">
+                        Today
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-700">RMV</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{day.rmv}</p>
+                  </div>
+                  
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <RotateCcw className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium text-purple-700">OMV</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{day.omv}</p>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <PlayCircle className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-700">Listening</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{day.listening}</p>
+                  </div>
+                  
+                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="h-4 w-4 text-orange-600" />
+                      <span className="font-medium text-orange-700">Reading</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{day.reading}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop table layout
   return (
     <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
           <Calendar className="h-5 w-5" />
           30-Day Murajah Schedule
         </CardTitle>
@@ -186,7 +263,7 @@ export const MurajahTable: React.FC<MurajahTableProps> = ({ juzMemorization, set
           Overview of your review cycles for the next 30 days
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
