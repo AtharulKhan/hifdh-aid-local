@@ -22,6 +22,7 @@ interface ReviewCycle {
   id: string;
   isOverdue?: boolean;
   isPostponed?: boolean;
+  postponedToDate?: string;
 }
 
 interface DailyCompletion {
@@ -66,7 +67,7 @@ export const MurajahDashboard = () => {
 
   const postponeCycle = (cycleIndex: number) => {
     const cycle = cycles[cycleIndex];
-    if (cycle.completed) return; // Don't postpone completed cycles
+    if (cycle.completed || cycle.isPostponed) return; // Don't postpone completed or already postponed cycles
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -96,15 +97,21 @@ export const MurajahDashboard = () => {
     postponedCycles.push(postponedCycle);
     localStorage.setItem(postponedKey, JSON.stringify(postponedCycles));
 
+    // Update the cycle in the current list to show it's postponed
+    const updatedCycles = [...cycles];
+    updatedCycles[cycleIndex] = {
+      ...cycle,
+      isPostponed: true,
+      postponedToDate: tomorrowStr,
+      title: cycle.title.includes('Postponed!') ? cycle.title : `${cycle.title} - Postponed!`
+    };
+    setCycles(updatedCycles);
+
     // Mark cycle as postponed in state
     setPostponedCycles(prev => new Set([...prev, cycle.id]));
 
-    // Remove the cycle from today's list
-    const newCycles = cycles.filter((_, index) => index !== cycleIndex);
-    setCycles(newCycles);
-
-    // Update today's completions to remove this cycle
-    const completions = newCycles.reduce((acc, cycle) => {
+    // Update today's completions to reflect the current state
+    const completions = updatedCycles.reduce((acc, cycle) => {
       acc[cycle.id] = cycle.completed;
       return acc;
     }, {} as { [cycleId: string]: boolean });
@@ -688,7 +695,7 @@ export const MurajahDashboard = () => {
       {/* Review Cycles */}
       <div className="grid gap-4">
         {cycles.map((cycle, index) => (
-          <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''}`}>
+          <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''} ${cycle.isPostponed ? 'opacity-60' : ''}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -703,9 +710,9 @@ export const MurajahDashboard = () => {
                         {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
                       </p>
                     )}
-                    {cycle.isPostponed && (
+                    {cycle.isPostponed && cycle.postponedToDate && (
                       <p className="text-xs text-blue-600 mt-1">
-                        Postponed from yesterday
+                        Postponed to {new Date(cycle.postponedToDate).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -722,10 +729,12 @@ export const MurajahDashboard = () => {
                       Postponed
                     </Badge>
                   )}
-                  <Badge variant={cycle.completed ? "default" : "outline"}>
-                    {cycle.completed ? "Completed" : "Pending"}
-                  </Badge>
-                  {!cycle.completed && !postponedCycles.has(cycle.id) && (
+                  {!cycle.isPostponed && (
+                    <Badge variant={cycle.completed ? "default" : "outline"}>
+                      {cycle.completed ? "Completed" : "Pending"}
+                    </Badge>
+                  )}
+                  {!cycle.completed && !cycle.isPostponed && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -736,18 +745,15 @@ export const MurajahDashboard = () => {
                       Postpone
                     </Button>
                   )}
-                  {postponedCycles.has(cycle.id) && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
-                      Postponed to tomorrow
-                    </Badge>
+                  {!cycle.isPostponed && (
+                    <Button
+                      variant={cycle.completed ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleCycleCompletion(index)}
+                    >
+                      {cycle.completed ? "Undo" : "Complete"}
+                    </Button>
                   )}
-                  <Button
-                    variant={cycle.completed ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleCycleCompletion(index)}
-                  >
-                    {cycle.completed ? "Undo" : "Complete"}
-                  </Button>
                 </div>
               </div>
             </CardContent>
