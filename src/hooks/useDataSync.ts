@@ -87,7 +87,7 @@ export const useDataSync = () => {
               is_overdue: item.isOverdue || false,
               is_postponed: item.isPostponed || false,
               postponed_to_date: item.postponedToDate || null
-            });
+            } as any);
         }
         console.log('Synced memorization planner schedule');
       }
@@ -105,7 +105,7 @@ export const useDataSync = () => {
               is_postponed: true,
               postponed_to_date: task.targetDate,
               postponed_from_date: task.postponedFromDate
-            })
+            } as any)
             .eq('user_id', user.id)
             .eq('date', task.originalDate)
             .eq('page', task.page)

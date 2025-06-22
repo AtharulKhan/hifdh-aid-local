@@ -116,7 +116,10 @@ export type Database = {
           end_line: number
           id: string
           is_overdue: boolean
+          is_postponed: boolean
           page: number
+          postponed_from_date: string | null
+          postponed_to_date: string | null
           start_line: number
           surah: string
           task: string
@@ -130,7 +133,10 @@ export type Database = {
           end_line: number
           id?: string
           is_overdue?: boolean
+          is_postponed?: boolean
           page: number
+          postponed_from_date?: string | null
+          postponed_to_date?: string | null
           start_line: number
           surah: string
           task: string
@@ -144,7 +150,10 @@ export type Database = {
           end_line?: number
           id?: string
           is_overdue?: boolean
+          is_postponed?: boolean
           page?: number
+          postponed_from_date?: string | null
+          postponed_to_date?: string | null
           start_line?: number
           surah?: string
           task?: string

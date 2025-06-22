@@ -130,20 +130,24 @@ export const PlannerSchedule = ({
     // Save to Supabase if user is authenticated
     if (user) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('memorization_planner_schedule')
           .update({
             is_postponed: true,
             postponed_to_date: tomorrowStr,
             postponed_from_date: new Date().toISOString().split('T')[0]
-          })
+          } as any)
           .eq('user_id', user.id)
           .eq('date', item.date)
           .eq('page', item.page)
           .eq('start_line', item.startLine)
           .eq('end_line', item.endLine);
         
-        console.log('Task postponed in Supabase');
+        if (error) {
+          console.error('Error postponing task in Supabase:', error);
+        } else {
+          console.log('Task postponed in Supabase');
+        }
       } catch (error) {
         console.error('Error postponing task in Supabase:', error);
       }
@@ -186,20 +190,24 @@ export const PlannerSchedule = ({
     // Remove from Supabase if user is authenticated
     if (user) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('memorization_planner_schedule')
           .update({
             is_postponed: false,
             postponed_to_date: null,
             postponed_from_date: null
-          })
+          } as any)
           .eq('user_id', user.id)
           .eq('date', item.date)
           .eq('page', item.page)
           .eq('start_line', item.startLine)
           .eq('end_line', item.endLine);
         
-        console.log('Task un-postponed in Supabase');
+        if (error) {
+          console.error('Error un-postponing task in Supabase:', error);
+        } else {
+          console.log('Task un-postponed in Supabase');
+        }
       } catch (error) {
         console.error('Error un-postponing task in Supabase:', error);
       }
