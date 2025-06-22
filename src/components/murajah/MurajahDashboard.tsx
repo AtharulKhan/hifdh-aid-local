@@ -69,6 +69,29 @@ export const MurajahDashboard = () => {
     }
   }, []);
 
+  const getPostponedCycleIds = (date: string): Set<string> => {
+    const postponedKey = 'murajah-postponed-cycles';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    const postponedIds = new Set<string>();
+    
+    if (!existingPostponed) return postponedIds;
+    
+    try {
+      const postponedCycles = JSON.parse(existingPostponed);
+      postponedCycles.forEach((cycle: any) => {
+        if (cycle.originalDate === date || cycle.postponedFromDate === date) {
+          // Create the cycle ID that would match the original cycle
+          const cycleId = `${cycle.type.toLowerCase()}-${cycle.originalDate}`;
+          postponedIds.add(cycleId);
+        }
+      });
+    } catch (error) {
+      console.error('Error loading postponed cycle IDs:', error);
+    }
+    
+    return postponedIds;
+  };
+
   const postponeCycle = async (cycleIndex: number) => {
     const cycle = cycles[cycleIndex];
     if (cycle.completed || cycle.isPostponed) return; // Don't postpone completed or already postponed cycles
@@ -205,6 +228,10 @@ export const MurajahDashboard = () => {
     if (juzMemorization.length === 0) return;
 
     const today = new Date().toISOString().split('T')[0];
+    
+    // Get postponed cycle IDs for today
+    const todaysPostponedIds = getPostponedCycleIds(today);
+    
     const newCycles = generateDailyCycles(juzMemorization, settings, today);
     
     // Add postponed cycles for today
@@ -213,12 +240,23 @@ export const MurajahDashboard = () => {
     
     // Load completion status for today
     const savedCompletions = loadTodaysCompletions();
-    const cyclesWithStatus = allCycles.map(cycle => ({
-      ...cycle,
-      completed: savedCompletions[cycle.id] || false
-    }));
+    const cyclesWithStatus = allCycles.map(cycle => {
+      // Check if this cycle was postponed
+      const isPostponed = todaysPostponedIds.has(cycle.id) || cycle.isPostponed;
+      
+      return {
+        ...cycle,
+        completed: savedCompletions[cycle.id] || false,
+        isPostponed,
+        title: isPostponed && !cycle.title.includes('Postponed!') ? `${cycle.title} - Postponed!` : cycle.title,
+        postponedToDate: isPostponed ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : cycle.postponedToDate
+      };
+    });
     
     setCycles(cyclesWithStatus);
+    
+    // Update postponed cycles state
+    setPostponedCycles(todaysPostponedIds);
   }, [juzMemorization, settings]);
 
   const loadTodaysCompletions = (): { [cycleId: string]: boolean } => {
@@ -641,7 +679,7 @@ export const MurajahDashboard = () => {
     return selectedUnits.map(unit => unit.displayText).join(', ');
   };
 
-  const calculateListeningCycle = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+  const calculateListeningCycle = (juzWithMemorization: JuzMemorization[],  settings: ReviewSettings, date: string): string => {
     return calculateOMV(juzWithMemorization, { ...settings, omvJuz: settings.listeningJuz }, date);
   };
 
