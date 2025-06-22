@@ -9,6 +9,7 @@ import surahNames from "@/data/surah-names.json";
 import { ComprehensivePrintDialog } from "@/components/shared/ComprehensivePrintDialog";
 import { PrintableMurajahCycles } from "./PrintableMurajahCycles";
 import { PrintableMurajahSchedule } from "./PrintableMurajahSchedule";
+import { toast } from "sonner";
 
 interface ReviewCycle {
   type: 'RMV' | 'OMV' | 'Listening' | 'Reading' | 'New';
@@ -40,6 +41,7 @@ interface JuzMemorization {
 export const MurajahDashboard = () => {
   const [cycles, setCycles] = useState<ReviewCycle[]>([]);
   const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
+  const [postponedCycles, setPostponedCycles] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<ReviewSettings>({
     rmvPages: 7,
     omvJuz: 1,
@@ -94,6 +96,9 @@ export const MurajahDashboard = () => {
     postponedCycles.push(postponedCycle);
     localStorage.setItem(postponedKey, JSON.stringify(postponedCycles));
 
+    // Mark cycle as postponed in state
+    setPostponedCycles(prev => new Set([...prev, cycle.id]));
+
     // Remove the cycle from today's list
     const newCycles = cycles.filter((_, index) => index !== cycleIndex);
     setCycles(newCycles);
@@ -105,6 +110,11 @@ export const MurajahDashboard = () => {
     }, {} as { [cycleId: string]: boolean });
     
     saveTodaysCompletions(completions);
+
+    // Show success toast
+    toast.success(`${cycle.title} postponed to tomorrow`, {
+      description: "This cycle will appear in tomorrow's review list."
+    });
   };
 
   const getPostponedCycles = (date: string): ReviewCycle[] => {
@@ -715,7 +725,7 @@ export const MurajahDashboard = () => {
                   <Badge variant={cycle.completed ? "default" : "outline"}>
                     {cycle.completed ? "Completed" : "Pending"}
                   </Badge>
-                  {!cycle.completed && (
+                  {!cycle.completed && !postponedCycles.has(cycle.id) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -725,6 +735,11 @@ export const MurajahDashboard = () => {
                       <ArrowRight className="h-3 w-3 mr-1" />
                       Postpone
                     </Button>
+                  )}
+                  {postponedCycles.has(cycle.id) && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
+                      Postponed to tomorrow
+                    </Badge>
                   )}
                   <Button
                     variant={cycle.completed ? "default" : "outline"}
