@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight } from "lucide-react";
+import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -172,6 +172,79 @@ export const MurajahDashboard = () => {
     // Show success toast
     toast.success(`${cycle.title} postponed to tomorrow`, {
       description: "This cycle will appear in tomorrow's review list."
+    });
+  };
+
+  const unPostponeCycle = async (cycleIndex: number) => {
+    const cycle = cycles[cycleIndex];
+    if (!cycle.isPostponed) return; // Only allow un-postponing of postponed cycles
+
+    // Remove from postponed cycles in localStorage
+    const postponedKey = 'murajah-postponed-cycles';
+    const existingPostponed = localStorage.getItem(postponedKey);
+    
+    if (existingPostponed) {
+      try {
+        let postponedCycles = JSON.parse(existingPostponed);
+        // Remove cycles that match this cycle's original data
+        postponedCycles = postponedCycles.filter((postponedCycle: any) => {
+          return !(
+            postponedCycle.type === cycle.type &&
+            postponedCycle.originalDate === cycle.startDate &&
+            postponedCycle.content === cycle.content
+          );
+        });
+        localStorage.setItem(postponedKey, JSON.stringify(postponedCycles));
+      } catch (error) {
+        console.error('Error removing postponed cycle from localStorage:', error);
+      }
+    }
+
+    // Remove from Supabase if user is authenticated
+    if (user) {
+      try {
+        await supabase
+          .from('postponed_murajah_cycles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('cycle_type', cycle.type)
+          .eq('original_date', cycle.startDate)
+          .eq('content', cycle.content);
+        
+        console.log('Postponed cycle removed from Supabase');
+      } catch (error) {
+        console.error('Error removing postponed cycle from Supabase:', error);
+      }
+    }
+
+    // Update the cycle in the current list to show it's no longer postponed
+    const updatedCycles = [...cycles];
+    updatedCycles[cycleIndex] = {
+      ...cycle,
+      isPostponed: false,
+      postponedToDate: undefined,
+      title: cycle.title.replace(' - Postponed!', '')
+    };
+    setCycles(updatedCycles);
+
+    // Remove cycle from postponed state
+    setPostponedCycles(prev => {
+      const newSet = new Set([...prev]);
+      newSet.delete(cycle.id);
+      return newSet;
+    });
+
+    // Update today's completions to reflect the current state
+    const completions = updatedCycles.reduce((acc, cycle) => {
+      acc[cycle.id] = cycle.completed;
+      return acc;
+    }, {} as { [cycleId: string]: boolean });
+    
+    saveTodaysCompletions(completions);
+
+    // Show success toast
+    toast.success(`${cycle.title.replace(' - Postponed!', '')} moved back to today`, {
+      description: "This cycle is now available for completion today."
     });
   };
 
@@ -825,6 +898,17 @@ export const MurajahDashboard = () => {
                     <Badge variant={cycle.completed ? "default" : "outline"}>
                       {cycle.completed ? "Completed" : "Pending"}
                     </Badge>
+                  )}
+                  {cycle.isPostponed && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => unPostponeCycle(index)}
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300"
+                    >
+                      <ArrowLeft className="h-3 w-3 mr-1" />
+                      Un-postpone
+                    </Button>
                   )}
                   {!cycle.completed && !cycle.isPostponed && (
                     <Button
