@@ -22,8 +22,7 @@ import {
   Target,
   Settings,
   ExternalLink,
-  AlertTriangle,
-  ArrowRight
+  AlertTriangle
 } from "lucide-react";
 import { format, parseISO, isToday, startOfWeek, endOfWeek, isWithinInterval, isBefore, startOfDay } from 'date-fns';
 import { getVersesArray, QuranVerse } from '@/data/quranData';
@@ -46,8 +45,6 @@ interface ReviewCycle {
   icon: React.ReactNode;
   color: string;
   isOverdue?: boolean;
-  isPostponed?: boolean;
-  originalDate?: string;
 }
 
 // Updated ReviewSettings interface
@@ -402,95 +399,11 @@ export const MurajahMainDashboard = () => {
     }
   };
 
-  const getPostponedCycles = (date: string): ReviewCycle[] => {
-    const savedPostponed = localStorage.getItem('murajah-postponed-cycles');
-    if (!savedPostponed) return [];
-
-    try {
-      const postponedCycles: { [date: string]: string[] } = JSON.parse(savedPostponed);
-      const todaysPostponed = postponedCycles[date] || [];
-      
-      const postponedReviewCycles: ReviewCycle[] = [];
-      const currentJuzMem = juzMemorization;
-      const currentSettings = reviewSettings;
-      const juzForOMV = currentJuzMem.filter(j => j.isMemorized);
-
-      todaysPostponed.forEach(cycleType => {
-        let content = '';
-        let titleSuffix = '';
-        let baseType: ReviewCycle['type'] = 'RMV';
-        let icon: React.ReactNode;
-        let color = '';
-
-        switch (cycleType.toUpperCase()) {
-          case 'RMV':
-            content = calculateRMV(currentJuzMem, currentSettings);
-            titleSuffix = `(Last ${currentSettings.rmvPages} Pages) - Postponed!`;
-            baseType = 'RMV';
-            icon = <Clock className="h-4 w-4" />;
-            color = 'bg-green-50 border-green-200';
-            break;
-          case 'OMV':
-            content = calculateOMV(juzForOMV, currentSettings, date);
-            titleSuffix = `(${currentSettings.omvJuz} Juz) - Postponed!`;
-            baseType = 'OMV';
-            icon = <RotateCcw className="h-4 w-4" />;
-            color = 'bg-purple-50 border-purple-200';
-            break;
-          case 'LISTENING':
-            content = calculateListeningCycle(juzForOMV, currentSettings, date);
-            titleSuffix = `(${currentSettings.listeningJuz} Juz) - Postponed!`;
-            baseType = 'Listening';
-            icon = <PlayCircle className="h-4 w-4" />;
-            color = 'bg-blue-50 border-blue-200';
-            break;
-          case 'READING':
-            content = calculateReadingCycle(juzForOMV, currentSettings, date);
-            titleSuffix = `(${currentSettings.readingJuz} Juz) - Postponed!`;
-            baseType = 'Reading';
-            icon = <BookOpen className="h-4 w-4" />;
-            color = 'bg-orange-50 border-orange-200';
-            break;
-          default:
-            return;
-        }
-
-        if (content && !content.startsWith('No Juz') && !content.startsWith('Set current Juz')) {
-          postponedReviewCycles.push({
-            id: `${cycleType.toLowerCase()}-${date}-postponed`,
-            type: baseType,
-            title: `${baseType} ${titleSuffix}`,
-            content: content,
-            startDate: date,
-            completed: false,
-            icon: icon,
-            color: color,
-            isPostponed: true
-          });
-        }
-      });
-
-      return postponedReviewCycles;
-    } catch (error) {
-      console.error('Error getting postponed cycles:', error);
-      return [];
-    }
-  };
-
   const generateDailyCycles = (currentJuzMem: JuzMemorization[], currentSettings: ReviewSettings, date: string): ReviewCycle[] => {
     const generatedCycles: ReviewCycle[] = [];
     const todayCompletions = loadTodaysCompletions();
 
     const juzForOMVTypeCycles = currentJuzMem.filter(j => j.isMemorized);
-
-    // First, add any postponed cycles for today
-    const postponedCycles = getPostponedCycles(date);
-    postponedCycles.forEach(cycle => {
-      generatedCycles.push({ 
-        ...cycle, 
-        completed: todayCompletions[cycle.id] || false
-      });
-    });
 
     const carryOverCycles = getCarryOverCycles(date, currentJuzMem, currentSettings);
     carryOverCycles.forEach(cycle => {
@@ -853,53 +766,6 @@ export const MurajahMainDashboard = () => {
     }));
   };
 
-  const postponeCycle = (cycleId: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
-    // Get the cycle type from the cycle ID
-    const cycleType = cycleId.split('-')[0].toUpperCase();
-    
-    // Save to postponed cycles in localStorage
-    const savedPostponed = localStorage.getItem('murajah-postponed-cycles');
-    let postponedData: { [date: string]: string[] } = {};
-    
-    if (savedPostponed) {
-      try {
-        postponedData = JSON.parse(savedPostponed);
-      } catch (error) {
-        console.error('Error parsing postponed cycles:', error);
-      }
-    }
-    
-    // Add cycle type to tomorrow's postponed list
-    if (!postponedData[tomorrowStr]) {
-      postponedData[tomorrowStr] = [];
-    }
-    
-    if (!postponedData[tomorrowStr].includes(cycleType)) {
-      postponedData[tomorrowStr].push(cycleType);
-    }
-    
-    localStorage.setItem('murajah-postponed-cycles', JSON.stringify(postponedData));
-    
-    // Remove the cycle from today's list
-    const updatedCycles = todaysReviewCycles.filter(cycle => cycle.id !== cycleId);
-    setTodaysReviewCycles(updatedCycles);
-    
-    // Update today's completions to remove this cycle
-    const completions = updatedCycles.reduce((acc, cycle) => {
-      acc[cycle.id] = cycle.completed;
-      return acc;
-    }, {} as { [cycleId: string]: boolean });
-    
-    saveTodaysCompletions(completions);
-    
-    console.log(`Postponed ${cycleType} cycle to ${tomorrowStr}`);
-  };
-
   const saveTodaysCompletions = (completions: { [cycleId: string]: boolean }) => {
     const today = new Date().toISOString().split('T')[0];
     const savedData = localStorage.getItem('murajah-daily-completions');
@@ -1153,38 +1019,19 @@ export const MurajahMainDashboard = () => {
                           Overdue
                         </Badge>
                       )}
-                      {cycle.isPostponed && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
-                          <ArrowRight className="h-3 w-3 mr-1" />
-                          Postponed
-                        </Badge>
-                      )}
                       {cycle.completed ? (
                         <Badge variant="default" className="text-xs">Completed</Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs">Pending</Badge>
                       )}
-                      <div className="flex gap-1">
-                        <Button
-                          variant={cycle.completed ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleCycleCompletion(cycle.id)}
-                          className="text-xs"
-                        >
-                          {cycle.completed ? "Undo" : "Complete"}
-                        </Button>
-                        {!cycle.completed && !cycle.isPostponed && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => postponeCycle(cycle.id)}
-                            className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                          >
-                            <ArrowRight className="h-3 w-3 mr-1" />
-                            Postpone
-                          </Button>
-                        )}
-                      </div>
+                      <Button
+                        variant={cycle.completed ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleCycleCompletion(cycle.id)}
+                        className="text-xs"
+                      >
+                        {cycle.completed ? "Undo" : "Complete"}
+                      </Button>
                     </div>
                   </div>
                 ))}
