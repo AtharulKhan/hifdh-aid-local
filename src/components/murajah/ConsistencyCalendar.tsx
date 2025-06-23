@@ -118,56 +118,57 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
 
   return (
     <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center justify-between text-lg">
+      <CardHeader className="pb-3 sm:pb-4">
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between text-base sm:text-lg gap-3 sm:gap-0">
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Consistency Calendar</span>
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center gap-1">
-              <Flame className="h-4 w-4 text-orange-500" />
+              <Flame className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
               <span className="font-medium">{currentStreak} day streak</span>
             </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700">
+            <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
               <Trophy className="h-3 w-3 mr-1" />
               {perfectDays} perfect days
             </Badge>
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Month labels */}
-          <div className="flex justify-between text-xs text-gray-500 px-4">
+      <CardContent className="px-3 sm:px-6">
+        <div className="space-y-3 sm:space-y-4">
+          {/* Month labels - Hidden on mobile for space */}
+          <div className="hidden sm:flex justify-between text-xs text-gray-500 px-4">
             {months.map(month => (
               <span key={month}>{month}</span>
             ))}
           </div>
           
           {/* Calendar grid */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 sm:gap-1">
             {/* Day labels */}
-            <div className="flex flex-col gap-1 text-xs text-gray-500 pr-2">
-              {days.map(day => (
-                <div key={day} className="h-3 flex items-center">
-                  {day}
+            <div className="flex flex-col gap-1 text-xs text-gray-500 pr-1 sm:pr-2">
+              {days.map((day, index) => (
+                <div key={day} className="h-2.5 sm:h-3 flex items-center">
+                  <span className="hidden sm:inline">{day}</span>
+                  <span className="sm:hidden">{day.charAt(0)}</span>
                 </div>
               ))}
             </div>
             
-            {/* Activity grid */}
+            {/* Activity grid with horizontal scroll on mobile */}
             <TooltipProvider>
-              <div className="flex gap-1 overflow-x-auto">
+              <div className="flex gap-1 overflow-x-auto pb-2 sm:pb-0">
                 {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-1">
+                  <div key={weekIndex} className="flex flex-col gap-1 flex-shrink-0">
                     {Array.from({ length: 7 }).map((_, dayIndex) => {
                       const activity = week[dayIndex];
                       if (!activity) {
                         return (
                           <div
                             key={dayIndex}
-                            className="w-3 h-3 bg-gray-50 rounded-sm"
+                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-50 rounded-sm"
                           />
                         );
                       }
@@ -179,10 +180,10 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
                         <Tooltip key={dayIndex}>
                           <TooltipTrigger asChild>
                             <div
-                              className={`w-3 h-3 rounded-sm cursor-pointer hover:ring-2 hover:ring-green-300 ${color}`}
+                              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm cursor-pointer hover:ring-2 hover:ring-green-300 touch-manipulation ${color}`}
                             />
                           </TooltipTrigger>
-                          <TooltipContent className="bg-white border border-gray-200 text-gray-900">
+                          <TooltipContent className="bg-white border border-gray-200 text-gray-900 max-w-xs">
                             <div className="text-sm">
                               <div className="font-medium">
                                 {format(new Date(activity.date), 'MMM d, yyyy')}
@@ -214,18 +215,18 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
           </div>
           
           {/* Legend */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{totalActiveDays} active days in the last year</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-gray-500 gap-2 sm:gap-0">
+            <span className="text-xs sm:text-sm">{totalActiveDays} active days in the last year</span>
             <div className="flex items-center gap-2">
-              <span>Less</span>
+              <span className="text-xs">Less</span>
               <div className="flex gap-1">
-                <div className="w-3 h-3 bg-gray-100 rounded-sm" />
-                <div className="w-3 h-3 bg-green-200 rounded-sm" />
-                <div className="w-3 h-3 bg-green-400 rounded-sm" />
-                <div className="w-3 h-3 bg-green-500 rounded-sm" />
-                <div className="w-3 h-3 bg-green-600 rounded-sm" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-100 rounded-sm" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-200 rounded-sm" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-sm" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-sm" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-600 rounded-sm" />
               </div>
-              <span>More</span>
+              <span className="text-xs">More</span>
             </div>
           </div>
         </div>
