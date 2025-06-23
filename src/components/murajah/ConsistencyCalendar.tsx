@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -118,7 +117,7 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card>
+    <Card className="bg-white">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center gap-2">
@@ -137,7 +136,7 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-white">
         <div className="space-y-4">
           {/* Month labels */}
           <div className="flex justify-between text-xs text-gray-500 px-4">
