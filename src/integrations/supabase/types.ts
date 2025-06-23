@@ -195,6 +195,54 @@ export type Database = {
         }
         Relationships: []
       }
+      murajah_daily_cycles: {
+        Row: {
+          completed: boolean
+          content: string
+          created_at: string
+          cycle_type: string
+          date: string
+          id: string
+          is_overdue: boolean
+          is_postponed: boolean
+          original_date: string | null
+          postponed_to_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          content: string
+          created_at?: string
+          cycle_type: string
+          date: string
+          id?: string
+          is_overdue?: boolean
+          is_postponed?: boolean
+          original_date?: string | null
+          postponed_to_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          content?: string
+          created_at?: string
+          cycle_type?: string
+          date?: string
+          id?: string
+          is_overdue?: boolean
+          is_postponed?: boolean
+          original_date?: string | null
+          postponed_to_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       postponed_murajah_cycles: {
         Row: {
           content: string

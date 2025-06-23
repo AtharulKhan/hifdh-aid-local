@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -162,6 +163,69 @@ export const useDataSync = () => {
             });
         }
         console.log('Synced postponed Muraja\'ah cycles');
+      }
+
+      // Sync murajah daily cycles
+      const dailyCompletions = localStorage.getItem('murajah-daily-completions');
+      if (dailyCompletions) {
+        const completions = JSON.parse(dailyCompletions);
+        
+        // Clear existing daily cycles for this user first
+        await supabase
+          .from('murajah_daily_cycles')
+          .delete()
+          .eq('user_id', user.id);
+        
+        // Insert daily cycles based on completions
+        for (const dayCompletion of completions) {
+          for (const [cycleId, completed] of Object.entries(dayCompletion.completions)) {
+            // Parse cycle ID to extract type and date
+            const [cycleType, dateStr] = cycleId.split('-');
+            const isOverdue = cycleId.includes('overdue');
+            const isPostponed = cycleId.includes('postponed');
+            
+            // Generate title and content based on cycle type
+            let title = '';
+            let content = '';
+            
+            switch (cycleType.toUpperCase()) {
+              case 'RMV':
+                title = 'RMV (Recent Memorization Review)';
+                content = 'Recent memorization pages';
+                break;
+              case 'OMV':
+                title = 'OMV (Old Memorization Review)';
+                content = 'Old memorization review';
+                break;
+              case 'LISTENING':
+                title = 'Listening Cycle';
+                content = 'Listening review cycle';
+                break;
+              case 'READING':
+                title = 'Reading Cycle';
+                content = 'Reading review cycle';
+                break;
+              default:
+                title = `${cycleType} Cycle`;
+                content = `${cycleType} review cycle`;
+            }
+            
+            await supabase
+              .from('murajah_daily_cycles')
+              .insert({
+                user_id: user.id,
+                date: dateStr,
+                cycle_type: cycleType.toUpperCase(),
+                title,
+                content,
+                completed: completed as boolean,
+                is_overdue: isOverdue,
+                is_postponed: isPostponed,
+                original_date: dateStr
+              });
+          }
+        }
+        console.log('Synced murajah daily cycles');
       }
 
       // Sync journal entries
@@ -330,6 +394,38 @@ export const useDataSync = () => {
         localStorage.setItem('murajah-postponed-cycles', JSON.stringify(formattedPostponedCycles));
       }
 
+      // Load murajah daily cycles
+      const { data: dailyCyclesData } = await supabase
+        .from('murajah_daily_cycles')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (dailyCyclesData && dailyCyclesData.length > 0) {
+        // Convert to the format expected by the local storage
+        const groupedByDate = dailyCyclesData.reduce((acc, cycle) => {
+          const dateStr = cycle.date;
+          if (!acc[dateStr]) {
+            acc[dateStr] = {};
+          }
+          
+          // Create cycle ID in the format expected by the app
+          let cycleId = `${cycle.cycle_type.toLowerCase()}-${dateStr}`;
+          if (cycle.is_overdue) cycleId += '-overdue';
+          if (cycle.is_postponed) cycleId += '-postponed';
+          
+          acc[dateStr][cycleId] = cycle.completed;
+          return acc;
+        }, {} as { [date: string]: { [cycleId: string]: boolean } });
+
+        const formattedDailyCompletions = Object.entries(groupedByDate).map(([date, completions]) => ({
+          date,
+          completions
+        }));
+
+        localStorage.setItem('murajah-daily-completions', JSON.stringify(formattedDailyCompletions));
+        console.log('Loaded murajah daily cycles from cloud');
+      }
+
       // Load journal entries
       const { data: journalData } = await supabase
         .from('journal_entries')
@@ -418,6 +514,12 @@ export const useDataSync = () => {
         .delete()
         .eq('user_id', user.id);
 
+      // Clear daily murajah cycles
+      await supabase
+        .from('murajah_daily_cycles')
+        .delete()
+        .eq('user_id', user.id);
+
       console.log('Cleared all data from Supabase');
 
       toast({
@@ -453,6 +555,9 @@ export const useDataSync = () => {
       
       // Clear postponed cycles
       localStorage.removeItem('murajah-postponed-cycles');
+      
+      // Clear daily completions
+      localStorage.removeItem('murajah-daily-completions');
       
       // Clear journal entries
       localStorage.removeItem('journal-storage');
