@@ -89,6 +89,33 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
     }
   };
 
+  // Desktop: Show full year data
+  const desktopWeeks = useMemo(() => {
+    const result: DailyActivity[][] = [];
+    let currentWeek: DailyActivity[] = [];
+    
+    activityData.forEach((activity, index) => {
+      const date = new Date(activity.date);
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
+      // Start new week on Sunday
+      if (dayOfWeek === 0 && currentWeek.length > 0) {
+        result.push(currentWeek);
+        currentWeek = [];
+      }
+      
+      currentWeek.push(activity);
+      
+      // Handle last week
+      if (index === activityData.length - 1) {
+        result.push(currentWeek);
+      }
+    });
+    
+    return result;
+  }, [activityData]);
+
+  // Mobile: Show current month data
   const currentMonthData = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -106,57 +133,52 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
     });
   }, [currentMonth, activityData]);
 
-  const weeks = useMemo(() => {
-    if (isMobile) {
-      // For mobile, show current month in weekly chunks
-      const result: DailyActivity[][] = [];
-      let currentWeek: DailyActivity[] = [];
-      
-      currentMonthData.forEach((activity, index) => {
-        const date = new Date(activity.date);
-        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        
-        // Start new week on Sunday
-        if (dayOfWeek === 0 && currentWeek.length > 0) {
-          result.push(currentWeek);
-          currentWeek = [];
-        }
-        
-        currentWeek.push(activity);
-        
-        // Handle last week
-        if (index === currentMonthData.length - 1) {
-          result.push(currentWeek);
-        }
+  const mobileWeeks = useMemo(() => {
+    const result: DailyActivity[][] = [];
+    let currentWeek: DailyActivity[] = [];
+    
+    // Add empty days at the beginning of the month if needed
+    const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const startPadding = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Fill in empty days at the start
+    for (let i = 0; i < startPadding; i++) {
+      currentWeek.push({
+        date: '',
+        reviewCompleted: false,
+        memorizationCompleted: false,
+        totalTasks: 0,
+        completedTasks: 0
       });
-      
-      return result;
-    } else {
-      // Desktop: show full year
-      const result: DailyActivity[][] = [];
-      let currentWeek: DailyActivity[] = [];
-      
-      activityData.forEach((activity, index) => {
-        const date = new Date(activity.date);
-        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        
-        // Start new week on Sunday
-        if (dayOfWeek === 0 && currentWeek.length > 0) {
-          result.push(currentWeek);
-          currentWeek = [];
-        }
-        
-        currentWeek.push(activity);
-        
-        // Handle last week
-        if (index === activityData.length - 1) {
-          result.push(currentWeek);
-        }
-      });
-      
-      return result;
     }
-  }, [activityData, currentMonthData, isMobile]);
+    
+    currentMonthData.forEach((activity, index) => {
+      currentWeek.push(activity);
+      
+      // Start new week on Sunday (when currentWeek has 7 items)
+      if (currentWeek.length === 7) {
+        result.push(currentWeek);
+        currentWeek = [];
+      }
+    });
+    
+    // Handle last partial week
+    if (currentWeek.length > 0) {
+      // Fill remaining days with empty cells
+      while (currentWeek.length < 7) {
+        currentWeek.push({
+          date: '',
+          reviewCompleted: false,
+          memorizationCompleted: false,
+          totalTasks: 0,
+          completedTasks: 0
+        });
+      }
+      result.push(currentWeek);
+    }
+    
+    return result;
+  }, [currentMonthData, currentMonth]);
 
   const totalActiveDays = activityData.filter(activity => activity.completedTasks > 0).length;
   const perfectDays = activityData.filter(activity => 
@@ -168,6 +190,8 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
 
   const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
   const nextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
+
+  const weeks = isMobile ? mobileWeeks : desktopWeeks;
 
   return (
     <Card>
@@ -229,16 +253,15 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
             
             {/* Activity grid */}
             <TooltipProvider>
-              <div className="flex gap-1 flex-wrap sm:flex-nowrap overflow-hidden">
+              <div className={`flex gap-1 ${isMobile ? 'flex-wrap' : 'flex-nowrap overflow-hidden'}`}>
                 {weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="flex flex-col gap-1 flex-shrink-0">
-                    {Array.from({ length: 7 }).map((_, dayIndex) => {
-                      const activity = week[dayIndex];
-                      if (!activity) {
+                    {week.map((activity, dayIndex) => {
+                      if (!activity.date) {
                         return (
                           <div
                             key={dayIndex}
-                            className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 rounded-sm"
+                            className="w-3 h-3 sm:w-4 sm:h-4 bg-transparent rounded-sm"
                           />
                         );
                       }
