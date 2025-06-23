@@ -31,6 +31,29 @@ export const useDataSync = () => {
         console.log('Synced memorization planner settings');
       }
 
+      // Sync already memorized data
+      const alreadyMemorized = localStorage.getItem('memorizationPlannerAlreadyMemorized');
+      if (alreadyMemorized) {
+        const memorizedData = JSON.parse(alreadyMemorized);
+        
+        // Clear existing already memorized data for this user first
+        await supabase
+          .from('custom_orders')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('order_type', 'already_memorized');
+        
+        // Insert the already memorized data
+        await supabase
+          .from('custom_orders')
+          .insert({
+            user_id: user.id,
+            order_type: 'already_memorized',
+            custom_order: memorizedData
+          });
+        console.log('Synced already memorized data');
+      }
+
       // Sync custom Juz order
       const customJuzOrder = localStorage.getItem('customJuzOrder');
       if (customJuzOrder) {
@@ -298,7 +321,7 @@ export const useDataSync = () => {
         localStorage.setItem('memorizationPlannerSettings', JSON.stringify(formattedSettings));
       }
 
-      // Load custom orders
+      // Load custom orders including already memorized data
       const { data: customOrdersData } = await supabase
         .from('custom_orders')
         .select('*')
@@ -310,6 +333,8 @@ export const useDataSync = () => {
             localStorage.setItem('customJuzOrder', JSON.stringify(order.custom_order));
           } else if (order.order_type === 'surah') {
             localStorage.setItem('customSurahOrder', JSON.stringify(order.custom_order));
+          } else if (order.order_type === 'already_memorized') {
+            localStorage.setItem('memorizationPlannerAlreadyMemorized', JSON.stringify(order.custom_order));
           }
         });
         console.log('Synced custom orders from cloud');
@@ -549,6 +574,9 @@ export const useDataSync = () => {
       
       // Clear memorization planner postponed tasks
       localStorage.removeItem('memorization-planner-postponed-tasks');
+      
+      // Clear already memorized data
+      localStorage.removeItem('memorizationPlannerAlreadyMemorized');
       
       // Clear juz memorization data
       localStorage.removeItem('murajah-juz-memorization');
