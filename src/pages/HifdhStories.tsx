@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Search, Heart, Calendar, User, ExternalLink, BookOpen, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -151,6 +152,158 @@ The story of my memorisation is long, these are but glimpses of my journey.
 May Allāh help us memorise and internalise His Book. May we all preserve it and prove we are the carriers of it.
 
 Remember your why! You'll get what you intend. Ameen.`
+  },
+  {
+    id: '2',
+    title: 'How To Get An Ijazah In The Quran',
+    author: 'Qāri\' Mubashir',
+    summary: 'A comprehensive guide explaining what an Ijazah is, its importance in Qur\'an studies, the different types available, and the prerequisites for obtaining this sacred authorization to teach and transmit the Qur\'an.',
+    content: {
+      introduction: 'An Ijazah is a sacred authorization that connects you to an unbroken chain of transmission back to Prophet Muhammad (ﷺ). This guide explains everything you need to know about getting an Ijazah in the Qur\'an, from its literal meaning to the practical steps required.',
+      keyMoments: [
+        {
+          title: 'Understanding the Ijazah',
+          content: 'The word Ijazah comes from the Arabic root meaning "to permit or authorize." In Qur\'anic studies, it represents a stamp of approval in your recitation and memorization, granted after reciting the entire Qur\'an with mastery to a qualified teacher.',
+          lesson: 'An Ijazah is more than a certificate - it\'s a spiritual connection to the Prophet through an unbroken chain of teachers.'
+        },
+        {
+          title: 'The Sanad Chain',
+          content: 'A sanad is the chain of authorities connecting you back to the Prophet (ﷺ). Every qualified teacher has received their authorization through this sacred chain, ensuring the authenticity and preservation of Qur\'anic recitation.',
+          lesson: 'The sanad system preserves the integrity of Qur\'anic transmission across generations.'
+        },
+        {
+          title: 'Types and Levels',
+          content: 'There are two main types: Ijazah in Tajweed (recitation rules) and Ijazah in Qur\'an (full memorization). Advanced students can pursue multiple recitations (Qira\'at), from single narrations to the complete ten readings.',
+          lesson: 'The journey of Ijazah can be lifelong, with increasing levels of mastery and authorization.'
+        }
+      ],
+      advice: [
+        'Be Muslim, sane, trustworthy, disciplined, and free from immorality',
+        'Master the rules of Tajweed and apply them correctly',
+        'Memorize the entire Qur\'an and recite it flawlessly from memory',
+        'Be prepared to answer questions about Qur\'anic recitation',
+        'Find a qualified teacher with proper sanad authorization',
+        'Commit to the rigorous assessment process',
+        'Consider starting with Tajweed texts like al-Jazariyyah'
+      ],
+      conclusion: 'Getting an Ijazah connects you to a blessed chain extending back to the Prophet (ﷺ), elevates your understanding of the Qur\'an, and qualifies you to preserve and transmit this sacred knowledge to future generations. While not required to teach, it provides unparalleled spiritual and academic benefits.'
+    },
+    source: {
+      url: 'https://howtomemorisethequran.com/what-is-an-ijazah/',
+      website: 'How To Memorise The Quran'
+    },
+    tags: ['ijazah', 'sanad', 'authorization', 'teaching', 'qiraat', 'tajweed', 'qualification', 'chain of transmission', 'certification'],
+    readTime: '7 mins',
+    publishedDate: 'July 19, 2022',
+    highlights: [
+      'Explains the sacred chain of transmission (sanad) back to the Prophet (ﷺ)',
+      'Details 11 spiritual and practical benefits of obtaining an Ijazah',
+      'Outlines clear prerequisites and conditions for qualification',
+      'Describes different types and levels of Ijazah available'
+    ],
+    fullStory: `Many of you have asked me what it means when we say Ijāzah. Questions might be on your mind like, what is an Ijāzah? how do I get one? do I need one?
+
+In this article, I'll explain what the Ijāzah is, how important it is and how you can get one.
+
+The Ijāzah can mean different things depending on what the context is and can be synonymous with another word - the 'sanad'. Our context is the Qur'ān and its memorisation.
+
+**What is the literal meaning of Ijāzah?**
+
+The word Ijāzah (الإِجازَة) comes from the word jawz (جوز) and ajwaza (أجْوَزَ) which means to permit or authorise. The Arabs say the road, path, or way is permissible (جاز الطريق) where you take provisions and gifts for the way (جَاْوِزَة). From the same root, you'll see the word to get married (تَــجَوَّزَ) and many other words like walnuts.
+
+Literally, then, it means permission, license, or authorisation.
+
+**What is the meaning of Ijāzah in the Qur'ān?**
+
+The Ijāzah (plural is Ijāzāt) is when you are granted a stamp of approval in your recitation and memorisation of the Qur'ān. This is a process of reciting the entire Qur'an with mastery to a teacher who recited the Qur'an in the same way to his teacher, who recited to his etc. Any student would do this to gain approval and authenticate their own recitation and memorisation before someone who had done it with his teachers.
+
+Imām as-Suyūtī (Allāh grant him mercy) said it is:
+
+"It is a testimony from a qualified and authorised shaykh to the student that he/she has recited the entire Qur'ān to them by heart, with Tajweed, perfection, and differentiation between similarities, and has now become qualified to recite." (al-Itqān)
+
+You can think of it as a means to maintain standards and authenticity. Anyone granted Ijāzah is called a "Mujeez" or "Mujāz" literally one who has been granted Ijāzah.
+
+The Ijāzah is formally presented in the form of a certificate (and orally) that contains the words from the shaykh confirming that you have recited the Qur'ān to the standards required. This includes what you've been approved in (the particular qirā'ah, and teach and transmit Qur'ān to others with authority in it) and a sanad.
+
+**What is a Sanad?**
+
+A sanad literally means a support, chain or something that connects one thing to another. Technically it is a chain or list of authorities who have transmitted the Qur'ān with the same standards connecting all the way back to the Beloved Prophet (ﷺ) and his companions (Allah be pleased with them). This is similar to what you see before the text of a Hadīth (the isnād). Every chain differs in size, the smaller it is, the higher the regard for it is.
+
+The sanad is the way of our deen.
+
+Al-Hākim reports through Thābit ibn Qays, that the Beloved Prophet (ﷺ) said to his Companions:
+
+"You (the Sahaba) are listening and receiving from me and people (at-Tabi'un i.e. the Successors) will listen and receive from you. Then people (the atba' at-tabi'in) will listen and receive from those (the Successors) who listened and received from you. Then people (the fourth generation) will listen and receive from those (the atba' at-tabi'in) who were the audience and recipient of the Successors, who had listened and received from you." [Related by al-Hakim in Ma'rifa 'Ulum al-Hadith, p. 60.]
+
+Al-Imām Ahmad ibn Hanbal is reported by as-Sakhāwi in Fatha'l-Mughīth (vol. 2, p. 69) as saying: "If the ijazāt (license of transmission through a chain of authority) was neglected and denied, then the reliable knowledge would be destroyed."
+
+Al-Imām Ahmad ibn Hanbal also said: "Asking for the higher chain of authority (al-isnād al-'āli) is the sunna of the righteous predecessors." [Ibn as-Salah, 'Ulum al-Hadith, p. 150; al-Khatib al-Baghdadi, al-Jam' li-Akhlaq ar-Rawi wa Adab as-Sam', vol. 1, p. 123.]
+
+**What's the difference between an Ijāzah and a Sanad?**
+
+While some say, I have ijāzah for a particular science, another might say that he has a sanad for it. Ijāzah is the permission of an authority to the student for a specific discipline after deeming the student fit.
+
+A sanad is the chain of the authorities that links the teacher to the source of the discipline. It is given to a student after qualifying at the hands of the teacher.
+
+**Can you get an Ijāzah without a Sanad?**
+
+It depends on the type they receive. If a student receives a sanad from his teacher it will include an ijāzah but if he/she only receives an ijāzah it may not necessarily include a sanad. Many who qualify from institutions, for example, only receive ijāzah as a certificate of completion (which is not accompanied by a sanad). At times, depending on the type, a sanad may not include an Ijāzah.
+
+**If I don't have a Sanad or Ijāzah does that mean that I am not authentic in my Hifz?**
+
+Having an Ijāzah connected to a sanad is a means of approving your mastery in the recitation and memorisation of the Qur'ān. It doesn't mean you are not authentic if you don't have one. Having one, however, will push you to new heights and blessings.
+
+**Do I need an Ijāzah to teach the Qur'ān?**
+
+It is better but you do not need to have an ijāzah to teach the Qur'ān. It is recommended though, that a teacher gives a recommendation or approval to a student of the Qur'ān to teach before they teach. This gives both the teacher and student peace of mind as to their qualifications.
+
+**So what's the importance and benefit of an Ijāzah?**
+
+You might think that if you don't need one, then what's the point? There are many benefits and blessings in having one. These are 11 benefits of an Ijāzah:
+
+• being blessed and honoured to be connected to the great Imāms, scholars, companions and the Beloved Prophet (ﷺ) till the Day of Judgement
+• mastering the recitation of the Qur'ān to the levels it was revealed with
+• your name will be continued to be mentioned after your passing attached to the learning and preservation of the Qur'ān
+• being recognised for your hard efforts over the years in mastering the Qur'ān
+• playing a part in the preservation and spreading of the Qur'ān at the highest standards
+• having increased love and yearning for perfection and improvement
+• having increased knowledge of the Qur'ān
+• reaching a level of excellence in Qur'ān
+• being amongst the best of those that learn and teach the Qur'ān and therefore the best of people
+• raising your rank amongst the people (dunya and ākhira)
+• depending on your location and role, this can give rise to bigger opportunities in work (dunya)
+
+**What types of Ijāzah can you get for the Qur'ān?**
+
+While there are up to six types of Ijāzāt that often get mentioned these days, the most authentic paths are only two:
+
+1. **An Ijāzah in Tajweed** - this is where you recite a foundational text in Tajweed (like Muqaddimah al-Jazariyyah) and have proven to understand it. These Ijāzah connect you to a sanad going back to the author and grant you the permission to teach it.
+
+2. **An Ijāzah in Qur'ān** - this is where you have memorised the entire Qur'ān and are able to recall all of it to a teacher without looking perfectly. This grants you a sanad and authority in a particular recitation of the Qur'ān.
+
+**What are the different levels of Ijāzah?**
+
+What I mean by levels here are when you begin to move from getting one Ijāzah to several of them. There are different levels to this.
+
+1. You obtain an Ijāzah in a single narration and recitation of the Qur'ān.
+2. Like Hafs 'an 'Āsim. You obtain an Ijāzah in other narrations and recitations of the Qur'ān like Warsh 'an Nāfi' etc.
+3. Ijāzah with 7 Qira'āt of ash-Shātibiyyah.
+4. Qurān Ijāzah with 3 Qira'āt of Durrat Al-Madiyyah and 10 (Sughra) from ash-Shātibiyyah and Durrat.
+5. Ijāzah in 10 (Kubra) Qira'āt of Tayyibat An-Nashr.
+
+**What are the prerequisites and conditions for getting an Ijāzah?**
+
+This may differ from teacher to teacher, but generally speaking, you will need to:
+
+1. You are an Muslim, sane, trustworthy, disciplined, and free from immorality etc
+2. Understand and apply the rules of Tajweed to your recitation (others will require you to have memorised and understood al-Jazariyyah (107 couplets))
+3. Memorise and be able to recite the entire Qur'ān correctly from memory before a qualified teacher
+4. Be able to answer any questions concerning the Qur'ān and concerning its recitation
+5. Pass the required assessment on your knowledge and recitation of the Qur'ān (some teachers will have you recite in a certain way (pronounce every harakah) and others might be more lenient).
+
+If you have any other questions, please do get in touch.
+
+Allāh grant blessing.`
   }
 ];
 
