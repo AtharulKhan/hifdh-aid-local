@@ -30,6 +30,7 @@ import juzDataJson from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
 import { PracticeVerseCard } from './PracticeVerseCard';
 import { useNavigate } from 'react-router-dom';
+import { ConsistencyCalendar } from './ConsistencyCalendar';
 
 // Use the actual data structures from quranData
 const juzData = juzDataJson;
@@ -1300,6 +1301,35 @@ export const MurajahMainDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Consistency Calendar - Full Width */}
+      <ConsistencyCalendar 
+        dailyCompletions={localStorage.getItem('murajah-daily-completions') ? 
+          (() => {
+            try {
+              const savedData = localStorage.getItem('murajah-daily-completions');
+              if (!savedData) return [];
+              
+              const parsedData = JSON.parse(savedData);
+              if (Array.isArray(parsedData)) {
+                return parsedData;
+              } else if (typeof parsedData === 'object' && parsedData !== null) {
+                // Convert old object format to array format
+                return Object.entries(parsedData).map(([date, completions]) => ({
+                  date,
+                  completions: completions as { [cycleId: string]: boolean }
+                }));
+              }
+              return [];
+            } catch (error) {
+              console.error('Error parsing daily completions:', error);
+              return [];
+            }
+          })() : []
+        }
+        memorizationSchedule={memorizationSchedule}
+        currentStreak={currentStreak}
+      />
 
       {/* Weekly Overview and Achievements - Side by Side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
