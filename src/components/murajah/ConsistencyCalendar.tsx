@@ -1,9 +1,12 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Calendar, Flame, Trophy } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, subDays, isSameDay, startOfDay } from 'date-fns';
+import { Calendar, Flame, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, subDays, isSameDay, startOfDay, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DailyActivity {
   date: string;
@@ -30,6 +33,9 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
   memorizationSchedule = [],
   currentStreak = 0
 }) => {
+  const isMobile = useIsMobile();
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+
   const activityData = useMemo(() => {
     const today = new Date();
     const startDate = subDays(today, 364); // 365 days including today
@@ -83,30 +89,74 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
     }
   };
 
-  const weeks = useMemo(() => {
-    const result: DailyActivity[][] = [];
-    let currentWeek: DailyActivity[] = [];
+  const currentMonthData = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
     
-    activityData.forEach((activity, index) => {
-      const date = new Date(activity.date);
-      const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      
-      // Start new week on Sunday
-      if (dayOfWeek === 0 && currentWeek.length > 0) {
-        result.push(currentWeek);
-        currentWeek = [];
-      }
-      
-      currentWeek.push(activity);
-      
-      // Handle last week
-      if (index === activityData.length - 1) {
-        result.push(currentWeek);
-      }
+    return monthDays.map(date => {
+      const dateStr = date.toISOString().split('T')[0];
+      return activityData.find(activity => activity.date === dateStr) || {
+        date: dateStr,
+        reviewCompleted: false,
+        memorizationCompleted: false,
+        totalTasks: 0,
+        completedTasks: 0
+      };
     });
-    
-    return result;
-  }, [activityData]);
+  }, [currentMonth, activityData]);
+
+  const weeks = useMemo(() => {
+    if (isMobile) {
+      // For mobile, show current month in weekly chunks
+      const result: DailyActivity[][] = [];
+      let currentWeek: DailyActivity[] = [];
+      
+      currentMonthData.forEach((activity, index) => {
+        const date = new Date(activity.date);
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Start new week on Sunday
+        if (dayOfWeek === 0 && currentWeek.length > 0) {
+          result.push(currentWeek);
+          currentWeek = [];
+        }
+        
+        currentWeek.push(activity);
+        
+        // Handle last week
+        if (index === currentMonthData.length - 1) {
+          result.push(currentWeek);
+        }
+      });
+      
+      return result;
+    } else {
+      // Desktop: show full year
+      const result: DailyActivity[][] = [];
+      let currentWeek: DailyActivity[] = [];
+      
+      activityData.forEach((activity, index) => {
+        const date = new Date(activity.date);
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Start new week on Sunday
+        if (dayOfWeek === 0 && currentWeek.length > 0) {
+          result.push(currentWeek);
+          currentWeek = [];
+        }
+        
+        currentWeek.push(activity);
+        
+        // Handle last week
+        if (index === activityData.length - 1) {
+          result.push(currentWeek);
+        }
+      });
+      
+      return result;
+    }
+  }, [activityData, currentMonthData, isMobile]);
 
   const totalActiveDays = activityData.filter(activity => activity.completedTasks > 0).length;
   const perfectDays = activityData.filter(activity => 
@@ -115,6 +165,9 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
+  const nextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
 
   return (
     <Card>
@@ -138,28 +191,45 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
       </CardHeader>
       <CardContent className="px-3 sm:px-6">
         <div className="space-y-3 sm:space-y-4">
-          {/* Month labels - Hidden on mobile for space */}
-          <div className="hidden sm:flex justify-between text-xs text-gray-500 px-4">
-            {months.map(month => (
-              <span key={month}>{month}</span>
-            ))}
-          </div>
+          {/* Mobile month navigation */}
+          {isMobile && (
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="sm" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h3 className="font-medium text-sm">
+                {format(currentMonth, 'MMMM yyyy')}
+              </h3>
+              <Button variant="ghost" size="sm" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
+          {/* Month labels - Desktop only */}
+          {!isMobile && (
+            <div className="flex justify-between text-xs text-gray-500 px-4">
+              {months.map(month => (
+                <span key={month}>{month}</span>
+              ))}
+            </div>
+          )}
           
           {/* Calendar grid */}
-          <div className="flex gap-1 sm:gap-1">
+          <div className="flex gap-1">
             {/* Day labels */}
-            <div className="flex flex-col gap-1 text-xs text-gray-500 pr-1 sm:pr-2">
+            <div className="flex flex-col gap-1 text-xs text-gray-500 pr-2">
               {days.map((day, index) => (
-                <div key={day} className="h-2.5 sm:h-3 flex items-center">
-                  <span className="hidden sm:inline">{day}</span>
-                  <span className="sm:hidden">{day.charAt(0)}</span>
+                <div key={day} className="h-3 sm:h-4 flex items-center">
+                  <span className="block sm:hidden text-xs">{day.charAt(0)}</span>
+                  <span className="hidden sm:block">{day}</span>
                 </div>
               ))}
             </div>
             
-            {/* Activity grid with horizontal scroll on mobile */}
+            {/* Activity grid */}
             <TooltipProvider>
-              <div className="flex gap-1 overflow-x-auto pb-2 sm:pb-0">
+              <div className="flex gap-1 flex-wrap sm:flex-nowrap overflow-hidden">
                 {weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="flex flex-col gap-1 flex-shrink-0">
                     {Array.from({ length: 7 }).map((_, dayIndex) => {
@@ -168,7 +238,7 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
                         return (
                           <div
                             key={dayIndex}
-                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-50 rounded-sm"
+                            className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 rounded-sm"
                           />
                         );
                       }
@@ -180,7 +250,7 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
                         <Tooltip key={dayIndex}>
                           <TooltipTrigger asChild>
                             <div
-                              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm cursor-pointer hover:ring-2 hover:ring-green-300 touch-manipulation ${color}`}
+                              className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm cursor-pointer hover:ring-2 hover:ring-green-300 ${color}`}
                             />
                           </TooltipTrigger>
                           <TooltipContent className="bg-white border border-gray-200 text-gray-900 max-w-xs">
@@ -216,15 +286,17 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
           
           {/* Legend */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-gray-500 gap-2 sm:gap-0">
-            <span className="text-xs sm:text-sm">{totalActiveDays} active days in the last year</span>
+            <span className="text-xs sm:text-sm">
+              {isMobile ? `${format(currentMonth, 'MMMM')} activity` : `${totalActiveDays} active days in the last year`}
+            </span>
             <div className="flex items-center gap-2">
               <span className="text-xs">Less</span>
               <div className="flex gap-1">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-100 rounded-sm" />
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-200 rounded-sm" />
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-sm" />
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-sm" />
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-600 rounded-sm" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-100 rounded-sm" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-200 rounded-sm" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-400 rounded-sm" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-sm" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-600 rounded-sm" />
               </div>
               <span className="text-xs">More</span>
             </div>
