@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Toaster } from "./components/ui/toaster";
@@ -22,6 +21,7 @@ import Stats from "./pages/Stats";
 import { AuthPage } from "./components/auth/AuthPage";
 import WeakSpotsHub from "./pages/WeakSpotsHub";
 import ConsolidationView from "./pages/ConsolidationView";
+import HifdhStories from "./pages/HifdhStories";
 import { usePageTracking } from "./hooks/usePageTracking";
 
 // RouteTracker component to track page views
@@ -51,6 +51,7 @@ function App() {
                   <Route path="/tajweed" element={<Tajweed />} />
                   <Route path="/murajah" element={<Murajah />} />
                   <Route path="/quran-system" element={<QuranSystem />} />
+                  <Route path="/hifdh-stories" element={<HifdhStories />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/journal" element={<Journal />} />

@@ -33,6 +33,10 @@ const navItems = [{
   icon: Settings,
   label: "Set Hifdh Settings"
 }, {
+  path: "/hifdh-stories",
+  icon: Heart,
+  label: "Hifdh Stories"
+}, {
   path: "/stats",
   icon: TrendingUp,
   label: "Stats"
