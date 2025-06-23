@@ -9,7 +9,7 @@ import { ScheduleItem } from '@/hooks/use-memorization-planner';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { juzPageMapData } from '@/data/juz-page-map';
-import { X, CheckSquare, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, CheckSquare, AlertTriangle, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { PrintableScheduleTable } from './PrintableScheduleTable';
 import { ComprehensivePrintDialog } from '@/components/shared/ComprehensivePrintDialog';
 import { toast } from "sonner";
@@ -269,12 +269,19 @@ export const PlannerSchedule = ({
                 id={`select-${item.date}`}
               />
             )}
-            <Checkbox
-              checked={item.completed}
-              onCheckedChange={(checked) => onDayStatusChange(item.date, !!checked)}
-              id={`day-${item.date}`}
+            <Button
+              variant={item.completed ? "default" : "outline"}
+              size="sm"
+              onClick={() => onDayStatusChange(item.date, !item.completed)}
               disabled={item.isPostponed}
-            />
+              className={`h-8 w-8 p-0 ${
+                item.completed 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'hover:bg-green-50 hover:border-green-300'
+              }`}
+            >
+              {item.completed && <Check className="h-4 w-4" />}
+            </Button>
           </div>
           <div className="flex-1 min-w-0">
             <Label htmlFor={`day-${item.date}`} className="font-bold text-sm sm:text-base break-words">
