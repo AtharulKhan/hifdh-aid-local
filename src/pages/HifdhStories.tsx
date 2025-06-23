@@ -82,27 +82,39 @@ const stories: HifdhStory[] = [
       'Developed unique memorization techniques including the "memorization fund"',
       'Completed full Hifdh despite severe health challenges'
     ],
-    fullStory: `**An Amazing Hifdh Story Everyone Needs To Hear**
+    fullStory: `This is a Hifdh story that I came across years ago. It's narrated by the memoriser themselves and is an extraordinary story. It's a must-read and must-share for anyone memorising the Qur'ān. It's a story that you can keep on reading for your own motivation and there are some great gems too.
+
+# **My journey of memorising the Qur'ān begins**
 
 Everyone has a story but perhaps my story will ignite your heart (with inspired faith and determination).
 
-**My journey of memorising the Qur'ān begins**
+Before joining the Abu Faisal program for Hifdh, I used to memorise Qur'ān myself but it was constantly up and down. I didn't need encouragement as it was my belief that a person should be able to motivate themselves.
 
-Before joining the Abu Faisal program for Hifdh, I used to memorise Qur'ān myself but it was constantly up and down. I didn't need encouragement as it was my belief that a person should be able to motivate themselves. However, I wasn't well. I had a number of health challenges such as heart disease, and further complications with my liver, uterus and kidneys. I also had severe depression which led me to seek therapy for 7 years and I was taking pills for my mental health. I was still very young at the time and was in twelve grade (17/18 years old).
+However, I wasn't well.
+
+I had a number of health challenges such as heart disease, and further complications with my liver, uterus and kidneys. I also had severe depression which led me to seek therapy for 7 years and I was taking pills for my mental health. I was still very young at the time and was in twelve grade (17/18 years old).
 
 I began to commit to reciting and memorising Qur'ān to try to relieve my body pains. I managed to memorise Juz' 30, 29, 17, 18, 19, al-Baqarah, Ale-'Imrān and an-Nisā'... But I really struggled and didn't find any comfort. So I decided to retreat from memorisation for a long while. As my illness got worse, the further I moved away from Allāh and the Qur'ān. I stopped memorising under this pretext. I forgot my comfort was really between the folds of the Qur'ān.
 
-Years later, while at university and I decided to return to memorising the Qur'ān again. During the last year (2015), I heard about the Abu Faisal course (for Hifz) being held in Ibra', Oman. I used to always call my mum and on that day I called her to tell her about the course. I told her that I want to enter it but keeping in mind our financial struggles, I knew I couldn't get in. Then my mum said something that re-kindled the spirit of hope in me. She said: 'No one is pulled to the Qur'ān except that my Rabb facilitates (makes it easy) for them.'
+Years later, while at university and I decided to return to memorising the Qur'ān again. During the last year (2015), I heard about the Abu Faisal course (for Hifz) being held in Ibra', Oman. I used to always call my mum and on that day I called her to tell her about the course. I told her that I want to enter it but keeping in mind our financial struggles, I knew I couldn't get in. Then my mum said something that re-kindled the spirit of hope in me. She said:
+
+'No one is pulled to the Qur'ān except that my Rabb facilitates (makes it easy) for them.'
 
 I fell asleep stressing and thinking about how I could enter the course by any means necessary. Then I had a dream.
 
-I saw that I was walking in a valley with little water and papers (or leaves) were falling on me from the sky. Every paper had written on it an āyah of the Qur'ān. The last one I caught had written on it: 'Do not lose mercy in the Rahmah of Allāh.' (39:53). I heard a voice behind me say, 'Do not lose hope in the Rahmah of Allāh for we are with you, trust in Him alone.'
+I saw that I was walking in a valley with little water and papers (or leaves) were falling on me from the sky. Every paper had written on it an āyah of the Qur'ān. The last one I caught had written on it:
 
-When I woke up, I received the good news that my mum had entered into the course as money had become available to her! And when the time came, before entering I had an emotional breakdown. I started crying and crying. I didn't know why but I was certain that day I would find my cure here. That I would find my comfort.
+'Do not lose mercy in the Rahmah of Allāh.' (39:53).
+
+I heard a voice behind me say, 'Do not lose hope in the Rahmah of Allāh for we are with you, trust in Him alone.'
+
+When I woke up, I received the good news that my mum had entered into the course as money had become available to her!
+
+And when the time came, before entering I had an emotional breakdown. I started crying and crying. I didn't know why but I was certain that day I would find my cure here. That I would find my comfort.
 
 My first day was spent in tears after I first spoke to my teacher. After the second day came to an end, I felt like I'd only entered Islām on that day. I felt I had finally tasted the Qur'ān and what it was doing to my heart. I felt like an angel. I didn't feel like I was walking on the ground. Tears of joy were overwhelming me, falling from my eyes as I grabbed hold of the Qur'ān. I made a promise to my Rabb that I would never give up. That I will succeed and heal with the Qur'ān.
 
-**I started to find cures for my diseases**
+# **I started to find cures for my diseases**
 
 When I finished memorising Surah al-Baqarah I woke up at Fajr and vomited something very bitter. The good news came that day that I had recovered from my kidney disease. A disease that had given me such levels of pain that I wished I had died and not felt any pain ever again. Yet here with the blessings of the Qur'ān, I recovered.
 
@@ -112,23 +124,33 @@ I continued my memorisation, and I was sure that I would be cured further. When 
 
 After this, it was my heart disease that remained. When it came to the day I was to complete my memorisation, I was in the hospital that day for a heart check-up. The doctor said to me, 'We've done comprehensive checks and your heart is completely healthy. I can confirm that there's no evidence of disease.'
 
-Alhamdulillāh, I wished for nothing but two things. My health and the Qur'ān, and I got it. But my heart continues to yearn for paradise.
+Alhamdulillāh, I wished for nothing but two things.
 
-**My advice to all my sisters (and brothers)**
+My health and the Qur'ān, and I got it. But my heart continues to yearn for paradise.
 
-My sisters (and brothers), by Allāh, I had a legitimate excuse in my case but I kept going. I used to dream about the Qur'ān in the form of a very white and handsome man saying to me that I missed you at the Qur'ān session today at Fajr ?. I longed for it. I loved the Qur'ān. I used to miss the sessions. I fell in love with the Qur'ān and it was my beloved that even when I had an accident and sustained a blow to my head losing consciousness, I found myself reciting Surah al-Baqarah. My friend said to me that she was surprised that in my state I was doing that.
+# **My advice to all my sisters (and brothers)**
 
-If I want something, I open the Qur'ān with the intention of obtaining what I want. By Allāh, I find it ?. My life has become only for the Qur'an and I am nicknamed the spokeswoman of the Qur'ān by one of my teachers.
+My sisters (and brothers), by Allāh, I had a legitimate excuse in my case but I kept going. I used to dream about the Qur'ān in the form of a very white and handsome man saying to me that I missed you at the Qur'ān session today at Fajr 😊. I longed for it. I loved the Qur'ān. I used to miss the sessions. I fell in love with the Qur'ān and it was my beloved that even when I had an accident and sustained a blow to my head losing consciousness, I found myself reciting Surah al-Baqarah. My friend said to me that she was surprised that in my state I was doing that.
+
+If I want something, I open the Qur'ān with the intention of obtaining what I want. By Allāh, I find it 😊. My life has become only for the Qur'an and I am nicknamed the spokeswoman of the Qur'ān by one of my teachers.
 
 My sisters (and brothers), one of the secrets that I believe helped me memorise the Qur'ān was a box. I bought a box I called, "The memorisation fund." Think of it like a bank. Whenever I wanted to memorise something, I would throw in a 100 for Allāh with the intention and prayer of ease in my task. Alhamdulillāh, I saw the effect. I increase the amount I put in if I felt lazy.
 
-I would perfume my Mus'haf with a scent I loved. It was to accompany me everywhere. My work hasn't finished. I am still reviewing. Every obstacle I face, Allāh takes care of it. Before Allāh, there are no excuses. Take advantage of the time you have.
+I would perfume my Mus'haf with a scent I loved. It was to accompany me everywhere. My work hasn't finished. I am still reviewing. Every obstacle I face, Allāh takes care of it.
+
+Before Allāh, there are no excuses. Take advantage of the time you have.
 
 I also used to listen to the Nasheed 'Ya Hamil al-Qur'ān' and would make lots of Istighfār. I used to cook and remain with the Qurān.
 
-My sisters (and brothers), the Qur'ān is like paradise, life and bliss. Untie the burdens of your life with its fragrant verses. I'm telling you I had a dream even during menstruation where I saw the Qur'ān say, 'We have missed your sitting with us' which made me cry. Long and yearn for the Qur'ān!
+My sisters (and brothers), the Qur'ān is like paradise, life and bliss. Untie the burdens of your life with its fragrant verses. I'm telling you I had a dream even during menstruation where I saw the Qur'ān say, 'We have missed your sitting with us' which made me cry.
 
-The story of my memorisation is long, these are but glimpses of my journey. May Allāh help us memorise and internalise His Book. May we all preserve it and prove we are the carriers of it. Remember your why! You'll get what you intend. Ameen.`
+Long and yearn for the Qur'ān!
+
+The story of my memorisation is long, these are but glimpses of my journey.
+
+May Allāh help us memorise and internalise His Book. May we all preserve it and prove we are the carriers of it.
+
+Remember your why! You'll get what you intend. Ameen.`
   }
 ];
 
