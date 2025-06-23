@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -21,23 +20,51 @@ export const SyncDataDialog = ({ open, onOpenChange, onWebhookClick }: SyncDataD
   const { syncLocalDataToSupabase, loadDataFromSupabase, clearSupabaseData, clearLocalData } = useDataSync();
 
   const handlePushData = async () => {
-    await syncLocalDataToSupabase();
-    onOpenChange(false);
+    console.log('Starting push to cloud...');
+    try {
+      await syncLocalDataToSupabase();
+      console.log('Push to cloud completed successfully');
+    } catch (error) {
+      console.error('Push to cloud failed:', error);
+    } finally {
+      onOpenChange(false);
+    }
   };
 
   const handlePullData = async () => {
-    await loadDataFromSupabase();
-    onOpenChange(false);
+    console.log('Starting pull from cloud...');
+    try {
+      await loadDataFromSupabase();
+      console.log('Pull from cloud completed successfully');
+    } catch (error) {
+      console.error('Pull from cloud failed:', error);
+    } finally {
+      onOpenChange(false);
+    }
   };
 
   const handleClearCloudData = async () => {
-    await clearSupabaseData();
-    onOpenChange(false);
+    console.log('Starting clear cloud data...');
+    try {
+      await clearSupabaseData();
+      console.log('Clear cloud data completed successfully');
+    } catch (error) {
+      console.error('Clear cloud data failed:', error);
+    } finally {
+      onOpenChange(false);
+    }
   };
 
   const handleClearLocalData = () => {
-    clearLocalData();
-    onOpenChange(false);
+    console.log('Starting clear local data...');
+    try {
+      clearLocalData();
+      console.log('Clear local data completed successfully');
+    } catch (error) {
+      console.error('Clear local data failed:', error);
+    } finally {
+      onOpenChange(false);
+    }
   };
 
   const handleWebhookExport = () => {
