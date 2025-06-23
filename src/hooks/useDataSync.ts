@@ -475,6 +475,44 @@ export const useDataSync = () => {
         localStorage.setItem('journal-storage', JSON.stringify(formattedJournalData));
       }
 
+      // Load weak spots
+      const { data: weakSpotsData } = await supabase
+        .from('weak_spots')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (weakSpotsData && weakSpotsData.length > 0) {
+        // Store weak spots in the format expected by the app
+        const formattedWeakSpots = weakSpotsData.map(spot => ({
+          id: spot.id,
+          surahNumber: spot.surah_number,
+          ayahNumber: spot.ayah_number,
+          status: spot.status,
+          createdAt: spot.created_at,
+          updatedAt: spot.updated_at
+        }));
+        localStorage.setItem('weak-spots', JSON.stringify(formattedWeakSpots));
+        console.log('Loaded weak spots from cloud');
+      }
+
+      // Load profiles data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData) {
+        // Store profile data if needed by the app
+        localStorage.setItem('user-profile', JSON.stringify({
+          id: profileData.id,
+          email: profileData.email,
+          createdAt: profileData.created_at,
+          updatedAt: profileData.updated_at
+        }));
+        console.log('Loaded profile data from cloud');
+      }
+
       console.log('Data loaded from Supabase');
 
       toast({
