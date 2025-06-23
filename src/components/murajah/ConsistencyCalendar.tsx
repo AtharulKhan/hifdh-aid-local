@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -183,7 +182,7 @@ export const ConsistencyCalendar: React.FC<ConsistencyCalendarProps> = ({
                               className={`w-3 h-3 rounded-sm cursor-pointer hover:ring-2 hover:ring-green-300 ${color}`}
                             />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent className="bg-white border border-gray-200 text-gray-900">
                             <div className="text-sm">
                               <div className="font-medium">
                                 {format(new Date(activity.date), 'MMM d, yyyy')}
