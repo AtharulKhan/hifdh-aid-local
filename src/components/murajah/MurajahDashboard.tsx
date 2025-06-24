@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -42,10 +43,23 @@ interface JuzMemorization {
   memorizedSurahs?: number[]; // Array of surah IDs that are memorized within this juz
 }
 
+interface ReverseSettings {
+  rmv: boolean;
+  omv: boolean;
+  listening: boolean;
+  reading: boolean;
+}
+
 export const MurajahDashboard = () => {
   const [cycles, setCycles] = useState<ReviewCycle[]>([]);
   const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
   const [postponedCycles, setPostponedCycles] = useState<Set<string>>(new Set());
+  const [reverseSettings, setReverseSettings] = useState<ReverseSettings>({
+    rmv: false,
+    omv: false,
+    listening: false,
+    reading: false
+  });
   const [settings, setSettings] = useState<ReviewSettings>({
     rmvPages: 7,
     omvJuz: 1,
@@ -61,6 +75,7 @@ export const MurajahDashboard = () => {
   useEffect(() => {
     const savedJuz = localStorage.getItem('murajah-juz-memorization');
     const savedSettings = localStorage.getItem('murajah-review-settings');
+    const savedReverseSettings = localStorage.getItem('murajah-reverse-settings');
 
     if (savedJuz) {
       setJuzMemorization(JSON.parse(savedJuz));
@@ -68,7 +83,22 @@ export const MurajahDashboard = () => {
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
     }
+    if (savedReverseSettings) {
+      setReverseSettings(JSON.parse(savedReverseSettings));
+    }
   }, []);
+
+  // Save reverse settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('murajah-reverse-settings', JSON.stringify(reverseSettings));
+  }, [reverseSettings]);
+
+  const toggleReverseOrder = (cycleType: keyof ReverseSettings) => {
+    setReverseSettings(prev => ({
+      ...prev,
+      [cycleType]: !prev[cycleType]
+    }));
+  };
 
   const getPostponedCycleIds = (date: string): Set<string> => {
     const postponedKey = 'murajah-postponed-cycles';
@@ -331,7 +361,7 @@ export const MurajahDashboard = () => {
     
     // Update postponed cycles state
     setPostponedCycles(todaysPostponedIds);
-  }, [juzMemorization, settings]);
+  }, [juzMemorization, settings, reverseSettings]);
 
   const loadTodaysCompletions = (): { [cycleId: string]: boolean } => {
     const today = new Date().toISOString().split('T')[0];
@@ -683,11 +713,21 @@ export const MurajahDashboard = () => {
       return '';
     }
 
-    const maxPage = currentJuzMem.endPage;
-    const minPage = currentJuzMem.startPage;
-    const startPage = Math.max(maxPage - settings.rmvPages + 1, minPage);
+    const max = currentJuzMem.endPage;
+    const min = currentJuzMem.startPage;
+    let startPage = Math.max(max - settings.rmvPages + 1, min);
+    let endPage = max;
 
-    return `Juz ${settings.currentJuz} - Pages (${startPage}-${maxPage})`;
+    // Apply reverse order if enabled
+    if (reverseSettings.rmv) {
+      const temp = startPage;
+      startPage = endPage;
+      endPage = temp;
+    }
+
+    return reverseSettings.rmv 
+      ? `Juz ${settings.currentJuz} - Pages (${startPage}-${endPage}) [Reversed]`
+      : `Juz ${settings.currentJuz} - Pages (${startPage}-${endPage})`;
   };
 
   const calculateOMV = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
@@ -737,6 +777,11 @@ export const MurajahDashboard = () => {
 
     if (memorizationUnits.length === 0) return '';
 
+    // Apply reverse order if enabled
+    if (reverseSettings.omv) {
+      memorizationUnits.reverse();
+    }
+
     // Calculate rotation based on date
     const startDate = new Date(settings.startDate);
     const currentDate = new Date(date);
@@ -750,15 +795,142 @@ export const MurajahDashboard = () => {
       selectedUnits.push(memorizationUnits[unitIndex]);
     }
 
-    return selectedUnits.map(unit => unit.displayText).join(', ');
+    const result = selectedUnits.map(unit => unit.displayText).join(', ');
+    return reverseSettings.omv ? `${result} [Reversed]` : result;
   };
 
-  const calculateListeningCycle = (juzWithMemorization: JuzMemorization[],  settings: ReviewSettings, date: string): string => {
-    return calculateOMV(juzWithMemorization, { ...settings, omvJuz: settings.listeningJuz }, date);
+  const calculateListeningCycle = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
+    if (juzWithMemorization.length === 0) return '';
+
+    // Get all available memorization units
+    const memorizationUnits: Array<{
+      type: 'full_juz' | 'partial_juz';
+      juzNumber: number;
+      surahIds?: number[];
+      displayText: string;
+    }> = [];
+
+    juzWithMemorization.forEach(juzMem => {
+      if (juzMem.isMemorized) {
+        const juz = juzData[juzMem.juzNumber.toString() as keyof typeof juzData];
+        if (juz) {
+          let displayText = `Juz ${juzMem.juzNumber}`;
+          if (juzMem.startPage && juzMem.endPage) {
+            displayText += ` (Pages ${juzMem.startPage}-${juzMem.endPage})`;
+          } else {
+            displayText += ` (${juz.first_verse_key} - ${juz.last_verse_key})`;
+          }
+          
+          memorizationUnits.push({
+            type: 'full_juz',
+            juzNumber: juzMem.juzNumber,
+            displayText
+          });
+        }
+      } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
+        const surahTexts = juzMem.memorizedSurahs.map(surahId => {
+          const surah = surahNames[surahId.toString() as keyof typeof surahNames];
+          return surah ? surah.name_simple : `Surah ${surahId}`;
+        });
+        
+        memorizationUnits.push({
+          type: 'partial_juz',
+          juzNumber: juzMem.juzNumber,
+          surahIds: juzMem.memorizedSurahs,
+          displayText: `Juz ${juzMem.juzNumber} (${surahTexts.join(', ')})`
+        });
+      }
+    });
+
+    if (memorizationUnits.length === 0) return '';
+
+    // Apply reverse order if enabled
+    if (reverseSettings.listening) {
+      memorizationUnits.reverse();
+    }
+
+    // Calculate rotation based on date
+    const startDate = new Date(settings.startDate);
+    const currentDate = new Date(date);
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const cycleIndex = Math.max(0, daysSinceStart) % memorizationUnits.length;
+    
+    const selectedUnits = [];
+    for (let i = 0; i < settings.listeningJuz && i < memorizationUnits.length; i++) {
+      const unitIndex = (cycleIndex + i) % memorizationUnits.length;
+      selectedUnits.push(memorizationUnits[unitIndex]);
+    }
+
+    const result = selectedUnits.map(unit => unit.displayText).join(', ');
+    return reverseSettings.listening ? `${result} [Reversed]` : result;
   };
 
   const calculateReadingCycle = (juzWithMemorization: JuzMemorization[], settings: ReviewSettings, date: string): string => {
-    return calculateOMV(juzWithMemorization, { ...settings, omvJuz: settings.readingJuz }, date);
+    if (juzWithMemorization.length === 0) return '';
+
+    // Get all available memorization units
+    const memorizationUnits: Array<{
+      type: 'full_juz' | 'partial_juz';
+      juzNumber: number;
+      surahIds?: number[];
+      displayText: string;
+    }> = [];
+
+    juzWithMemorization.forEach(juzMem => {
+      if (juzMem.isMemorized) {
+        const juz = juzData[juzMem.juzNumber.toString() as keyof typeof juzData];
+        if (juz) {
+          let displayText = `Juz ${juzMem.juzNumber}`;
+          if (juzMem.startPage && juzMem.endPage) {
+            displayText += ` (Pages ${juzMem.startPage}-${juzMem.endPage})`;
+          } else {
+            displayText += ` (${juz.first_verse_key} - ${juz.last_verse_key})`;
+          }
+          
+          memorizationUnits.push({
+            type: 'full_juz',
+            juzNumber: juzMem.juzNumber,
+            displayText
+          });
+        }
+      } else if (juzMem.memorizedSurahs && juzMem.memorizedSurahs.length > 0) {
+        const surahTexts = juzMem.memorizedSurahs.map(surahId => {
+          const surah = surahNames[surahId.toString() as keyof typeof surahNames];
+          return surah ? surah.name_simple : `Surah ${surahId}`;
+        });
+        
+        memorizationUnits.push({
+          type: 'partial_juz',
+          juzNumber: juzMem.juzNumber,
+          surahIds: juzMem.memorizedSurahs,
+          displayText: `Juz ${juzMem.juzNumber} (${surahTexts.join(', ')})`
+        });
+      }
+    });
+
+    if (memorizationUnits.length === 0) return '';
+
+    // Apply reverse order if enabled
+    if (reverseSettings.reading) {
+      memorizationUnits.reverse();
+    }
+
+    // Calculate rotation based on date
+    const startDate = new Date(settings.startDate);
+    const currentDate = new Date(date);
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const cycleIndex = Math.max(0, daysSinceStart) % memorizationUnits.length;
+    
+    const selectedUnits = [];
+    for (let i = 0; i < settings.readingJuz && i < memorizationUnits.length; i++) {
+      const unitIndex = (cycleIndex + i) % memorizationUnits.length;
+      selectedUnits.push(memorizationUnits[unitIndex]);
+    }
+
+    const result = selectedUnits.map(unit => unit.displayText).join(', ');
+    return reverseSettings.reading ? `${result} [Reversed]` : result;
   };
 
   const toggleCycleCompletion = (index: number) => {
@@ -852,6 +1024,55 @@ export const MurajahDashboard = () => {
                   data: cycles,
                   component: PrintableMurajahCycles
                 }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Reverse Order Controls */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Reverse Order Controls</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-green-600" />
+                <span className="text-xs font-medium">RMV</span>
+              </div>
+              <Switch
+                checked={reverseSettings.rmv}
+                onCheckedChange={() => toggleReverseOrder('rmv')}
+              />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="h-4 w-4 text-purple-600" />
+                <span className="text-xs font-medium">OMV</span>
+              </div>
+              <Switch
+                checked={reverseSettings.omv}
+                onCheckedChange={() => toggleReverseOrder('omv')}
+              />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex items-center gap-2">
+                <PlayCircle className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium">Listen</span>
+              </div>
+              <Switch
+                checked={reverseSettings.listening}
+                onCheckedChange={() => toggleReverseOrder('listening')}
+              />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-orange-600" />
+                <span className="text-xs font-medium">Read</span>
+              </div>
+              <Switch
+                checked={reverseSettings.reading}
+                onCheckedChange={() => toggleReverseOrder('reading')}
               />
             </div>
           </div>
