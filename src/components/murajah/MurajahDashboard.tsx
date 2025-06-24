@@ -84,20 +84,31 @@ export const MurajahDashboard = () => {
       setSettings(JSON.parse(savedSettings));
     }
     if (savedReverseSettings) {
-      setReverseSettings(JSON.parse(savedReverseSettings));
+      try {
+        const parsedReverseSettings = JSON.parse(savedReverseSettings);
+        setReverseSettings(parsedReverseSettings);
+        console.log('Loaded reverse settings from localStorage:', parsedReverseSettings);
+      } catch (error) {
+        console.error('Error parsing reverse settings from localStorage:', error);
+      }
     }
   }, []);
 
   // Save reverse settings to localStorage whenever they change
   useEffect(() => {
+    console.log('Saving reverse settings to localStorage:', reverseSettings);
     localStorage.setItem('murajah-reverse-settings', JSON.stringify(reverseSettings));
   }, [reverseSettings]);
 
   const toggleReverseOrder = (cycleType: keyof ReverseSettings) => {
-    setReverseSettings(prev => ({
-      ...prev,
-      [cycleType]: !prev[cycleType]
-    }));
+    setReverseSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [cycleType]: !prev[cycleType]
+      };
+      console.log(`Toggling ${cycleType} reverse order:`, newSettings);
+      return newSettings;
+    });
   };
 
   const getPostponedCycleIds = (date: string): Set<string> => {
