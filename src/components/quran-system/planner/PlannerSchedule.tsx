@@ -287,7 +287,7 @@ export const PlannerSchedule = ({
             <Label htmlFor={`day-${item.date}`} className="font-bold text-sm sm:text-base break-words">
               {format(parseISO(item.date), isMobile ? "MMM d, yy" : "EEE, MMM d, yyyy")}
             </Label>
-            <p className="text-xs sm:text-sm text-muted-foreground break-words overflow-hidden">
+            <p className="text-xs sm:text-sm text-muted-foreground break-words break-all overflow-wrap-anywhere">
               {isMobile ? taskWithJuz.substring(0, 30) + '...' : taskWithJuz}
             </p>
             {item.isPostponed && (
