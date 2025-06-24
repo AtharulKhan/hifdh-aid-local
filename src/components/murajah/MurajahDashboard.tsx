@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Calendar, CheckCircle, RotateCcw, PlayCircle, BookOpen, Clock, AlertTriangle, ArrowRight, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { ReviewSettings } from "./ReviewSettings";
 import juzData from "@/data/juz-numbers.json";
 import surahNames from "@/data/surah-names.json";
@@ -46,6 +46,7 @@ export const MurajahDashboard = () => {
   const [cycles, setCycles] = useState<ReviewCycle[]>([]);
   const [juzMemorization, setJuzMemorization] = useState<JuzMemorization[]>([]);
   const [postponedCycles, setPostponedCycles] = useState<Set<string>>(new Set());
+  const [isReversed, setIsReversed] = useState(false);
   const [settings, setSettings] = useState<ReviewSettings>({
     rmvPages: 7,
     omvJuz: 1,
@@ -775,6 +776,16 @@ export const MurajahDashboard = () => {
     saveTodaysCompletions(completions);
   };
 
+  // Add function to toggle reverse order
+  const toggleReverseOrder = () => {
+    setIsReversed(!isReversed);
+  };
+
+  // Get cycles in the correct order (normal or reversed)
+  const getOrderedCycles = () => {
+    return isReversed ? [...cycles].reverse() : cycles;
+  };
+
   // Add a function to generate future murajah schedule for printing
   const generateMurajahSchedule = () => {
     const schedule = [];
@@ -818,6 +829,8 @@ export const MurajahDashboard = () => {
     );
   }
 
+  const orderedCycles = getOrderedCycles();
+
   return (
     <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
       {/* Header */}
@@ -843,16 +856,27 @@ export const MurajahDashboard = () => {
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Completed</div>
               </div>
-              <ComprehensivePrintDialog
-                murajah={{
-                  schedule: generateMurajahSchedule(),
-                  component: PrintableMurajahSchedule
-                }}
-                todaysMurajah={{
-                  data: cycles,
-                  component: PrintableMurajahCycles
-                }}
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleReverseOrder}
+                  className="text-xs px-2 py-1"
+                >
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  {isReversed ? 'Normal' : 'Reverse'}
+                </Button>
+                <ComprehensivePrintDialog
+                  murajah={{
+                    schedule: generateMurajahSchedule(),
+                    component: PrintableMurajahSchedule
+                  }}
+                  todaysMurajah={{
+                    data: cycles,
+                    component: PrintableMurajahCycles
+                  }}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -860,84 +884,89 @@ export const MurajahDashboard = () => {
 
       {/* Review Cycles */}
       <div className="grid gap-3 sm:gap-4">
-        {cycles.map((cycle, index) => (
-          <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''} ${cycle.isPostponed ? 'opacity-60' : ''}`}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className={`p-2 rounded-lg flex-shrink-0 ${cycle.completed ? 'bg-green-100' : 'bg-white'}`}>
-                    {cycle.completed ? <CheckCircle className="h-4 w-4 text-green-600" /> : cycle.icon}
+        {orderedCycles.map((cycle, originalIndex) => {
+          // Calculate the actual index in the original cycles array
+          const actualIndex = isReversed ? cycles.length - 1 - originalIndex : originalIndex;
+          
+          return (
+            <Card key={cycle.id} className={`${cycle.color} transition-all duration-200 ${cycle.completed ? 'opacity-75' : ''} ${cycle.isPostponed ? 'opacity-60' : ''}`}>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${cycle.completed ? 'bg-green-100' : 'bg-white'}`}>
+                      {cycle.completed ? <CheckCircle className="h-4 w-4 text-green-600" /> : cycle.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 text-sm sm:text-base break-words">{cycle.title}</h3>
+                      <p className="text-gray-600 text-sm break-words">{cycle.content}</p>
+                      {cycle.startDate !== new Date().toISOString().split('T')[0] && !cycle.isPostponed && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
+                        </p>
+                      )}
+                      {cycle.isPostponed && cycle.postponedToDate && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Postponed to {new Date(cycle.postponedToDate).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base break-words">{cycle.title}</h3>
-                    <p className="text-gray-600 text-sm break-words">{cycle.content}</p>
-                    {cycle.startDate !== new Date().toISOString().split('T')[0] && !cycle.isPostponed && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        {cycle.isOverdue ? 'Overdue from' : 'Carried over from'} {new Date(cycle.startDate).toLocaleDateString()}
-                      </p>
+                  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                    {cycle.isOverdue && (
+                      <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Overdue
+                      </Badge>
                     )}
-                    {cycle.isPostponed && cycle.postponedToDate && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        Postponed to {new Date(cycle.postponedToDate).toLocaleDateString()}
-                      </p>
+                    {cycle.isPostponed && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+                        Postponed
+                      </Badge>
+                    )}
+                    {!cycle.isPostponed && (
+                      <Badge variant={cycle.completed ? "default" : "outline"} className="text-xs">
+                        {cycle.completed ? "Completed" : "Pending"}
+                      </Badge>
+                    )}
+                    {cycle.isPostponed && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => unPostponeCycle(actualIndex)}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 text-xs px-2 py-1"
+                      >
+                        <ArrowLeft className="h-3 w-3 mr-1" />
+                        <span className="hidden sm:inline">Un-postpone</span>
+                        <span className="sm:hidden">Undo</span>
+                      </Button>
+                    )}
+                    {!cycle.completed && !cycle.isPostponed && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => postponeCycle(actualIndex)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 text-xs px-2 py-1"
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" />
+                        Postpone
+                      </Button>
+                    )}
+                    {!cycle.isPostponed && (
+                      <Button
+                        variant={cycle.completed ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleCycleCompletion(actualIndex)}
+                        className="text-xs px-3 py-1"
+                      >
+                        {cycle.completed ? "Undo" : "Complete"}
+                      </Button>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                  {cycle.isOverdue && (
-                    <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300 text-xs">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Overdue
-                    </Badge>
-                  )}
-                  {cycle.isPostponed && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
-                      Postponed
-                    </Badge>
-                  )}
-                  {!cycle.isPostponed && (
-                    <Badge variant={cycle.completed ? "default" : "outline"} className="text-xs">
-                      {cycle.completed ? "Completed" : "Pending"}
-                    </Badge>
-                  )}
-                  {cycle.isPostponed && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => unPostponeCycle(index)}
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 text-xs px-2 py-1"
-                    >
-                      <ArrowLeft className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">Un-postpone</span>
-                      <span className="sm:hidden">Undo</span>
-                    </Button>
-                  )}
-                  {!cycle.completed && !cycle.isPostponed && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => postponeCycle(index)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 text-xs px-2 py-1"
-                    >
-                      <ArrowRight className="h-3 w-3 mr-1" />
-                      Postpone
-                    </Button>
-                  )}
-                  {!cycle.isPostponed && (
-                    <Button
-                      variant={cycle.completed ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleCycleCompletion(index)}
-                      className="text-xs px-3 py-1"
-                    >
-                      {cycle.completed ? "Undo" : "Complete"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {cycles.length === 0 && (
