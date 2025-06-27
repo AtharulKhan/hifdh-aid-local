@@ -60,14 +60,56 @@
     <!-- PWA Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+        window.addEventListener('load', async () => {
+          try {
+            // Unregister any existing service workers first
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              if (registration.scope === location.origin + '/') {
+                console.log('Unregistering old service worker');
+                await registration.unregister();
+              }
+            }
+            
+            // Register new service worker
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('SW registered: ', registration);
+            
+            // Handle service worker updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New content is available, prompt user or auto-reload
+                    console.log('New content available, reloading...');
+                    window.location.reload();
+                  }
+                });
+              }
             });
+            
+            // Listen for controlling service worker changes
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              console.log('Controller changed, reloading...');
+              window.location.reload();
+            });
+            
+          } catch (registrationError) {
+            console.log('SW registration failed: ', registrationError);
+          }
+        });
+      }
+      
+      // Clear old caches on page load to prevent stale content
+      if ('caches' in window) {
+        caches.keys().then(cacheNames => {
+          cacheNames.forEach(cacheName => {
+            if (cacheName.startsWith('hifdh-aid-v') && !cacheName.includes('v3')) {
+              console.log('Clearing old cache:', cacheName);
+              caches.delete(cacheName);
+            }
+          });
         });
       }
     </script>
