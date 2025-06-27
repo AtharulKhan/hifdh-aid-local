@@ -62,54 +62,50 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            // Unregister any existing service workers first
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) {
-              if (registration.scope === location.origin + '/') {
-                console.log('Unregistering old service worker');
-                await registration.unregister();
-              }
-            }
-            
-            // Register new service worker
             const registration = await navigator.serviceWorker.register('/sw.js');
-            console.log('SW registered: ', registration);
+            console.log('SW registered successfully: ', registration);
             
-            // Handle service worker updates
+            // Handle service worker updates without infinite reload loops
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
               if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New content is available, prompt user or auto-reload
-                    console.log('New content available, reloading...');
-                    window.location.reload();
+                    // Show update notification instead of auto-reload
+                    console.log('New content available');
+                    
+                    // Create a user-friendly update notification
+                    const updateBanner = document.createElement('div');
+                    updateBanner.style.cssText = `
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      right: 0;
+                      background: #16a34a;
+                      color: white;
+                      padding: 12px;
+                      text-align: center;
+                      z-index: 9999;
+                      font-family: system-ui, -apple-system, sans-serif;
+                    `;
+                    updateBanner.innerHTML = `
+                      <span>A new version is available!</span>
+                      <button onclick="window.location.reload()" style="margin-left: 10px; background: white; color: #16a34a; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        Update Now
+                      </button>
+                      <button onclick="this.parentElement.remove()" style="margin-left: 5px; background: transparent; color: white; border: 1px solid white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        Later
+                      </button>
+                    `;
+                    document.body.appendChild(updateBanner);
                   }
                 });
               }
             });
             
-            // Listen for controlling service worker changes
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              console.log('Controller changed, reloading...');
-              window.location.reload();
-            });
-            
           } catch (registrationError) {
             console.log('SW registration failed: ', registrationError);
           }
-        });
-      }
-      
-      // Clear old caches on page load to prevent stale content
-      if ('caches' in window) {
-        caches.keys().then(cacheNames => {
-          cacheNames.forEach(cacheName => {
-            if (cacheName.startsWith('hifdh-aid-v') && !cacheName.includes('v3')) {
-              console.log('Clearing old cache:', cacheName);
-              caches.delete(cacheName);
-            }
-          });
         });
       }
     </script>
